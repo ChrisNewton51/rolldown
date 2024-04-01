@@ -5,37 +5,50 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    private float horizontalInput,verticalInput;
-    public float turnSpeed = 10000;
     private Rigidbody rb;
-    private float currentX;
+    private Vector3 movement;
+    public float speed = 10f;
+    private bool onFloor = false;
 
-    // Start is called before the first frame update
     void Start()
     {
-        rb = GetComponent<Rigidbody>();    
+        rb = GetComponent<Rigidbody>();
     }
 
-    // Update is called once per frame
     void Update()
     {
-        horizontalInput = Input.GetAxis("Horizontal");
-        verticalInput = Input.GetAxis("Vertical");
+        // Capture input from A and D keys
+        movement = new Vector3(Input.GetAxis("Horizontal"), 0, 0);
+    }
+
+    void FixedUpdate()
+    {
+        // Move the character using rigidbody.AddForce()
+        if (onFloor) MoveCharacter(movement);
+    }
+
+    void MoveCharacter(Vector3 direction)
+    {
+        // Apply force to the rigidbody
+        rb.AddForce(direction * speed);
 
         if (Input.GetKeyDown(KeyCode.A))
         {
-            Move(-turnSpeed);
+            rb.AddForce(-Vector3.right * 5, ForceMode.Impulse);
         }
         if (Input.GetKeyDown(KeyCode.D))
         {
-            Move(turnSpeed);
+            rb.AddForce(Vector3.right * 5, ForceMode.Impulse);
         }
-
     }
 
-    private void Move(float velocity)
+    private void OnCollisionEnter(Collision collision)
     {
-        currentX = transform.position.x + 1;
-        transform.position = Vector3.MoveTowards(transform.position, new Vector3(currentX, transform.position.y, transform.position.z), velocity * Time.deltaTime);
+        if (collision.gameObject.CompareTag("Floor")) onFloor = true;
+    }
+
+    private void OnCollisionExit(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Floor")) onFloor = false;
     }
 }
