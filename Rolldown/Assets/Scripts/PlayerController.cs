@@ -121,13 +121,17 @@ public class PlayerController : MonoBehaviour
         {
             if (Mathf.Abs(transform.position.x) > 18)
             {
+                if ((rb.velocity.x < 0 && onSideR) || (rb.velocity.x > 0 && onSideL))
+                {
+                    rb.AddForce(new Vector3(0, jumpForce + 0.2f, 0), ForceMode.Impulse);
+                }
                 rb.AddForce(new Vector3(0, 5 * Mathf.Abs(1 / transform.position.x), 0), ForceMode.Impulse);
             }
             else
             {
                 rb.AddForce(new Vector3(0, jumpForce, 0), ForceMode.Impulse);
             }
-            rb.AddForce(new Vector3(-transform.position.x * 0.003f, 0, 0), ForceMode.Impulse);
+            rb.AddForce(new Vector3(-transform.position.x * 0.002f, 0, 0), ForceMode.Impulse);
             jumpTime += Time.deltaTime;
         }
 
