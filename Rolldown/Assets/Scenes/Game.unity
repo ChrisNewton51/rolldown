@@ -314,7 +314,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
-  m_Mesh: {fileID: 333286643}
+  m_Mesh: {fileID: 283495273}
 --- !u!33 &33569155
 MeshFilter:
   m_ObjectHideFlags: 10
@@ -5441,7 +5441,7 @@ GameObject:
   - component: {fileID: 38579817}
   - component: {fileID: 38579816}
   m_Layer: 0
-  m_Name: Beam (10)
+  m_Name: Beam
   m_TagString: Floor
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5456,8 +5456,8 @@ Transform:
   m_GameObject: {fileID: 38579814}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -3.4694465e-18, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0.0437, y: -0, z: -0}
+  m_LocalScale: {x: 0.9, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 642047706}
@@ -6143,7 +6143,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
-  m_Mesh: {fileID: 1394505205}
+  m_Mesh: {fileID: 1493742786}
 --- !u!33 &126780153
 MeshFilter:
   m_ObjectHideFlags: 10
@@ -11695,7 +11695,7 @@ GameObject:
   - component: {fileID: 250533785}
   - component: {fileID: 250533784}
   m_Layer: 0
-  m_Name: Cube (1)
+  m_Name: Stopper
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -14503,7 +14503,7 @@ GameObject:
   - component: {fileID: 537535648}
   - component: {fileID: 537535647}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: Stopper
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -16334,15 +16334,15 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 812273456}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.08715578, y: 0, z: 0, w: 0.9961947}
-  m_LocalPosition: {x: 0, y: 0, z: 72.8}
+  m_LocalRotation: {x: 0.10452846, y: 0, z: 0, w: 0.9945219}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1403180675}
   - {fileID: 1123376017}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 10, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 12, y: 0, z: 0}
 --- !u!1 &829673897
 GameObject:
   m_ObjectHideFlags: 0
@@ -18678,7 +18678,7 @@ Transform:
   m_GameObject: {fileID: 1039145627}
   serializedVersion: 2
   m_LocalRotation: {x: 0.08715578, y: -0, z: -0, w: 0.9961947}
-  m_LocalPosition: {x: -0.57, y: 42.57, z: -201.46}
+  m_LocalPosition: {x: -0.57, y: 54.37, z: -262.33}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -18696,7 +18696,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 34daf642e144e614a9d7f2603c726ebe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  steadyForce: 10
+  steadyForce: 4
+  jumpForce: 0.14
 --- !u!43 &1065140407
 Mesh:
   m_ObjectHideFlags: 0
@@ -21648,7 +21649,7 @@ GameObject:
   - component: {fileID: 1453985759}
   - component: {fileID: 1453985758}
   m_Layer: 0
-  m_Name: Beam (11)
+  m_Name: Beam
   m_TagString: Floor
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -21663,8 +21664,8 @@ Transform:
   m_GameObject: {fileID: 1453985756}
   serializedVersion: 2
   m_LocalRotation: {x: 0.15080367, y: 0.9885638, z: -0, w: 0}
-  m_LocalPosition: {x: -0.29, y: -1.7, z: 57.909996}
-  m_LocalScale: {x: 70, y: 1, z: 1}
+  m_LocalPosition: {x: -6.46, y: 0.23, z: 57.91}
+  m_LocalScale: {x: 60, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 159657739}
@@ -23717,7 +23718,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
-  m_Mesh: {fileID: 1597754573}
+  m_Mesh: {fileID: 2143124653}
 --- !u!33 &1661954734
 MeshFilter:
   m_ObjectHideFlags: 10

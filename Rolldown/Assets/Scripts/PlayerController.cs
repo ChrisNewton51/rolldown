@@ -6,6 +6,7 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     public float steadyForce = 2f;
+    public float jumpForce = 0.22f;
 
     private Rigidbody rb;
     private float horizontalInput, verticalInput;
@@ -14,7 +15,6 @@ public class PlayerController : MonoBehaviour
     private bool jumping, negativeJump, sideJumping = false;
     private float jumpTime = 0;
     private float buttonTime = 0.15f;
-    private float jumpForce = 0.22f;
     private float gravityScale = 1.27f;
     private bool onSideR, onSideL = false;
 
@@ -50,7 +50,7 @@ public class PlayerController : MonoBehaviour
         // In the air
         if (!onFloor && !onRamp && !onSideL && !onSideR)
         {
-            steadyForce = 7;
+            steadyForce = 3;
         }
 
 
@@ -123,9 +123,11 @@ public class PlayerController : MonoBehaviour
             {
                 if ((rb.velocity.x < 0 && onSideR) || (rb.velocity.x > 0 && onSideL))
                 {
-                    rb.AddForce(new Vector3(0, jumpForce + 0.2f, 0), ForceMode.Impulse);
+                    Debug.Log("test");
+                    rb.AddForce(new Vector3(0, jumpForce, 0), ForceMode.Impulse);
+                } else {
+                    rb.AddForce(new Vector3(0, Mathf.Abs(3 / transform.position.x), 0), ForceMode.Impulse);
                 }
-                rb.AddForce(new Vector3(0, 5 * Mathf.Abs(1 / transform.position.x), 0), ForceMode.Impulse);
             }
             else
             {
@@ -182,7 +184,7 @@ public class PlayerController : MonoBehaviour
     void LandReset()
     {
         negativeJump = false;
-        steadyForce = 10;
+        steadyForce = 7;
     }
 
     private void OnCollisionExit(Collision collision)

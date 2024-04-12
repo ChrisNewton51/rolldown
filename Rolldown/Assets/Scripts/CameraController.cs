@@ -9,7 +9,7 @@ public class CameraController : MonoBehaviour
 {
     public GameObject player;
     public GameObject floor;
-    public float sensitivity = 80.0f;
+    public float sensitivity = 60.0f;
     public float distance = 8.0f;
 
     private float orbitDamping = 10f;
