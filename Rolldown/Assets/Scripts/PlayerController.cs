@@ -6,7 +6,12 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     public float steadyForce = 2f;
+    public float airForce = 3f;
+    public float sideForce = 8f;
     public float jumpForce = 0.22f;
+    public float sideJumpForce = 3f;
+    public float sideJumpHorizForce = 0.002f;
+    public float gravityScale = 1.5f;
 
     private Rigidbody rb;
     private float horizontalInput, verticalInput;
@@ -15,8 +20,8 @@ public class PlayerController : MonoBehaviour
     private bool jumping, negativeJump, sideJumping = false;
     private float jumpTime = 0;
     private float buttonTime = 0.15f;
-    private float gravityScale = 1.27f;
     private bool onSideR, onSideL = false;
+    private int sideBound = 18;
 
     void Start()
     {
@@ -25,18 +30,38 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // Capture input from movement keys
-        horizontalInput = Input.GetAxis("Horizontal");
-        verticalInput = Input.GetAxis("Vertical");
-        //Debug.Log(rb.velocity.y);
+        // Inputs
+        DetectMoveCharacter();
 
-        MoveCharacter(horizontalInput, verticalInput);
+        
+
+        
     }
 
-    void MoveCharacter(float horizontalInput, float verticalInput)
+    void FixedUpdate()
+    {
+        // Physics movements
+        HandleMoveCharacter(horizontalInput, verticalInput);
+        rb.AddForce(Physics.gravity);
+        Debug.Log(rb.velocity.z);
+    }
+
+    void DetectMoveCharacter()
+    {
+        // Detect horizontal key presses
+        DetectLRInput();
+
+        // Detect jump key presses
+        DetectJump();
+
+        // Detect slow down key presses
+        DetectFBInput();
+    }
+
+    void HandleMoveCharacter(float horizontalInput, float verticalInput)
     {
         // Left and right movement
-        LRMovement(horizontalInput);
+        HandleLRMovement(horizontalInput);
 
         // Jump handling
         HandleJumping();
@@ -45,12 +70,17 @@ public class PlayerController : MonoBehaviour
         SlowdownHandle(verticalInput);
     }
 
-    void LRMovement(float horizontalInput)
+    void DetectLRInput()
+    {
+        horizontalInput = Input.GetAxis("Horizontal");
+    }
+
+    void HandleLRMovement(float horizontalInput)
     {
         // In the air
         if (!onFloor && !onRamp && !onSideL && !onSideR)
         {
-            steadyForce = 3;
+            steadyForce = airForce;
         }
 
 
@@ -63,7 +93,7 @@ public class PlayerController : MonoBehaviour
         // When on sides
         if (onSideR && horizontalInput < 0)
         {
-            rb.AddForce(new Vector3(horizontalInput * 8 * Mathf.Abs(1 / transform.position.x), horizontalInput, 0) * steadyForce);
+            rb.AddForce(new Vector3(horizontalInput * Mathf.Abs(sideForce / transform.position.x), horizontalInput, 0) * steadyForce);
         }
         else if (onSideR && horizontalInput > 0)
         {
@@ -71,7 +101,7 @@ public class PlayerController : MonoBehaviour
         }
         if (onSideL && horizontalInput > 0)
         {
-            rb.AddForce(new Vector3(horizontalInput * 8 * Mathf.Abs(1 / transform.position.x), -horizontalInput, 0) * steadyForce);
+            rb.AddForce(new Vector3(horizontalInput * Mathf.Abs(sideForce / transform.position.x), -horizontalInput, 0) * steadyForce);
         }
         else if (onSideL && horizontalInput < 0)
         {
@@ -95,9 +125,8 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void HandleJumping()
+    void DetectJump()
     {
-        // Detect jump
         if ((onFloor || onRamp) && Input.GetKeyDown(KeyCode.Space))
         {
             jumping = true;
@@ -110,7 +139,10 @@ public class PlayerController : MonoBehaviour
             negativeJump = true;
             jumpTime = 0;
         }
+    }
 
+    void HandleJumping()
+    {
         // Begin jump
         if (jumping)
         {
@@ -119,21 +151,20 @@ public class PlayerController : MonoBehaviour
         }
         if (sideJumping)
         {
-            if (Mathf.Abs(transform.position.x) > 18)
+            if (Mathf.Abs(transform.position.x) > sideBound)
             {
                 if ((rb.velocity.x < 0 && onSideR) || (rb.velocity.x > 0 && onSideL))
                 {
-                    Debug.Log("test");
                     rb.AddForce(new Vector3(0, jumpForce, 0), ForceMode.Impulse);
                 } else {
-                    rb.AddForce(new Vector3(0, Mathf.Abs(3 / transform.position.x), 0), ForceMode.Impulse);
+                    rb.AddForce(new Vector3(0, Mathf.Abs(sideJumpForce / transform.position.x), 0), ForceMode.Impulse);
                 }
             }
             else
             {
                 rb.AddForce(new Vector3(0, jumpForce, 0), ForceMode.Impulse);
             }
-            rb.AddForce(new Vector3(-transform.position.x * 0.002f, 0, 0), ForceMode.Impulse);
+            rb.AddForce(new Vector3(-transform.position.x * sideJumpHorizForce, 0, 0), ForceMode.Impulse);
             jumpTime += Time.deltaTime;
         }
 
@@ -147,6 +178,11 @@ public class PlayerController : MonoBehaviour
         {
             rb.AddForce(Physics.gravity * (gravityScale - 1) * rb.mass);
         }
+    }
+
+    void DetectFBInput()
+    {
+        verticalInput = Input.GetAxis("Vertical");
     }
 
     void SlowdownHandle(float verticalInput)
@@ -184,7 +220,7 @@ public class PlayerController : MonoBehaviour
     void LandReset()
     {
         negativeJump = false;
-        steadyForce = 7;
+        steadyForce = 45;
     }
 
     private void OnCollisionExit(Collision collision)

@@ -10,7 +10,7 @@ public class CameraController : MonoBehaviour
     public GameObject player;
     public GameObject floor;
     public float sensitivity = 60.0f;
-    public float distance = 8.0f;
+    public float distance = 12.0f;
 
     private float orbitDamping = 10f;
     private float x = 0.0f;
@@ -36,8 +36,8 @@ public class CameraController : MonoBehaviour
             
         }
         x = Mathf.Clamp(x, -lookRange, lookRange);
-        Quaternion rotation = Quaternion.Euler(20, x, 0);
-        Vector3 position = rotation * new Vector3(0.0f, 3.5f, -distance) + player.transform.position;
+        Quaternion rotation = Quaternion.Euler(15, x, 0);
+        Vector3 position = rotation * new Vector3(0.0f, 4f, -distance) + player.transform.position;
 
         transform.position = Vector3.Lerp(transform.position, position, Time.deltaTime * orbitDamping);
         transform.rotation = Quaternion.Lerp(transform.rotation, rotation, Time.deltaTime * orbitDamping);
