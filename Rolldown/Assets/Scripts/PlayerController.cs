@@ -12,6 +12,7 @@ public class PlayerController : MonoBehaviour
     public float sideJumpForce = 3f;
     public float sideJumpHorizForce = 0.002f;
     public float gravityScale = 1.5f;
+    public bool inRArch, inLArch = false;
 
     private Rigidbody rb;
     private float horizontalInput, verticalInput;
@@ -32,10 +33,6 @@ public class PlayerController : MonoBehaviour
     {
         // Inputs
         DetectMoveCharacter();
-
-        
-
-        
     }
 
     void FixedUpdate()
@@ -43,7 +40,7 @@ public class PlayerController : MonoBehaviour
         // Physics movements
         HandleMoveCharacter(horizontalInput, verticalInput);
         rb.AddForce(Physics.gravity);
-        Debug.Log(rb.velocity.z);
+        //Debug.Log(rb.velocity.z);
     }
 
     void DetectMoveCharacter()
@@ -220,7 +217,7 @@ public class PlayerController : MonoBehaviour
     void LandReset()
     {
         negativeJump = false;
-        steadyForce = 45;
+        steadyForce = 35;
     }
 
     private void OnCollisionExit(Collision collision)
@@ -229,5 +226,26 @@ public class PlayerController : MonoBehaviour
         if (collision.gameObject.CompareTag("SideR")) onSideR = false;
         if (collision.gameObject.CompareTag("SideL")) onSideL = false;
         if (collision.gameObject.CompareTag("Ramp")) onRamp = false;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("ArchR"))
+        {
+            inRArch = true;
+        }
+        if (other.gameObject.CompareTag("ArchL"))
+        {
+            inLArch = true;
+        }
+
+        if (other.gameObject.CompareTag("ArchREnd"))
+        {
+            inRArch = false;
+        }
+        if (other.gameObject.CompareTag("ArchLEnd"))
+        {
+            inLArch = false;
+        }
     }
 }

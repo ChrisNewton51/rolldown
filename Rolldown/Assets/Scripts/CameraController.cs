@@ -7,11 +7,10 @@ using static UnityEngine.GraphicsBuffer;
 
 public class CameraController : MonoBehaviour
 {
-    public GameObject player;
-    public GameObject floor;
-    public float sensitivity = 60.0f;
+    public float sensitivity = 40.0f;
     public float distance = 12.0f;
 
+    private PlayerController player;
     private float orbitDamping = 10f;
     private float x = 0.0f;
     private float lookRange = 60f;
@@ -19,12 +18,13 @@ public class CameraController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        player = GameObject.Find("Player").GetComponent<PlayerController>();
     }
 
     void LateUpdate()
     {
         CamOrbit();
+        
     }
 
     private void CamOrbit()
@@ -36,10 +36,21 @@ public class CameraController : MonoBehaviour
             
         }
         x = Mathf.Clamp(x, -lookRange, lookRange);
-        Quaternion rotation = Quaternion.Euler(15, x, 0);
+        Quaternion rotation = Quaternion.Euler(15, 0, 0);
         Vector3 position = rotation * new Vector3(0.0f, 4f, -distance) + player.transform.position;
 
-        transform.position = Vector3.Lerp(transform.position, position, Time.deltaTime * orbitDamping);
+        if (player.inRArch)
+        {
+            transform.position = Vector3.Lerp(transform.position, new Vector3(8.33f, position.y, position.z), Time.deltaTime * orbitDamping);
+        } 
+        else if (player.inLArch)
+        {
+            transform.position = Vector3.Lerp(transform.position, new Vector3(-8.33f, position.y, position.z), Time.deltaTime * orbitDamping);
+        }
+        else
+        {
+            transform.position = Vector3.Lerp(transform.position, position, Time.deltaTime * orbitDamping);
+        }
         transform.rotation = Quaternion.Lerp(transform.rotation, rotation, Time.deltaTime * orbitDamping);
     }
 }

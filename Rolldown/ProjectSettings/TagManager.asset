@@ -8,6 +8,10 @@ TagManager:
   - SideR
   - SideL
   - Ramp
+  - ArchR
+  - ArchL
+  - ArchLEnd
+  - ArchREnd
   layers:
   - Default
   - TransparentFX
