@@ -12,6 +12,7 @@ TagManager:
   - ArchL
   - ArchLEnd
   - ArchREnd
+  - Puncher
   layers:
   - Default
   - TransparentFX
