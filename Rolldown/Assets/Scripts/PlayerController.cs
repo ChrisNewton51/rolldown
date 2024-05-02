@@ -23,6 +23,8 @@ public class PlayerController : MonoBehaviour
     private float buttonTime = 0.15f;
     private bool onSideR, onSideL = false;
     private int sideBound = 18;
+    private float puncherForce = 35;
+    private float courseDecline = 12;
 
     void Start()
     {
@@ -246,6 +248,13 @@ public class PlayerController : MonoBehaviour
         if (other.gameObject.CompareTag("ArchLEnd"))
         {
             inLArch = false;
+        }
+
+        // Puncher objects
+        if (other.gameObject.CompareTag("Puncher"))
+        {
+            rb.AddForce(new Vector3(0, Mathf.Cos((courseDecline * Mathf.PI)/180), Mathf.Sin((courseDecline * Mathf.PI)/180)) * puncherForce, ForceMode.Impulse);
+            negativeJump = true;
         }
     }
 }
