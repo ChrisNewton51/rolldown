@@ -4,16 +4,17 @@ using UnityEngine;
 
 public class PuncherMovement : MonoBehaviour
 {
-    public float bottomLimit = -15f;
     public float topLimit = -5f;
 
+    private float bottomLimit = -15f;
     private float punchSpeed = 8;
     private float upSpeed = 8;
-    private float downSpeed = -2;
+    private float downSpeed = -4;
 
     void Start()
     {
-        // Randomize position and bottom limit    
+        bottomLimit = Random.Range(-15, -11);    
+        transform.localPosition = new Vector3(transform.localPosition.x, bottomLimit + 1, transform.localPosition.z);
     }
 
     // Update is called once per frame
