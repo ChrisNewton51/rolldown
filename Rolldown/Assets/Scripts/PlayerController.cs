@@ -13,6 +13,7 @@ public class PlayerController : MonoBehaviour
     public float sideJumpHorizForce = 0.002f;
     public float gravityScale = 1.5f;
     public bool inRArch, inLArch = false;
+    public float bombForce = 2000;
 
     private Rigidbody rb;
     private float horizontalInput, verticalInput;
@@ -255,6 +256,13 @@ public class PlayerController : MonoBehaviour
         {
             rb.AddForce(new Vector3(0, Mathf.Cos((courseDecline * Mathf.PI)/180), Mathf.Sin((courseDecline * Mathf.PI)/180)) * puncherForce, ForceMode.Impulse);
             negativeJump = true;
+        }
+
+        if (other.gameObject.CompareTag("Bomb"))
+        {
+            Debug.Log("hit");
+            rb.AddExplosionForce(bombForce, other.gameObject.transform.position, 30);
+            Destroy(other.gameObject);
         }
     }
 }

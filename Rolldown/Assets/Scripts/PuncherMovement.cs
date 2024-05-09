@@ -21,7 +21,7 @@ public class PuncherMovement : MonoBehaviour
     void Update()
     {
         transform.Translate(Vector3.up * Time.deltaTime * punchSpeed);
-        Debug.Log(gameObject.GetComponent<BoxCollider>().center);
+        
         if (transform.localPosition.y >= topLimit)
         {
             punchSpeed = downSpeed;

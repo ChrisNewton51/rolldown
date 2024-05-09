@@ -5,11 +5,12 @@ using UnityEngine;
 public class BombSpawner : MonoBehaviour
 {
     public GameObject bomb;
+    public GameObject bombParent;
 
     // Start is called before the first frame update
     void Start()
     {
-        InvokeRepeating("SpawnBomb", 1, 0.5f);
+        InvokeRepeating("SpawnBomb", 1, 0.2f);
     }
 
     // Update is called once per frame
@@ -21,6 +22,9 @@ public class BombSpawner : MonoBehaviour
     // For bombs obstacle
     void SpawnBomb()
     {
-        Instantiate(bomb, new Vector3(Random.Range(-26, 26), 50, Random.Range(1800, 2100)), Quaternion.identity);
+        Vector3 localPos = new Vector3(Random.Range(-26, 26), 200, Random.Range(400, 800));
+        GameObject newBomb = Instantiate(bomb, transform);
+        newBomb.transform.SetParent(bombParent.transform);
+        newBomb.transform.localPosition = localPos;
     }
 }
