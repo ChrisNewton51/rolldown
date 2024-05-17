@@ -151,7 +151,7 @@ Material:
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _StarDensity: 10
-    - _SunMaskSize: -0.65
+    - _SunMaskSize: -0.82
     - _SunMaskSpherize: 0
     - _SunSize: 0.55
     - _Surface: 0
