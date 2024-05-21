@@ -14,16 +14,21 @@ public class CameraController : MonoBehaviour
     private float orbitDamping = 10f;
     private float x = 0.0f;
     private float lookRange = 60f;
+    private float rvZ = 19.3f;
+    private float rvY = 5.2f;
+    private Camera thisCamera;
 
     // Start is called before the first frame update
     void Start()
     {
         player = GameObject.Find("Player").GetComponent<PlayerController>();
+        thisCamera = GameObject.Find("Main Camera").GetComponent<Camera>();
     }
 
     void LateUpdate()
     {
         CamOrbit();
+        
         
     }
 
@@ -39,18 +44,44 @@ public class CameraController : MonoBehaviour
         Quaternion rotation = Quaternion.Euler(15, 0, 0);
         Vector3 position = rotation * new Vector3(0.0f, 4f, -distance) + player.transform.position;
 
-        if (player.inRArch)
+        if (Input.GetKey(KeyCode.Tab))
         {
-            transform.position = Vector3.Lerp(transform.position, new Vector3(8.33f, position.y, position.z), Time.deltaTime * orbitDamping);
-        } 
-        else if (player.inLArch)
+            orbitDamping = 100;
+            if (player.inRArch)
+            {
+                thisCamera.nearClipPlane = 2;
+                transform.position = Vector3.Lerp(transform.position, new Vector3(8.33f, position.y - rvY, position.z + rvZ), Time.deltaTime * orbitDamping);
+            }
+            else if (player.inLArch)
+            {
+                thisCamera.nearClipPlane = 2;
+                transform.position = Vector3.Lerp(transform.position, new Vector3(-8.33f, position.y - rvY, position.z + rvZ), Time.deltaTime * orbitDamping);
+            }
+            else
+            {
+                thisCamera.nearClipPlane = 0.3f;
+                transform.position = Vector3.Lerp(transform.position, new Vector3(position.x, position.y - rvY, position.z + rvZ), Time.deltaTime * orbitDamping);
+            }
+            transform.rotation = Quaternion.Euler(195, 0, 180);
+        } else
         {
-            transform.position = Vector3.Lerp(transform.position, new Vector3(-8.33f, position.y, position.z), Time.deltaTime * orbitDamping);
+            orbitDamping = 10;
+            if (player.inRArch)
+            {
+                thisCamera.nearClipPlane = 2;
+                transform.position = Vector3.Lerp(transform.position, new Vector3(8.33f, position.y, position.z), Time.deltaTime * orbitDamping);
+            }
+            else if (player.inLArch)
+            {
+                thisCamera.nearClipPlane = 2;
+                transform.position = Vector3.Lerp(transform.position, new Vector3(-8.33f, position.y, position.z), Time.deltaTime * orbitDamping);
+            }
+            else
+            {
+                thisCamera.nearClipPlane = 0.3f;
+                transform.position = Vector3.Lerp(transform.position, position, Time.deltaTime * orbitDamping);
+            }
+            transform.rotation = rotation; //Quaternion.Lerp(transform.rotation, rotation, Time.deltaTime * orbitDamping);
         }
-        else
-        {
-            transform.position = Vector3.Lerp(transform.position, position, Time.deltaTime * orbitDamping);
-        }
-        transform.rotation = Quaternion.Lerp(transform.rotation, rotation, Time.deltaTime * orbitDamping);
     }
 }

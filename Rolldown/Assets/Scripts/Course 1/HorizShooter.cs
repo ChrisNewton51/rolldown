@@ -21,7 +21,7 @@ public class HorizShooter : MonoBehaviour
 
     void SpawnSmallBomb()
     {
-        GameObject inSmallBomb = Instantiate(smallBomb, transform.position, Quaternion.identity);
+        GameObject inSmallBomb = Instantiate(smallBomb, transform.position, Quaternion.Euler(15,0,0));
         inSmallBomb.transform.SetParent(smallBombParent.transform);
     }
 }

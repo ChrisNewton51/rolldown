@@ -1,16 +1,19 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 public class OscillatePanel : MonoBehaviour
 {
     private float hSpeed = 4;
     private float vSpeed = 4;
+    private int hDirection = 1;
+    private int vDirection = 1;
     // Start is called before the first frame update
     void Start()
     {
         hSpeed = Random.Range(4, 6);
-        vSpeed = Random.Range(3, 5);
+        vSpeed = Random.Range(2, 4);
     }
 
     // Update is called once per frame
@@ -18,19 +21,25 @@ public class OscillatePanel : MonoBehaviour
     {
         if (gameObject.name == "HOscPanel")
         {
-            transform.Translate(Vector3.right * hSpeed * Time.deltaTime);
-            if (transform.position.x >= 12.5f || transform.position.x <= 4.35f)
+            transform.Translate(Vector3.right * hSpeed * hDirection * Time.deltaTime);
+            if (transform.position.x >= 12.5f)
             {
-                hSpeed *= -1;
+                hDirection = -1;
+            } else if (transform.position.x <= 4.35f)
+            {
+                hDirection = 1;
             }
         }
 
         if (gameObject.name == "VOscPanel")
         {
-            transform.Translate(Vector3.down * vSpeed * Time.deltaTime);
-            if (transform.localPosition.y >= 3.1f || transform.localPosition.y <= -3.5f)
+            transform.Translate(Vector3.down * vSpeed * vDirection * Time.deltaTime);
+            if (transform.localPosition.y >= 3.1f)
             {
-                vSpeed *= -1;
+                vDirection = 1;
+            } else if (transform.localPosition.y <= -3.5f)
+            {
+                vDirection = -1;
             }
         }
     }

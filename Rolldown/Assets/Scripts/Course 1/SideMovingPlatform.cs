@@ -11,7 +11,7 @@ public class SideMovingPlatform : MonoBehaviour
 
     void Start()
     {
-        moveSpeed = Random.Range(0.3f, 0.8f);
+        moveSpeed = Random.Range(1f, 2f);
         movement = Time.deltaTime * moveSpeed;
     }
     // Update is called once per frame
