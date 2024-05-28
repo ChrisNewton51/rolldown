@@ -16,6 +16,7 @@ public class PlayerController : MonoBehaviour
     public float bombForce = 2000;
     public float highBoostForce = 50;
     public float lowBoostForce = 10;
+    public Material material;
 
     private Rigidbody rb;
     private float horizontalInput, verticalInput;
@@ -28,6 +29,7 @@ public class PlayerController : MonoBehaviour
     private int sideBound = 18;
     private float puncherForce = 35;
     private float courseDecline = 12;
+    private bool invincible = false;
 
     void Start()
     {
@@ -44,8 +46,6 @@ public class PlayerController : MonoBehaviour
     {
         // Physics movements
         HandleMoveCharacter(horizontalInput, verticalInput);
-        rb.AddForce(Physics.gravity);
-        //Debug.Log(rb.velocity.z);
     }
 
     void DetectMoveCharacter()
@@ -253,17 +253,17 @@ public class PlayerController : MonoBehaviour
             inLArch = false;
         }
 
-        // Puncher objects
         if (other.gameObject.CompareTag("Puncher"))
         {
             rb.AddForce(new Vector3(0, Mathf.Cos((courseDecline * Mathf.PI)/180), Mathf.Sin((courseDecline * Mathf.PI)/180)) * puncherForce, ForceMode.Impulse);
             negativeJump = true;
         }
 
-        if (other.gameObject.CompareTag("Bomb"))
+        if (other.gameObject.CompareTag("Bomb") && !invincible)
         {
             rb.AddExplosionForce(bombForce, other.gameObject.transform.position, 30);
             Destroy(other.gameObject);
+            StartCoroutine(Invincible());
         }
 
         if (other.gameObject.CompareTag("HighBoost"))
@@ -275,5 +275,50 @@ public class PlayerController : MonoBehaviour
         {
             rb.AddForce(new Vector3(0, -.2f, 1) * lowBoostForce, ForceMode.Impulse);
         }
+
+        if (other.gameObject.CompareTag("Finish"))
+        {
+            Respawn();   
+        }
+
+        if (other.gameObject.CompareTag("Laser") && !invincible)
+        {
+            Disable();
+        }
+    }
+
+    private void Respawn()
+    {
+        transform.position = new Vector3(0, 71, -265);
+        rb.velocity = new Vector3(0, 0, 0);
+        rb.angularVelocity = new Vector3(0, 0, 0);
+    }
+
+    private void Disable()
+    { 
+        rb.velocity /= 4;
+        rb.angularVelocity = Vector3.zero;
+        
+        StartCoroutine(Invincible());
+    }
+
+    IEnumerator Invincible()
+    {
+        float time = Time.time;
+        Color emColor = material.GetColor("_EmissionColor");
+        invincible = true;
+        float waitTime = 0.15f;
+        for (int i = 0; i < 6; i++)
+        {
+            material.SetColor("_EmissionColor", emColor * 0.5f);
+            material.SetColor("_BaseColor", new Color(material.color.r - 20, material.color.g - 20, material.color.b - 20, 0.2f));
+            yield return new WaitForSeconds(waitTime);
+            material.SetColor("_EmissionColor", emColor * 1);
+            material.SetColor("_BaseColor", Color.black);
+            yield return new WaitForSeconds(waitTime);
+        }
+        invincible = false;
     }
 }
+
+
