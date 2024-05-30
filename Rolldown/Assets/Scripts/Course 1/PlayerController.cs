@@ -17,6 +17,10 @@ public class PlayerController : MonoBehaviour
     public float highBoostForce = 50;
     public float lowBoostForce = 10;
     public Material material;
+    public GameObject laser;
+
+    // TEST
+    public GameObject target;
 
     private Rigidbody rb;
     private float horizontalInput, verticalInput;
@@ -31,15 +35,23 @@ public class PlayerController : MonoBehaviour
     private float courseDecline = 12;
     private bool invincible = false;
 
+    private LineRenderer laserLine;
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+        laserLine = laser.GetComponent<LineRenderer>();
+        laserLine.positionCount = 2;
     }
 
     void Update()
     {
-        // Inputs
+        // Movement
         DetectMoveCharacter();
+
+        // Powerups
+        HandlePowerups();
+        
     }
 
     void FixedUpdate()
@@ -48,6 +60,7 @@ public class PlayerController : MonoBehaviour
         HandleMoveCharacter(horizontalInput, verticalInput);
     }
 
+    // Movement //
     void DetectMoveCharacter()
     {
         // Detect horizontal key presses
@@ -194,7 +207,62 @@ public class PlayerController : MonoBehaviour
             rb.AddForce(new Vector3(0, 0, verticalInput) * steadyForce);
         }
     }
-    
+
+    // Disable //
+    void Respawn()
+    {
+        transform.position = new Vector3(0, 71, -265);
+        rb.velocity = new Vector3(0, 0, 0);
+        rb.angularVelocity = new Vector3(0, 0, 0);
+    }
+
+    void Disable()
+    {
+        rb.velocity /= 4;
+        rb.angularVelocity = Vector3.zero;
+
+        StartCoroutine(Invincible());
+    }
+
+    IEnumerator Invincible()
+    {
+        float time = Time.time;
+        Color emColor = material.GetColor("_EmissionColor");
+        invincible = true;
+        float waitTime = 0.15f;
+        for (int i = 0; i < 6; i++)
+        {
+            material.SetColor("_EmissionColor", emColor * 0.5f);
+            material.SetColor("_BaseColor", new Color(material.color.r - 20, material.color.g - 20, material.color.b - 20, 0.2f));
+            yield return new WaitForSeconds(waitTime);
+            material.SetColor("_EmissionColor", emColor * 1);
+            material.SetColor("_BaseColor", Color.black);
+            yield return new WaitForSeconds(waitTime);
+        }
+        invincible = false;
+    }
+
+    // Powerups //
+    void HandlePowerups()
+    {
+
+        if (Input.GetKeyDown(KeyCode.E)) 
+        {
+            StartCoroutine(ShootLaser());
+        }
+
+    }
+
+    IEnumerator ShootLaser()
+    {
+        GameObject las = Instantiate(laser, transform.position, Quaternion.identity);
+        las.transform.SetParent(transform);
+        laserLine.SetPosition(0, transform.position);
+        laserLine.SetPosition(1, target.transform.position);
+        yield return new WaitForSeconds(0.5f);
+        Destroy(las);
+    }
+
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Floor"))
@@ -287,38 +355,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void Respawn()
-    {
-        transform.position = new Vector3(0, 71, -265);
-        rb.velocity = new Vector3(0, 0, 0);
-        rb.angularVelocity = new Vector3(0, 0, 0);
-    }
-
-    private void Disable()
-    { 
-        rb.velocity /= 4;
-        rb.angularVelocity = Vector3.zero;
-        
-        StartCoroutine(Invincible());
-    }
-
-    IEnumerator Invincible()
-    {
-        float time = Time.time;
-        Color emColor = material.GetColor("_EmissionColor");
-        invincible = true;
-        float waitTime = 0.15f;
-        for (int i = 0; i < 6; i++)
-        {
-            material.SetColor("_EmissionColor", emColor * 0.5f);
-            material.SetColor("_BaseColor", new Color(material.color.r - 20, material.color.g - 20, material.color.b - 20, 0.2f));
-            yield return new WaitForSeconds(waitTime);
-            material.SetColor("_EmissionColor", emColor * 1);
-            material.SetColor("_BaseColor", Color.black);
-            yield return new WaitForSeconds(waitTime);
-        }
-        invincible = false;
-    }
+    
 }
 
 
