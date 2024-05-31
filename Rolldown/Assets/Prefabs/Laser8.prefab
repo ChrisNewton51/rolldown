@@ -43982,10 +43982,9 @@ GameObject:
   - component: {fileID: -5746729125281790094}
   - component: {fileID: 114678305193455830}
   - component: {fileID: 120067324791973530}
-  - component: {fileID: -5290935894918446125}
   m_Layer: 0
   m_Name: Laser8
-  m_TagString: Untagged
+  m_TagString: Laser
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -44088,8 +44087,8 @@ LineRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Positions:
-  - {x: 28.006603, y: 6.4531755, z: -266.41708}
-  - {x: -0.42000002, y: -6.8797994, z: -249}
+  - {x: -20.457012, y: 5.50633, z: -266.41705}
+  - {x: -9.906558, y: -6.4046416, z: -249}
   m_Parameters:
     serializedVersion: 3
     widthMultiplier: 0.3
@@ -44158,27 +44157,6 @@ LineRenderer:
   m_UseWorldSpace: 1
   m_Loop: 0
   m_ApplyActiveColorSpace: 0
---- !u!65 &-5290935894918446125
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1959126674990218}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.3, y: 0.3, z: 30.3}
-  m_Center: {x: 0, y: -2.9683732e-16, z: 15}
 --- !u!1 &1991019760861846
 GameObject:
   m_ObjectHideFlags: 0

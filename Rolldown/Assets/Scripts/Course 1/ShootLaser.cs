@@ -27,6 +27,9 @@ public class ShootLaser : MonoBehaviour
     private ParticleSystem[] Effects;
     private ParticleSystem[] Hit;
     private PlayerController player;
+    private BoxCollider laserCollider;
+    private int playerLayer;
+    private int layerMask;
 
     void Start ()
     {
@@ -35,7 +38,13 @@ public class ShootLaser : MonoBehaviour
         Effects = GetComponentsInChildren<ParticleSystem>();
         Hit = HitEffect.GetComponentsInChildren<ParticleSystem>();
 
+        laserCollider = gameObject.AddComponent<BoxCollider>();
+        laserCollider.isTrigger = true;
+
         player = GetComponentInParent<PlayerController>();
+
+        playerLayer = LayerMask.NameToLayer("Player");
+        layerMask = ~(1 << playerLayer);
 
     }
 
@@ -51,7 +60,7 @@ public class ShootLaser : MonoBehaviour
         {
             Laser.SetPosition(0, transform.position);
             RaycastHit hit;     
-            if (Physics.Raycast(transform.position, directionToTarget, out hit, MaxLength))
+            if (Physics.Raycast(transform.position, directionToTarget, out hit, MaxLength, layerMask))
             {
                 //End laser position if collides with object
                 Laser.SetPosition(1, hit.point);
@@ -69,6 +78,8 @@ public class ShootLaser : MonoBehaviour
                 //Texture tiling
                 Length[0] = MainTextureLength * (Vector3.Distance(transform.position, hit.point));
                 Length[2] = NoiseTextureLength * (Vector3.Distance(transform.position, hit.point));
+
+                UpdateLaserCollider(hit.point);
             }
             else
             {
@@ -83,6 +94,8 @@ public class ShootLaser : MonoBehaviour
                 //Texture tiling
                 Length[0] = MainTextureLength * (Vector3.Distance(transform.position, EndPos));
                 Length[2] = NoiseTextureLength * (Vector3.Distance(transform.position, EndPos));
+
+                UpdateLaserCollider(EndPos);
             }
             //Insurance against the appearance of a laser in the center of coordinates!
             if (Laser.enabled == false && LaserSaver == false)
@@ -91,6 +104,23 @@ public class ShootLaser : MonoBehaviour
                 Laser.enabled = true;
             }
         }  
+    }
+
+    void UpdateLaserCollider(Vector3 endPoint)
+    {
+        // Calculate the center position of the BoxCollider
+        Vector3 centerPosition = (transform.position + endPoint) / 2;
+
+        // Calculate the size of the BoxCollider
+        float laserLength = Vector3.Distance(transform.position, endPoint);
+        Vector3 colliderSize = new Vector3(Laser.startWidth, Laser.startWidth, laserLength + 1);
+
+        // Update the BoxCollider properties
+        laserCollider.size = colliderSize;
+        laserCollider.center = transform.InverseTransformPoint(centerPosition);
+
+        // Align the BoxCollider with the laser direction
+        laserCollider.transform.LookAt(endPoint);
     }
 
     public void DisablePrepare()

@@ -18,6 +18,7 @@ public class PlayerController : MonoBehaviour
     public float lowBoostForce = 10;
     public Material material;
     public GameObject laser;
+    public bool dummy;
 
     // TEST
     public GameObject target;
@@ -35,13 +36,9 @@ public class PlayerController : MonoBehaviour
     private float courseDecline = 12;
     private bool invincible = false;
 
-    private LineRenderer laserLine;
-
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        laserLine = laser.GetComponent<LineRenderer>();
-        laserLine.positionCount = 2;
     }
 
     void Update()
@@ -50,7 +47,8 @@ public class PlayerController : MonoBehaviour
         DetectMoveCharacter();
 
         // Powerups
-        HandlePowerups();
+        if (!dummy)
+            HandlePowerups();
         
     }
 
@@ -257,9 +255,8 @@ public class PlayerController : MonoBehaviour
     {
         GameObject las = Instantiate(laser, transform.position, Quaternion.identity);
         las.transform.SetParent(transform);
-        laserLine.SetPosition(0, transform.position);
-        laserLine.SetPosition(1, target.transform.position);
-        yield return new WaitForSeconds(0.5f);
+        
+        yield return new WaitForSeconds(10.5f);
         Destroy(las);
     }
 
