@@ -9,8 +9,8 @@ public class CameraController : MonoBehaviour
 {
     public float sensitivity = 40.0f;
     public float distance = 12.0f;
+    public PlayerController player;
 
-    private PlayerController player;
     private float orbitDamping = 10f;
     private float x = 0.0f;
     private float lookRange = 60f;
@@ -21,7 +21,6 @@ public class CameraController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        player = GameObject.Find("Player").GetComponent<PlayerController>();
         thisCamera = GameObject.Find("Main Camera").GetComponent<Camera>();
     }
 

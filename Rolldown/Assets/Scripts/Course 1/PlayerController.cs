@@ -18,7 +18,6 @@ public class PlayerController : MonoBehaviour
     public float lowBoostForce = 10;
     public Material material;
     public GameObject laser;
-    public bool dummy;
 
     // TEST
     public GameObject target;
@@ -47,8 +46,7 @@ public class PlayerController : MonoBehaviour
         DetectMoveCharacter();
 
         // Powerups
-        if (!dummy)
-            HandlePowerups();
+        HandlePowerups();
         
     }
 
@@ -244,7 +242,7 @@ public class PlayerController : MonoBehaviour
     void HandlePowerups()
     {
 
-        if (Input.GetKeyDown(KeyCode.E)) 
+        if (Input.GetKeyDown(KeyCode.E) && target != null) 
         {
             StartCoroutine(ShootLaser());
         }
@@ -256,7 +254,7 @@ public class PlayerController : MonoBehaviour
         GameObject las = Instantiate(laser, transform.position, Quaternion.identity);
         las.transform.SetParent(transform);
         
-        yield return new WaitForSeconds(10.5f);
+        yield return new WaitForSeconds(0.5f);
         Destroy(las);
     }
 
