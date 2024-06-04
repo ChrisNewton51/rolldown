@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 1374388685}
-  m_IndirectSpecularColor: {r: 0.014905478, g: 0.0005234835, b: 0.04647604, a: 1}
+  m_IndirectSpecularColor: {r: 0.0092129335, g: 0.0004948196, b: 0.028931394, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -209,13 +209,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 721755969}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalRotation: {x: -0.14349268, y: 0, z: 0, w: 0.9896514}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -16.5, y: 0, z: 0}
 --- !u!114 &721755973
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -271,6 +271,7 @@ GameObject:
   - component: {fileID: 1374388686}
   - component: {fileID: 1374388685}
   - component: {fileID: 1374388687}
+  - component: {fileID: 1374388688}
   m_Layer: 0
   m_Name: Directional Light
   m_TagString: Untagged
@@ -348,13 +349,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1374388684}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.096083164, y: -0, z: -0, w: 0.9953733}
+  m_LocalRotation: {x: -0.0006862468, y: 0.9830473, z: -0.18335086, w: -0.00012799377}
   m_LocalPosition: {x: 0, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 11.027, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 21.13, y: 180, z: -0.08}
 --- !u!114 &1374388687
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -378,6 +379,18 @@ MonoBehaviour:
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 0
+--- !u!114 &1374388688
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1374388684}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2d4582e981a6b248825e1c81bf295e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

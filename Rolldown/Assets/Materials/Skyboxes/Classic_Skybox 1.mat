@@ -60,7 +60,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _Cubemap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 8900000, guid: fb72d1b5d16c1b5499ed2d89e5018e46, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SunMask:
@@ -86,7 +86,7 @@ Material:
     - BOOLEAN_FF1E9D2611CF4E959316C577475EA27F: 1
     - BOOLEAN_GLITCHYMOON: 1
     - Vector1_7d421ef4d57f45e586330be25bfb5941: 12.28
-    - Vector1_a770b768a8ca40a9b814a01444e6b850: 2.84
+    - Vector1_a770b768a8ca40a9b814a01444e6b850: 3.56
     - _AddPrecomputedVelocity: 0
     - _AlphaCutoffEnable: 0
     - _AlphaDstBlend: 0
@@ -94,8 +94,8 @@ Material:
     - _AlphaToMask: 0
     - _AlphaToMaskInspectorValue: 0
     - _BlendMode: 0
-    - _CubemapOpacity: 0.4
-    - _CubemapRotation: -50
+    - _CubemapOpacity: 0.567
+    - _CubemapRotation: -96
     - _CullMode: 2
     - _CullModeForward: 2
     - _DepthOffsetEnable: 0
