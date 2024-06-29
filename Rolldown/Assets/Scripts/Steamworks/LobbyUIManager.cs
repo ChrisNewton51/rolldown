@@ -4,6 +4,7 @@ using UnityEngine;
 using Steamworks;
 using TMPro;
 using HeathenEngineering.SteamworksIntegration;
+using UnityEngine.UI;
 
 
 public class LobbyUIManager : MonoBehaviour
@@ -15,6 +16,7 @@ public class LobbyUIManager : MonoBehaviour
     [SerializeField] private GameObject lobbyObject;
     [SerializeField] private TextMeshProUGUI lobbyTitle;
     [SerializeField] private LobbyManager lobbyManager;
+    [SerializeField] private Button leaveButton;
 
     [Header("User lobby setup")]
     [SerializeField] private LobbyUserPanel lobbyUserPanelPrefab;
@@ -26,6 +28,7 @@ public class LobbyUIManager : MonoBehaviour
     {
         OpenMainMenu();
         HeathenEngineering.SteamworksIntegration.API.Overlay.Client.EventGameLobbyJoinRequested.AddListener(OverlayJoinButton);
+        leaveButton.onClick.AddListener(LeaveLobby);
     }
 
     public void OnLobbyCreated(LobbyData lobbyData)
@@ -104,5 +107,10 @@ public class LobbyUIManager : MonoBehaviour
         userPanel.Initialize(userData);
 
         _lobbyUserPanels.TryAdd(userData, userPanel);
+    }
+
+    public void LeaveLobby()
+    {
+        lobbyManager.Leave();
     }
 }
