@@ -16,6 +16,12 @@ public class LobbyUIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI lobbyTitle;
     [SerializeField] private LobbyManager lobbyManager;
 
+    [Header("User lobby setup")]
+    [SerializeField] private LobbyUserPanel lobbyUserPanelPrefab;
+    [SerializeField] private Transform lobbyUserHolder;
+
+    private Dictionary<UserData, LobbyUserPanel> _lobbyUserPanels = new();
+
     private void Awake()
     {
         OpenMainMenu();
@@ -24,22 +30,47 @@ public class LobbyUIManager : MonoBehaviour
 
     public void OnLobbyCreated(LobbyData lobbyData)
     {
+        ClearCards();
         lobbyData.Name = UserData.Me.Name + "'s lobby";
         lobbyTitle.text = UserData.Me.Name + "'s lobby";
         OpenLobby();
+
+        SetupCard(UserData.Me);
     }
 
     public void OnLobbyJoined(LobbyData lobbyData)
     {
-        Debug.Log(lobbyData.Name);
+        ClearCards();
         lobbyTitle.text = lobbyData.Name;
         OpenLobby();
+
+        foreach (var member in lobbyData.Members)
+        {
+            SetupCard(member.user);
+        }
     }
 
     public void OpenMainMenu()
     {
         CloseScreens();
         mainMenuObject.SetActive(true);
+    }
+
+    public void OnUserJoin(UserData userData)
+    {
+        SetupCard(userData);
+    }
+
+    public void OnUserLeft(UserLobbyLeaveData userLeaveData)
+    {
+        if(!_lobbyUserPanels.TryGetValue(userLeaveData.user, out LobbyUserPanel panel))
+        {
+            Debug.LogError("Tried to remove user that doesn't exist");
+            return;
+        }
+
+        Destroy(panel.gameObject);
+        _lobbyUserPanels.Remove(userLeaveData.user);
     }
 
     public void OpenLobby()
@@ -57,5 +88,21 @@ public class LobbyUIManager : MonoBehaviour
     {
         mainMenuObject.SetActive(false);
         lobbyObject.SetActive(false);
+    }
+
+    private void ClearCards()
+    {
+        foreach (Transform child in lobbyUserHolder)
+            Destroy(child.gameObject);
+
+        _lobbyUserPanels.Clear();
+    }
+
+    private void SetupCard(UserData userData)
+    {
+        var userPanel = Instantiate(lobbyUserPanelPrefab, lobbyUserHolder);
+        userPanel.Initialize(userData);
+
+        _lobbyUserPanels.TryAdd(userData, userPanel);
     }
 }
