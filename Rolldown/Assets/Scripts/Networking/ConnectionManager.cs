@@ -30,7 +30,7 @@ public class ConnectionManager : MonoBehaviour
 
         fishySteamworks.StartConnection(true);
         fishySteamworks.StartConnection(false);
-        SceneManager.LoadScene(1);
+        //SceneManager.LoadScene(1);
     }
 
     public void StartConnection()
@@ -46,7 +46,7 @@ public class ConnectionManager : MonoBehaviour
 
         fishySteamworks.SetClientAddress(hostUser.id.ToString());
         fishySteamworks.StartConnection(false);
-        SceneManager.LoadScene(1);
+        //SceneManager.LoadScene(1);
     }
 
     public static string GetHostHex()

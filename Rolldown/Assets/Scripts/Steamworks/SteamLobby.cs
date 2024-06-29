@@ -10,7 +10,6 @@ public class SteamLobby : MonoBehaviour
     protected Callback<LobbyEnter_t> lobbyEntered;
     protected Callback<LobbyChatUpdate_t> lobbyChatUpdate;
 
-    public LobbyUIManager lobbyUIManager; // Reference to your UI manager
     private CSteamID currentLobbyID;
     private bool hasEnteredLobby = false;
 
@@ -55,7 +54,6 @@ public class SteamLobby : MonoBehaviour
         if (result.m_ulSteamIDLobby == (ulong)currentLobbyID)
         {
             Debug.Log("Lobby chat update: " + result.m_ulSteamIDLobby);
-            lobbyUIManager.UpdateLobbyMembers(currentLobbyID);
         }
     }
 
@@ -70,7 +68,6 @@ public class SteamLobby : MonoBehaviour
 
         Debug.Log("Successfully entered lobby with ID: " + result.m_ulSteamIDLobby);
         currentLobbyID = new CSteamID(result.m_ulSteamIDLobby);
-        lobbyUIManager.UpdateLobbyMembers(currentLobbyID);
     }
 
     public void InviteFriend()

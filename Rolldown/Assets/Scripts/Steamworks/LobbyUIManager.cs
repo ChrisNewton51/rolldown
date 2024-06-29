@@ -3,57 +3,58 @@ using System.Collections.Generic;
 using UnityEngine;
 using Steamworks;
 using TMPro;
+using HeathenEngineering.SteamworksIntegration;
+
 
 public class LobbyUIManager : MonoBehaviour
 {
-    public GameObject memberTemplate;
-    public GameObject membersPanel;
+    [Header("Main")]
+    [SerializeField] private GameObject mainMenuObject;
 
-    private List<GameObject> memberTexts = new List<GameObject>();
+    [Header("Lobby")]
+    [SerializeField] private GameObject lobbyObject;
+    [SerializeField] private TextMeshProUGUI lobbyTitle;
+    [SerializeField] private LobbyManager lobbyManager;
 
-    public void UpdateLobbyMembers(CSteamID lobbyID)
+    private void Awake()
     {
-        // Clear existing member UI elements
-        foreach (var memberText in memberTexts)
-        {
-            Destroy(memberText);
-        }
-        memberTexts.Clear();
-
-        // Include the lobby owner (creator)
-        CSteamID ownerID = SteamMatchmaking.GetLobbyOwner(lobbyID);
-        string ownerName = SteamFriends.GetFriendPersonaName(ownerID);
-
-        // Create a UI element for the lobby owner
-        CreatePlayerNameText(ownerName + " (Host)");
-
-        // Get the number of members in the lobby
-        int memberCount = SteamMatchmaking.GetNumLobbyMembers(lobbyID);
-
-        // Debug log to check the number of members
-        Debug.Log("Member Count: " + memberCount);
-
-        // Loop through each member and create a UI element for them
-        for (int i = 0; i < memberCount; i++)
-        {
-            CSteamID memberID = SteamMatchmaking.GetLobbyMemberByIndex(lobbyID, i);
-            string memberName = SteamFriends.GetFriendPersonaName(memberID);
-
-            // Skip adding the owner again
-            if (memberID == ownerID)
-            {
-                continue;
-            }
-
-            CreatePlayerNameText(memberName);
-        }
+        OpenMainMenu();
+        HeathenEngineering.SteamworksIntegration.API.Overlay.Client.EventGameLobbyJoinRequested.AddListener(OverlayJoinButton);
     }
 
-    private void CreatePlayerNameText(string name)
+    public void OnLobbyCreated(LobbyData lobbyData)
     {
-        GameObject newPlayerNameText = Instantiate(memberTemplate, membersPanel.transform);
-        newPlayerNameText.GetComponent<TextMeshProUGUI>().text = name;
-        newPlayerNameText.SetActive(true);
-        memberTexts.Add(newPlayerNameText);
+        lobbyData.Name = UserData.Me.Name + "'s lobby";
+        lobbyTitle.text = UserData.Me.Name + "'s lobby";
+        OpenLobby();
+    }
+
+    public void OnLobbyJoined(LobbyData lobbyData)
+    {
+        lobbyTitle.text = lobbyData.Name;
+        OpenLobby();
+    }
+
+    public void OpenMainMenu()
+    {
+        CloseScreens();
+        mainMenuObject.SetActive(true);
+    }
+
+    public void OpenLobby()
+    {
+        CloseScreens();
+        lobbyObject.SetActive(true);
+    }
+
+    private void OverlayJoinButton(LobbyData lobbyData, UserData user)
+    {
+        lobbyManager.Join(lobbyData);
+    }
+
+    private void CloseScreens()
+    {
+        mainMenuObject.SetActive(false);
+        lobbyObject.SetActive(false);
     }
 }
