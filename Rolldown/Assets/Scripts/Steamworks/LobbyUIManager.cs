@@ -31,6 +31,7 @@ public class LobbyUIManager : MonoBehaviour
 
     public void OnLobbyJoined(LobbyData lobbyData)
     {
+        Debug.Log(lobbyData.Name);
         lobbyTitle.text = lobbyData.Name;
         OpenLobby();
     }
