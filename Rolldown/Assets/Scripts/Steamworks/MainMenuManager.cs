@@ -22,6 +22,8 @@ public class MainMenuManager : MonoBehaviour
     [SerializeField] private LobbyUserPanel lobbyUserPanelPrefab;
     [SerializeField] private Transform lobbyUserHolder;
 
+    [SerializeField] private GameObject menuScreen, lobbyScreen;
+
     private Dictionary<UserData, LobbyUserPanel> _lobbyUserPanels = new();
 
     private void Awake()
@@ -112,5 +114,12 @@ public class MainMenuManager : MonoBehaviour
     public void LeaveLobby()
     {
         lobbyManager.Leave();
+        BootstrapManager.LeaveLobby();
+    }
+
+    public void StartGame()
+    {
+        string[] scenesToClose = new string[] { "MainMenu" };
+        BootstrapNetworkManager.ChangeNetworkScene("Game", scenesToClose);
     }
 }
