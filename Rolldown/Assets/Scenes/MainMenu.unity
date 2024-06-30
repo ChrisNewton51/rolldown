@@ -539,7 +539,7 @@ PrefabInstance:
         type: 3}
       propertyPath: Invited.m_PersistentCalls.m_Calls.Array.data[1].m_Target
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 940077171}
     - target: {fileID: 6940239210108254378, guid: 766cfd4c64f47fa4fb4a10d5ab2d6c62,
         type: 3}
       propertyPath: Invited.m_PersistentCalls.m_Calls.Array.data[1].m_CallState
@@ -1545,8 +1545,7 @@ MonoBehaviour:
   lobbyUserPanelPrefab: {fileID: 6677383895239789645, guid: e3d254f4542d9e143ba4ca7664486647,
     type: 3}
   lobbyUserHolder: {fileID: 131469481}
-  menuScreen: {fileID: 0}
-  lobbyScreen: {fileID: 0}
+  mainCamera: {fileID: 721755969}
 --- !u!4 &748615332
 Transform:
   m_ObjectHideFlags: 0

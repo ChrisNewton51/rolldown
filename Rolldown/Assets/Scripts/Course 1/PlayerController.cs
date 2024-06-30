@@ -18,7 +18,6 @@ public class PlayerController : MonoBehaviour
     public float lowBoostForce = 10;
     public Material material;
     public GameObject laser;
-    public GameObject camObject;
 
     // TEST
     public GameObject target;
@@ -39,7 +38,6 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        camObject.SetActive(true);
     }
 
     void Update()

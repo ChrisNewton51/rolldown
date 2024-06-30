@@ -33,12 +33,14 @@ public class BootstrapManager : MonoBehaviour
 
     private void OnLobbyCreated(LobbyCreated_t callback)
     {
+        CurrentLobbyID = callback.m_ulSteamIDLobby;
         _fishySteamworks.SetClientAddress(SteamUser.GetSteamID().ToString());
         _fishySteamworks.StartConnection(true);
     }
 
     private void OnLobbyEntered(LobbyEnter_t callback)
     {
+        CurrentLobbyID = callback.m_ulSteamIDLobby;
         _fishySteamworks.SetClientAddress(SteamMatchmaking.GetLobbyData(new CSteamID(CurrentLobbyID), "HostAddress"));
         _fishySteamworks.StartConnection(false);
     }

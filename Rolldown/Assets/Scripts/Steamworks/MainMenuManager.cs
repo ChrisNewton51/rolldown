@@ -22,7 +22,7 @@ public class MainMenuManager : MonoBehaviour
     [SerializeField] private LobbyUserPanel lobbyUserPanelPrefab;
     [SerializeField] private Transform lobbyUserHolder;
 
-    [SerializeField] private GameObject menuScreen, lobbyScreen;
+    [SerializeField] private GameObject mainCamera;
 
     private Dictionary<UserData, LobbyUserPanel> _lobbyUserPanels = new();
 
@@ -119,6 +119,7 @@ public class MainMenuManager : MonoBehaviour
 
     public void StartGame()
     {
+        mainCamera.SetActive(false);
         string[] scenesToClose = new string[] { "MainMenu" };
         BootstrapNetworkManager.ChangeNetworkScene("Game", scenesToClose);
     }
