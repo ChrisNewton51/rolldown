@@ -4,26 +4,34 @@ using FishNet.Managing;
 using Steamworks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using HeathenEngineering.SteamworksIntegration;
+using FishySteamworks;
 
 public class BootstrapManager : MonoBehaviour
 {
-    private static BootstrapManager instance;
-    private void Awake() => instance = this;
+    public static BootstrapManager instance;
+    void Awake()
+    {
+        if (instance == null)
+        {
+            instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+    
 
     [SerializeField] private string menuName = "MainMenu";
     [SerializeField] private NetworkManager _networkManager;
-    [SerializeField] private FishySteamworks.FishySteamworks _fishySteamworks;
+    [SerializeField] private FishySteamworks.FishySteamworks _fishySteamworks; 
 
-    protected Callback<LobbyCreated_t> LobbyCreated;
-    protected Callback<GameLobbyJoinRequested_t> JoinRequest;
-    protected Callback<LobbyEnter_t> LobbyEntered;
-
-    public static ulong CurrentLobbyID;
+    public static string hostId;
 
     private void Start()
     {
-        LobbyCreated = Callback<LobbyCreated_t>.Create(OnLobbyCreated);
-        LobbyEntered = Callback<LobbyEnter_t>.Create(OnLobbyEntered);
     }
 
     public void GoToMenu()
@@ -31,24 +39,25 @@ public class BootstrapManager : MonoBehaviour
         SceneManager.LoadScene(menuName, LoadSceneMode.Additive);
     }
 
-    private void OnLobbyCreated(LobbyCreated_t callback)
+    public void LobbyCreated()
     {
-        CurrentLobbyID = callback.m_ulSteamIDLobby;
-        _fishySteamworks.SetClientAddress(SteamUser.GetSteamID().ToString());
-        _fishySteamworks.StartConnection(true);
-    }
+        var user = UserData.Get();
+        hostId = user.ToString();
 
-    private void OnLobbyEntered(LobbyEnter_t callback)
-    {
-        CurrentLobbyID = callback.m_ulSteamIDLobby;
-        _fishySteamworks.SetClientAddress(SteamMatchmaking.GetLobbyData(new CSteamID(CurrentLobbyID), "HostAddress"));
+        _fishySteamworks.StartConnection(true);
         _fishySteamworks.StartConnection(false);
     }
 
-    public static void LeaveLobby()
+    public void LobbyJoined()
     {
-        instance._fishySteamworks.StopConnection(false);
+        _fishySteamworks.SetClientAddress(hostId);
+        _fishySteamworks.StartConnection(false);
+    }
+
+    public void LeaveLobby()
+    {
+        _fishySteamworks.StopConnection(false);
         if (instance._networkManager.IsServerStarted)
-            instance._fishySteamworks.StopConnection(true);
+            _fishySteamworks.StopConnection(true);
     }
 }

@@ -41,6 +41,7 @@ public class MainMenuManager : MonoBehaviour
         OpenLobby();
 
         SetupCard(UserData.Me);
+        BootstrapManager.instance.LobbyCreated();
     }
 
     public void OnLobbyJoined(LobbyData lobbyData)
@@ -53,6 +54,7 @@ public class MainMenuManager : MonoBehaviour
         {
             SetupCard(member.user);
         }
+        BootstrapManager.instance.LobbyJoined();
     }
 
     public void OpenMainMenu()
@@ -64,6 +66,7 @@ public class MainMenuManager : MonoBehaviour
     public void OnUserJoin(UserData userData)
     {
         SetupCard(userData);
+        BootstrapManager.instance.LobbyJoined();
     }
 
     public void OnUserLeft(UserLobbyLeaveData userLeaveData)
@@ -114,7 +117,7 @@ public class MainMenuManager : MonoBehaviour
     public void LeaveLobby()
     {
         lobbyManager.Leave();
-        BootstrapManager.LeaveLobby();
+        BootstrapManager.instance.LeaveLobby();
     }
 
     public void StartGame()
