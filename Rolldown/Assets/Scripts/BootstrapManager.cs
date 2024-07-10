@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using FishNet.Managing;
+using FishNet.Managing.Scened;
 using Steamworks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -34,9 +35,14 @@ public class BootstrapManager : MonoBehaviour
     {
     }
 
+    public void StartGame()
+    {
+        _networkManager.SceneManager.LoadGlobalScenes(new SceneLoadData("Game"));
+    }
+
     public void GoToMenu()
     {
-        SceneManager.LoadScene(menuName, LoadSceneMode.Additive);
+        UnityEngine.SceneManagement.SceneManager.LoadScene(menuName, LoadSceneMode.Additive);
     }
 
     public void LobbyCreated()

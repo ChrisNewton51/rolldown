@@ -5,6 +5,8 @@ using Steamworks;
 using TMPro;
 using HeathenEngineering.SteamworksIntegration;
 using UnityEngine.UI;
+using FishNet.Managing.Scened;
+using FishNet.Managing;
 
 
 public class MainMenuManager : MonoBehaviour
@@ -124,6 +126,6 @@ public class MainMenuManager : MonoBehaviour
     {
         mainCamera.SetActive(false);
         string[] scenesToClose = new string[] { "MainMenu" };
-        BootstrapNetworkManager.ChangeNetworkScene("Game", scenesToClose);
+        BootstrapManager.instance.StartGame();
     }
 }
