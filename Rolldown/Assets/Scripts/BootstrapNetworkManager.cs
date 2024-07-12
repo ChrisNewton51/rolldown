@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using FishNet;
 using FishNet.Connection;
 using FishNet.Managing;
 using FishNet.Managing.Scened;
@@ -17,18 +18,13 @@ public class BootstrapNetworkManager : NetworkBehaviour
     [SerializeField] private NetworkManager _networkManager;
     [SerializeField] private FishySteamworks.FishySteamworks _fishySteamworks;
 
-    public static string hostId;
-
     public void LobbyCreated()
     {
-        var user = UserData.Get();
-        hostId = user.ToString();
-
         _fishySteamworks.StartConnection(true);
         _fishySteamworks.StartConnection(false);
     }
 
-    public void LobbyJoined()
+    public void LobbyJoined(string hostId)
     {
         _fishySteamworks.SetClientAddress(hostId);
         _fishySteamworks.StartConnection(false);
@@ -39,5 +35,15 @@ public class BootstrapNetworkManager : NetworkBehaviour
         _fishySteamworks.StopConnection(false);
         if (instance._networkManager.IsServerStarted)
             _fishySteamworks.StopConnection(true);
+    }
+
+    public void ListConnectedClients()
+    {
+        Dictionary<int, NetworkConnection> clients = InstanceFinder.ServerManager.Clients;
+
+        foreach (KeyValuePair<int, NetworkConnection> client in clients)
+        {
+            Debug.Log("Client ID: " + client.Key);
+        }
     }
 }

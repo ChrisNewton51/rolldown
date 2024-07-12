@@ -26,6 +26,7 @@ public class MainMenuManager : MonoBehaviour
     [SerializeField] private Transform lobbyUserHolder;
 
     [SerializeField] private GameObject mainCamera;
+    protected Callback<LobbyEnter_t> lobbyEntered;
 
     private Dictionary<UserData, LobbyUserPanel> _lobbyUserPanels = new();
 
@@ -34,6 +35,12 @@ public class MainMenuManager : MonoBehaviour
         OpenMainMenu();
         HeathenEngineering.SteamworksIntegration.API.Overlay.Client.EventGameLobbyJoinRequested.AddListener(OverlayJoinButton);
         leaveButton.onClick.AddListener(LeaveLobby);
+        lobbyEntered = Callback<LobbyEnter_t>.Create(OnLobbyEntered);
+    }
+
+    private void OnLobbyEntered(LobbyEnter_t result)
+    {
+        Debug.Log("Successfully entered lobby with ID: " + result.m_ulSteamIDLobby);
     }
 
     public void OnLobbyCreated(LobbyData lobbyData)
@@ -42,6 +49,9 @@ public class MainMenuManager : MonoBehaviour
         lobbyData.Name = UserData.Me.Name + "'s lobby";
         lobbyTitle.text = UserData.Me.Name + "'s lobby";
         OpenLobby();
+
+        string hostId = UserData.Get().ToString();
+        SteamMatchmaking.SetLobbyData(UserData.Get(), "HostID", hostId);
 
         SetupCard(UserData.Me);
         BootstrapNetworkManager.instance.LobbyCreated();
@@ -57,7 +67,9 @@ public class MainMenuManager : MonoBehaviour
         {
             SetupCard(member.user);
         }
-        BootstrapNetworkManager.instance.LobbyJoined();
+        Debug.Log("LOBBY JOINED");
+        string hostId = SteamMatchmaking.GetLobbyData(SteamMatchmaking.GetLobbyOwner(lobbyData.SteamId), "HostID");
+        BootstrapNetworkManager.instance.LobbyJoined(hostId);
     }
 
     public void OpenMainMenu()
@@ -69,7 +81,9 @@ public class MainMenuManager : MonoBehaviour
     public void OnUserJoin(UserData userData)
     {
         SetupCard(userData);
-        BootstrapNetworkManager.instance.LobbyJoined();
+        
+       // string hostId = SteamMatchmaking.GetLobbyData(SteamMatchmaking.GetLobbyOwner(lobbyData.SteamId), "HostID");
+       // BootstrapNetworkManager.instance.LobbyJoined(hostId);
     }
 
     public void OnUserLeft(UserLobbyLeaveData userLeaveData)
@@ -132,6 +146,6 @@ public class MainMenuManager : MonoBehaviour
 
     public void ListConnections()
     {
-        
+        BootstrapNetworkManager.instance.ListConnectedClients();
     }
 }

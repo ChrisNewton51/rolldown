@@ -50,4 +50,6 @@ public class BootstrapSceneManager : MonoBehaviour
 
         InstanceFinder.SceneManager.UnloadGlobalScenes(new SceneUnloadData(sceneName));
     }
+
+    
 }
