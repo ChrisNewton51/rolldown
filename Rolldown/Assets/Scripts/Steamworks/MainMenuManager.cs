@@ -7,6 +7,7 @@ using HeathenEngineering.SteamworksIntegration;
 using UnityEngine.UI;
 using FishNet.Managing.Scened;
 using FishNet.Managing;
+using FishNet.Connection;
 
 
 public class MainMenuManager : MonoBehaviour
@@ -43,7 +44,7 @@ public class MainMenuManager : MonoBehaviour
         OpenLobby();
 
         SetupCard(UserData.Me);
-        BootstrapManager.instance.LobbyCreated();
+        BootstrapNetworkManager.instance.LobbyCreated();
     }
 
     public void OnLobbyJoined(LobbyData lobbyData)
@@ -56,7 +57,7 @@ public class MainMenuManager : MonoBehaviour
         {
             SetupCard(member.user);
         }
-        BootstrapManager.instance.LobbyJoined();
+        BootstrapNetworkManager.instance.LobbyJoined();
     }
 
     public void OpenMainMenu()
@@ -68,7 +69,7 @@ public class MainMenuManager : MonoBehaviour
     public void OnUserJoin(UserData userData)
     {
         SetupCard(userData);
-        BootstrapManager.instance.LobbyJoined();
+        BootstrapNetworkManager.instance.LobbyJoined();
     }
 
     public void OnUserLeft(UserLobbyLeaveData userLeaveData)
@@ -119,13 +120,18 @@ public class MainMenuManager : MonoBehaviour
     public void LeaveLobby()
     {
         lobbyManager.Leave();
-        BootstrapManager.instance.LeaveLobby();
+        BootstrapNetworkManager.instance.LeaveLobby();
     }
 
     public void StartGame()
     {
         mainCamera.SetActive(false);
         string[] scenesToClose = new string[] { "MainMenu" };
-        BootstrapManager.instance.StartGame();
+        BootstrapSceneManager.instance.StartGame();
+    }
+
+    public void ListConnections()
+    {
+        
     }
 }

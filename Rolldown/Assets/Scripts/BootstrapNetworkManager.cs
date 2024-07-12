@@ -2,36 +2,42 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using FishNet.Connection;
+using FishNet.Managing;
 using FishNet.Managing.Scened;
 using FishNet.Object;
+using FishySteamworks;
+using HeathenEngineering.SteamworksIntegration;
 using UnityEngine;
 
 public class BootstrapNetworkManager : NetworkBehaviour
 {
-    private static BootstrapNetworkManager instance;
+    public static BootstrapNetworkManager instance;
     private void Awake() => instance = this;
 
-    public static void ChangeNetworkScene(string sceneName, string[] scenesToClose)
-    {
-        instance.CloseScenes(scenesToClose);
+    [SerializeField] private NetworkManager _networkManager;
+    [SerializeField] private FishySteamworks.FishySteamworks _fishySteamworks;
 
-        SceneLoadData sld = new SceneLoadData(sceneName);
-        NetworkConnection[] conns = instance.ServerManager.Clients.Values.ToArray();
-        instance.SceneManager.LoadConnectionScenes(conns, sld);
+    public static string hostId;
+
+    public void LobbyCreated()
+    {
+        var user = UserData.Get();
+        hostId = user.ToString();
+
+        _fishySteamworks.StartConnection(true);
+        _fishySteamworks.StartConnection(false);
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    void CloseScenes(string[] scenesToClose)
+    public void LobbyJoined()
     {
-        CloseScenesObserver(scenesToClose);
+        _fishySteamworks.SetClientAddress(hostId);
+        _fishySteamworks.StartConnection(false);
     }
 
-    [ObserversRpc]
-    void CloseScenesObserver(string[] scenesToClose)
+    public void LeaveLobby()
     {
-        foreach (var sceneName in scenesToClose)
-        {
-            UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(sceneName);
-        }
+        _fishySteamworks.StopConnection(false);
+        if (instance._networkManager.IsServerStarted)
+            _fishySteamworks.StopConnection(true);
     }
 }
