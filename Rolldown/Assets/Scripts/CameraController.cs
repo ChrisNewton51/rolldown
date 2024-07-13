@@ -20,16 +20,16 @@ public class CameraController : MonoBehaviour
     private GameObject camObject;
 
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
         thisCamera = GameObject.Find("Main Camera").GetComponent<Camera>();
+        thisCamera.gameObject.AddComponent<AudioListener>();
     }
 
     void LateUpdate()
     {
-        CamOrbit();
-        
-        
+        if (player != null) 
+            CamOrbit();
     }
 
     private void CamOrbit()

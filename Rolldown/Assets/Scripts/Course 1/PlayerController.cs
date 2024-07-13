@@ -43,11 +43,11 @@ public class PlayerController : NetworkBehaviour
 
     public override void OnStartClient()
     {
-        base.OnStartClient();
+        //base.OnStartClient();
         //if (base.IsOwner)
         //{
         //    playerCamera = Camera.main;
-        //    playerCamera.transform.position = new Vector3(0,0,0);
+        //    playerCamera.transform.position = new Vector3(0, 0, 0);
         //    playerCamera.transform.SetParent(transform);
         //}
         //else

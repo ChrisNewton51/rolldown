@@ -6,14 +6,9 @@ public class GameManager : MonoBehaviour
 {
     public GameObject titleScreen;
     public GameObject pauseScreen;
-    public GameObject mainCamera;
 
     private GameObject[] players;
 
-    void Awake()
-    {
-        mainCamera.SetActive(true);
-    }
     // Start is called before the first frame update
     void Start()
     {

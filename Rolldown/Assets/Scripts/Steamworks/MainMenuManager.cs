@@ -134,7 +134,7 @@ public class MainMenuManager : MonoBehaviour
 
     public void StartGame()
     {
-        mainCamera.SetActive(false);
+        //mainCamera.gameObject.GetComponent<AudioListener>().enabled = false;
         string[] scenesToClose = new string[] { "MainMenu" };
         BootstrapSceneManager.instance.StartGame();
     }
