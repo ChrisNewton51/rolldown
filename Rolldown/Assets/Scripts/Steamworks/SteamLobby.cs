@@ -3,76 +3,60 @@ using System.Collections.Generic;
 using UnityEngine;
 using Steamworks;
 using TMPro;
+using HeathenEngineering.SteamworksIntegration;
 
 public class SteamLobby : MonoBehaviour
 {
-    protected Callback<LobbyCreated_t> lobbyCreated;
-    protected Callback<LobbyEnter_t> lobbyEntered;
-    protected Callback<LobbyChatUpdate_t> lobbyChatUpdate;
-
-    private CSteamID currentLobbyID;
-    private bool hasEnteredLobby = false;
-
-    public GameObject steamLobby;
+    [SerializeField] private LobbyManager lobbyManager;
+    [SerializeField] private BootstrapNetworkManager bootstrapNetworkManager;
 
     private void Awake()
     {
-        if (!SteamManager.Initialized) { return; }
 
-        lobbyCreated = Callback<LobbyCreated_t>.Create(OnLobbyCreated);
-        lobbyEntered = Callback<LobbyEnter_t>.Create(OnLobbyEntered);
-        lobbyChatUpdate = Callback<LobbyChatUpdate_t>.Create(OnLobbyChatUpdate);
     }
 
-    public void CreateLobby()
+    public void OnLobbyCreated(LobbyData lobbyData)
     {
-        if (SteamManager.Initialized)
-        {
-            SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypeFriendsOnly, 4);
-        }
-        steamLobby.SetActive(true);
+        // UI
+        MainMenuManager.instance.OnLobbyCreated(lobbyData);
+
+        // Network
+        string hostId = UserData.Get().SteamId.ToString();
+        lobbyManager.SetLobbyData("HostID", hostId);
+        bootstrapNetworkManager.LobbyCreated(hostId);
     }
 
-    private void OnLobbyCreated(LobbyCreated_t result)
+    public void OnLobbyJoined(LobbyData lobbyData)
     {
-        if (result.m_eResult != EResult.k_EResultOK)
-        {
-            Debug.LogError("Failed to create lobby");
-            return;
-        }
+        // UI
+        MainMenuManager.instance.OnLobbyJoined(lobbyData);
 
-        Debug.Log("Lobby created successfully");
-        currentLobbyID = new CSteamID(result.m_ulSteamIDLobby);
-        SteamMatchmaking.SetLobbyData(currentLobbyID, "name", "My Game Lobby");
-
-        // Join the lobby as the creator
-        SteamMatchmaking.JoinLobby(currentLobbyID);
+        // Network
+        string hostId = lobbyManager.GetLobbyData("HostID");
+        bootstrapNetworkManager.LobbyJoined(hostId);
     }
 
-    private void OnLobbyChatUpdate(LobbyChatUpdate_t result)
+    public void OtherUserJoin(UserData userData)
     {
-        if (result.m_ulSteamIDLobby == (ulong)currentLobbyID)
-        {
-            Debug.Log("Lobby chat update: " + result.m_ulSteamIDLobby);
-        }
+        // UI
+        MainMenuManager.instance.OtherUserJoin(userData);
     }
 
-    private void OnLobbyEntered(LobbyEnter_t result)
+    public void OnUserLeft(UserLobbyLeaveData userLeaveData)
     {
-        if (hasEnteredLobby)
-        {
-            return; // Prevent duplicate calls
-        }
+        // UI
+        MainMenuManager.instance.OnUserLeft(userLeaveData);
+    }
 
-        hasEnteredLobby = true;
-
-        Debug.Log("Successfully entered lobby with ID: " + result.m_ulSteamIDLobby);
-        currentLobbyID = new CSteamID(result.m_ulSteamIDLobby);
+    public void LobbyLeave()
+    {
+        // Network
+        BootstrapNetworkManager.instance.LeaveLobby();
     }
 
     public void InviteFriend()
     {
         // Ensure the Steam overlay is enabled and working
-        SteamFriends.ActivateGameOverlayInviteDialog(currentLobbyID);
+        //SteamFriends.ActivateGameOverlayInviteDialog(currentLobbyID);
     }
 }

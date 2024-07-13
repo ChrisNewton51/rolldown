@@ -12,13 +12,15 @@ using FishNet.Connection;
 
 public class MainMenuManager : MonoBehaviour
 {
+    public static MainMenuManager instance;
+
     [Header("Main")]
     [SerializeField] private GameObject mainMenuObject;
 
     [Header("Lobby")]
+    [SerializeField] private Button hostButton;
     [SerializeField] private GameObject lobbyObject;
     [SerializeField] private TextMeshProUGUI lobbyTitle;
-    [SerializeField] private LobbyManager lobbyManager;
     [SerializeField] private Button leaveButton;
 
     [Header("User lobby setup")]
@@ -31,10 +33,17 @@ public class MainMenuManager : MonoBehaviour
 
     private void Awake()
     {
+        instance = this;
+
         OpenMainMenu();
+
         HeathenEngineering.SteamworksIntegration.API.Overlay.Client.EventGameLobbyJoinRequested.AddListener(OverlayJoinButton);
+
         leaveButton.onClick.AddListener(LeaveLobby);
+        hostButton.onClick.AddListener(CreateLobby);
     }
+
+    public void CreateLobby() => BootstrapManager.instance.lobbyManager.Create();
 
     public void OnLobbyCreated(LobbyData lobbyData)
     {
@@ -42,12 +51,7 @@ public class MainMenuManager : MonoBehaviour
         lobbyData.Name = UserData.Me.Name + "'s lobby";
         lobbyTitle.text = UserData.Me.Name + "'s lobby";
         OpenLobby();
-
-        string hostId = UserData.Get().ToString();
-        lobbyManager.SetLobbyData("HostID", hostId);
-
         SetupCard(UserData.Me);
-        BootstrapNetworkManager.instance.LobbyCreated();
     }
 
     public void OnLobbyJoined(LobbyData lobbyData)
@@ -60,9 +64,6 @@ public class MainMenuManager : MonoBehaviour
         {
             SetupCard(member.user);
         }
-        
-        string hostId = lobbyManager.GetLobbyData("HostID");
-        BootstrapNetworkManager.instance.LobbyJoined(hostId);
     }
 
     public void OpenMainMenu()
@@ -71,7 +72,7 @@ public class MainMenuManager : MonoBehaviour
         mainMenuObject.SetActive(true);
     }
 
-    public void OnUserJoin(UserData userData)
+    public void OtherUserJoin(UserData userData)
     {
         SetupCard(userData);
     }
@@ -96,7 +97,7 @@ public class MainMenuManager : MonoBehaviour
 
     private void OverlayJoinButton(LobbyData lobbyData, UserData user)
     {
-        lobbyManager.Join(lobbyData);
+        BootstrapManager.instance.lobbyManager.Join(lobbyData);
     }
 
     private void CloseScreens()
@@ -123,8 +124,12 @@ public class MainMenuManager : MonoBehaviour
 
     public void LeaveLobby()
     {
-        lobbyManager.Leave();
-        BootstrapNetworkManager.instance.LeaveLobby();
+        BootstrapManager.instance.lobbyManager.Leave();
+    }
+
+    public void InviteFriend(UserData userData)
+    {
+        BootstrapManager.instance.lobbyManager.Invite(userData);
     }
 
     public void StartGame()

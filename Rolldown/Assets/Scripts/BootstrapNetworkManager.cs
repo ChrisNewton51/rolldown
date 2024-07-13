@@ -24,8 +24,6 @@ public class BootstrapNetworkManager : NetworkBehaviour
         instance = this;
         _networkManager.ServerManager.OnServerConnectionState += OnServerConnectionState;
         _networkManager.ClientManager.OnClientConnectionState += OnClientConnectionState;
-
-        _fishySteamworks.Initialize(_networkManager, 0);
     }
 
     private void OnDestroy()
@@ -58,8 +56,10 @@ public class BootstrapNetworkManager : NetworkBehaviour
         }
     }
 
-    public void LobbyCreated()
+    public void LobbyCreated(string hostId)
     {
+        //_networkManager.ServerManager.StartConnection();
+        _fishySteamworks.SetClientAddress(hostId);
         _fishySteamworks.StartConnection(true);
         _fishySteamworks.StartConnection(false);
     }

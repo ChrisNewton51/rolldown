@@ -44,16 +44,16 @@ public class PlayerController : NetworkBehaviour
     public override void OnStartClient()
     {
         base.OnStartClient();
-        if (base.IsOwner)
-        {
-            playerCamera = Camera.main;
-            playerCamera.transform.position = spawn.transform.position;
-            playerCamera.transform.SetParent(transform);
-        }
-        else
-        {
-            gameObject.GetComponent<PlayerController>().enabled = false;
-        }
+        //if (base.IsOwner)
+        //{
+        //    playerCamera = Camera.main;
+        //    playerCamera.transform.position = new Vector3(0,0,0);
+        //    playerCamera.transform.SetParent(transform);
+        //}
+        //else
+        //{
+        //    gameObject.GetComponent<PlayerController>().enabled = false;
+        //}
     }
 
     void Start()

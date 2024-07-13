@@ -471,7 +471,7 @@ PrefabInstance:
         type: 3}
       propertyPath: Invited.m_PersistentCalls.m_Calls.Array.data[1].m_Target
       value: 
-      objectReference: {fileID: 940077171}
+      objectReference: {fileID: 748615331}
     - target: {fileID: 6940239210108254378, guid: 766cfd4c64f47fa4fb4a10d5ab2d6c62,
         type: 3}
       propertyPath: Invited.m_PersistentCalls.m_Calls.Array.data[1].m_CallState
@@ -480,12 +480,12 @@ PrefabInstance:
     - target: {fileID: 6940239210108254378, guid: 766cfd4c64f47fa4fb4a10d5ab2d6c62,
         type: 3}
       propertyPath: Invited.m_PersistentCalls.m_Calls.Array.data[1].m_MethodName
-      value: Invite
+      value: InviteFriend
       objectReference: {fileID: 0}
     - target: {fileID: 6940239210108254378, guid: 766cfd4c64f47fa4fb4a10d5ab2d6c62,
         type: 3}
       propertyPath: Invited.m_PersistentCalls.m_Calls.Array.data[1].m_TargetAssemblyTypeName
-      value: HeathenEngineering.SteamworksIntegration.LobbyManager, Heathen.Steamworks
+      value: MainMenuManager, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 6940239210108254378, guid: 766cfd4c64f47fa4fb4a10d5ab2d6c62,
         type: 3}
@@ -985,6 +985,18 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+      - m_Target: {fileID: 748615331}
+        m_TargetAssemblyTypeName: MainMenuManager, Assembly-CSharp
+        m_MethodName: OpenMainMenu
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &578340283
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1106,23 +1118,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 940077171}
-        m_TargetAssemblyTypeName: HeathenEngineering.SteamworksIntegration.LobbyManager,
-          Heathen.Steamworks
-        m_MethodName: Create
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: HeathenEngineering.SteamworksIntegration.LobbyManager,
-          Heathen.Steamworks
-        m_MethodName: Create
+      - m_Target: {fileID: 748615331}
+        m_TargetAssemblyTypeName: MainMenuManager, Assembly-CSharp
+        m_MethodName: CreateLobby
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1470,9 +1468,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mainMenuObject: {fileID: 1455396676}
+  hostButton: {fileID: 641364716}
   lobbyObject: {fileID: 140219432}
   lobbyTitle: {fileID: 1676102763}
-  lobbyManager: {fileID: 940077171}
   leaveButton: {fileID: 578340282}
   lobbyUserPanelPrefab: {fileID: 6677383895239789645, guid: e3d254f4542d9e143ba4ca7664486647,
     type: 3}
@@ -1893,170 +1891,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 934747972}
   m_CullTransparentMesh: 1
---- !u!1 &940077170
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 940077172}
-  - component: {fileID: 940077171}
-  m_Layer: 0
-  m_Name: LobbyManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &940077171
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 940077170}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0f314bc6f3466b54da82e29cdd36fe44, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Delegates: 03000000060000000a0000000700000009000000
-  searchArguments:
-    slots: -1
-    distance: 1
-    nearValues: []
-    numericFilters: []
-    stringFilters: []
-  createArguments:
-    usageHint: 2
-    name: 
-    slots: 10
-    type: 0
-    metadata: []
-    richPresenceFields: []
-  richPresenceFields: []
-  evtLobbyInvite:
-    m_PersistentCalls:
-      m_Calls: []
-  evtChatMsgReceived:
-    m_PersistentCalls:
-      m_Calls: []
-  evtFound:
-    m_PersistentCalls:
-      m_Calls: []
-  evtEnterSuccess:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 748615331}
-        m_TargetAssemblyTypeName: MainMenuManager, Assembly-CSharp
-        m_MethodName: OnLobbyJoined
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  evtEnterFailed:
-    m_PersistentCalls:
-      m_Calls: []
-  evtCreated:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 748615331}
-        m_TargetAssemblyTypeName: MainMenuManager, Assembly-CSharp
-        m_MethodName: OnLobbyCreated
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  evtCreateFailed:
-    m_PersistentCalls:
-      m_Calls: []
-  evtQuickMatchFailed:
-    m_PersistentCalls:
-      m_Calls: []
-  evtDataUpdated:
-    m_PersistentCalls:
-      m_Calls: []
-  evtLeave:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 748615331}
-        m_TargetAssemblyTypeName: MainMenuManager, Assembly-CSharp
-        m_MethodName: OpenMainMenu
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  evtAskedToLeave:
-    m_PersistentCalls:
-      m_Calls: []
-  evtGameCreated:
-    m_PersistentCalls:
-      m_Calls: []
-  evtUserJoined:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 748615331}
-        m_TargetAssemblyTypeName: MainMenuManager, Assembly-CSharp
-        m_MethodName: OnUserJoin
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  evtUserLeft:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 748615331}
-        m_TargetAssemblyTypeName: MainMenuManager, Assembly-CSharp
-        m_MethodName: OnUserLeft
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  evtAuthenticationSessionResult:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!4 &940077172
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 940077170}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1021.6605, y: -282.35352, z: 1165.5182}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &951190999
 GameObject:
   m_ObjectHideFlags: 0
@@ -3986,5 +3820,4 @@ SceneRoots:
   - {fileID: 721755972}
   - {fileID: 1374388686}
   - {fileID: 2051557593}
-  - {fileID: 940077172}
   - {fileID: 748615332}
