@@ -17,4 +17,19 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Connected.unity
     guid: c7d0ce4fabf771346a0043612674884c
+  - enabled: 1
+    path: Assets/FishNet/Demos/SceneManager/Additive Scenes/Scenes/AdditiveScenes_Start.unity
+    guid: afbcf8f41ca78ef4296672aeb824f605
+  - enabled: 1
+    path: Assets/FishNet/Demos/SceneManager/Additive Scenes/Scenes/AdditiveScenes_0.unity
+    guid: 7643cdc3eefb15f4f8608cc633c55f7e
+  - enabled: 1
+    path: Assets/FishNet/Demos/SceneManager/Additive Scenes/Scenes/AdditiveScenes_1.unity
+    guid: aab2581cdfbe8f44698ef91d36f2d6c6
+  - enabled: 1
+    path: Assets/FishNet/Demos/SceneManager/Additive Scenes/Scenes/AdditiveScenes_2.unity
+    guid: 969cc8a8a67c58b4da9baa82a65c66bf
+  - enabled: 1
+    path: Assets/FishNet/Demos/SceneManager/Additive Scenes/Scenes/AdditiveScenes_3.unity
+    guid: 8ac819f926d1e914e9552e79c147082d
   m_configObjects: {}

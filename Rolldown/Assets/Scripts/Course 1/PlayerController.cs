@@ -2,8 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using FishNet.Connection;
+using FishNet.Object;
+using FishNet.Example.ColliderRollbacks;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : NetworkBehaviour
 {
     public float steadyForce = 2f;
     public float airForce = 3f;
@@ -12,12 +15,15 @@ public class PlayerController : MonoBehaviour
     public float sideJumpForce = 3f;
     public float sideJumpHorizForce = 0.002f;
     public float gravityScale = 1.5f;
-    public bool inRArch, inLArch = false;
+    [HideInInspector] public bool inRArch, inLArch = false;
     public float bombForce = 2000;
     public float highBoostForce = 50;
     public float lowBoostForce = 10;
     public Material material;
     public GameObject laser;
+
+    [SerializeField] private Camera playerCamera;
+    [SerializeField] private GameObject spawn;
 
     // TEST
     public GameObject target;
@@ -34,6 +40,21 @@ public class PlayerController : MonoBehaviour
     private float puncherForce = 35;
     private float courseDecline = 12;
     private bool invincible = false;
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+        if (base.IsOwner)
+        {
+            playerCamera = Camera.main;
+            playerCamera.transform.position = spawn.transform.position;
+            playerCamera.transform.SetParent(transform);
+        }
+        else
+        {
+            gameObject.GetComponent<PlayerController>().enabled = false;
+        }
+    }
 
     void Start()
     {
