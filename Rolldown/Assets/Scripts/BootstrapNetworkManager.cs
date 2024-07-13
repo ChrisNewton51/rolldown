@@ -4,8 +4,10 @@ using System.Linq;
 using FishNet;
 using FishNet.Connection;
 using FishNet.Managing;
-using FishNet.Managing.Scened;
+using FishNet.Managing.Server;
+using FishNet.Managing.Client;
 using FishNet.Object;
+using FishNet.Transporting;
 using FishySteamworks;
 using HeathenEngineering.SteamworksIntegration;
 using UnityEngine;
@@ -13,10 +15,46 @@ using UnityEngine;
 public class BootstrapNetworkManager : NetworkBehaviour
 {
     public static BootstrapNetworkManager instance;
-    private void Awake() => instance = this;
 
     [SerializeField] private NetworkManager _networkManager;
     [SerializeField] private FishySteamworks.FishySteamworks _fishySteamworks;
+
+    private void Awake()
+    {
+        instance = this;
+        _networkManager.ServerManager.OnServerConnectionState += OnServerConnectionState;
+        _networkManager.ClientManager.OnClientConnectionState += OnClientConnectionState;
+    }
+
+    private void OnDestroy()
+    {
+        _networkManager.ServerManager.OnServerConnectionState -= OnServerConnectionState;
+        _networkManager.ClientManager.OnClientConnectionState -= OnClientConnectionState;
+    }
+
+    private void OnServerConnectionState(ServerConnectionStateArgs obj)
+    {
+        if (obj.ConnectionState == LocalConnectionState.Started)
+        {
+            Debug.Log("Server started and listening for connections.");
+        }
+        else if (obj.ConnectionState == LocalConnectionState.Stopped)
+        {
+            Debug.Log("Server stopped.");
+        }
+    }
+
+    private void OnClientConnectionState(ClientConnectionStateArgs obj)
+    {
+        if (obj.ConnectionState == LocalConnectionState.Started)
+        {
+            Debug.Log("Client connected to server.");
+        }
+        else if (obj.ConnectionState == LocalConnectionState.Stopped)
+        {
+            Debug.Log("Client disconnected from server.");
+        }
+    }
 
     public void LobbyCreated()
     {
