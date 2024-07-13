@@ -66,11 +66,6 @@ public class BootstrapNetworkManager : NetworkBehaviour
 
     public void LobbyJoined(string hostId)
     {
-        if (!UserData.Get(hostId).IsValid)
-        {
-            Debug.LogError("Host user not valid");
-            return;
-        }
         _fishySteamworks.SetClientAddress(hostId);
         _fishySteamworks.StartConnection(false);
     }
