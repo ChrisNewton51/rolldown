@@ -43,9 +43,8 @@ public class MainMenuManager : MonoBehaviour
         lobbyTitle.text = UserData.Me.Name + "'s lobby";
         OpenLobby();
 
-        ulong hostId = UserData.Get().SteamId;
-        Debug.Log(hostId.ToString());
-        lobbyManager.SetLobbyData("HostID", hostId.ToString());
+        string hostId = UserData.Get().ToString();
+        lobbyManager.SetLobbyData("HostID", hostId);
 
         SetupCard(UserData.Me);
         BootstrapNetworkManager.instance.LobbyCreated();
