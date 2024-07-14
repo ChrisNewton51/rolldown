@@ -4,12 +4,20 @@ using UnityEngine;
 using FishNet;
 using FishNet.Managing.Scened;
 using FishNet.Managing;
+using FishNet.Connection;
+using FishNet.Object;
+using System;
+using UnityEngine.ProBuilder.Shapes;
 
 public class BootstrapSceneManager : MonoBehaviour
 {
     public static BootstrapSceneManager instance;
 
-    private bool isSceneLoadingOrUnloading = false;
+    private Queue<string> sceneLoadQueue = new Queue<string>();
+    private Queue<string> sceneUnloadQueue = new Queue<string>();
+    private bool isSceneLoading = false;
+    
+    public NetworkConnection clientConnection;
 
     void Awake()
     {
@@ -28,30 +36,79 @@ public class BootstrapSceneManager : MonoBehaviour
     {
         InstanceFinder.SceneManager.OnLoadEnd += OnSceneLoadEnd;
         InstanceFinder.SceneManager.OnUnloadEnd += OnSceneUnloadEnd;
+        InstanceFinder.SceneManager.OnLoadStart += OnSceneLoadStart;
+        InstanceFinder.SceneManager.OnUnloadStart += OnSceneUnloadStart;
+        InstanceFinder.SceneManager.OnClientLoadedStartScenes += OnClientLoadedStartScene;
     }
-
+    public void OnClientLoadedStartScene(NetworkConnection conn, bool asServer)
+    {
+        if (!asServer)
+            return;
+        
+        clientConnection = conn;
+    }
     private void OnDisable()
     {
         InstanceFinder.SceneManager.OnLoadEnd -= OnSceneLoadEnd;
         InstanceFinder.SceneManager.OnUnloadEnd -= OnSceneUnloadEnd;
+        InstanceFinder.SceneManager.OnLoadStart -= OnSceneLoadStart;
+        InstanceFinder.SceneManager.OnUnloadStart -= OnSceneUnloadStart;
     }
 
+    private void OnSceneLoadStart(SceneLoadStartEventArgs obj) => isSceneLoading = true;
+    private void OnSceneUnloadStart(SceneUnloadStartEventArgs obj) => isSceneLoading = true;
+
     private void OnSceneLoadEnd(SceneLoadEndEventArgs obj)
-    {
-        Debug.Log($"Scene {obj.LoadedScenes} has finished loading.");
-        isSceneLoadingOrUnloading = false;
+    { 
+        isSceneLoading = false;
+        TryProcessNextScene();
     }
 
     private void OnSceneUnloadEnd(SceneUnloadEndEventArgs obj)
     {
-        Debug.Log($"Scene {obj.UnloadedScenes} has finished unloading.");
-        isSceneLoadingOrUnloading = false;
+        isSceneLoading = false;
+        TryProcessNextScene();
+    }
+
+    public void QueueLoadScene(string sceneName)
+    {
+        sceneLoadQueue.Enqueue(sceneName);
+        TryProcessNextScene();
+    }
+
+    public void QueueUnloadScene(string sceneName)
+    {
+        sceneUnloadQueue.Enqueue(sceneName);
+        TryProcessNextScene();
+    }
+
+    private void TryProcessNextScene()
+    {
+        if (!isSceneLoading)
+        {
+            if (sceneUnloadQueue.Count > 0)
+            {
+                string sceneName = sceneUnloadQueue.Dequeue();
+                UnloadScene(sceneName);
+            }
+            else if (sceneLoadQueue.Count > 0)
+            {
+                string sceneName = sceneLoadQueue.Dequeue();
+
+                LoadScene(sceneName);
+            }
+        }
     }
 
     public void StartGame()
     {
-        LoadScene("Game");
-        UnloadScene("MainMenu");
+        QueueUnloadScene("MainMenu");
+        QueueLoadScene("Game");
+    }
+
+    private void Update()
+    {
+        
     }
 
     private void LoadScene(string sceneName)
@@ -62,9 +119,9 @@ public class BootstrapSceneManager : MonoBehaviour
             return;
         }
 
-        if (!isSceneLoadingOrUnloading)
+        if (!isSceneLoading)
         {
-            isSceneLoadingOrUnloading = true;
+            isSceneLoading = true;
             SceneLoadData loadData = new SceneLoadData(sceneName);
             InstanceFinder.SceneManager.LoadGlobalScenes(loadData);
         }
@@ -78,9 +135,9 @@ public class BootstrapSceneManager : MonoBehaviour
             return;
         }
 
-        if (!isSceneLoadingOrUnloading)
+        if (!isSceneLoading)
         {
-            isSceneLoadingOrUnloading = true;
+            isSceneLoading = true;
             SceneUnloadData unloadData = new SceneUnloadData(sceneName);
             InstanceFinder.SceneManager.UnloadGlobalScenes(unloadData);
         }

@@ -22,9 +22,6 @@ public class PlayerController : NetworkBehaviour
     public Material material;
     public GameObject laser;
 
-    [SerializeField] private Camera playerCamera;
-    [SerializeField] private GameObject spawn;
-
     // TEST
     public GameObject target;
 
@@ -40,21 +37,6 @@ public class PlayerController : NetworkBehaviour
     private float puncherForce = 35;
     private float courseDecline = 12;
     private bool invincible = false;
-
-    public override void OnStartClient()
-    {
-        //base.OnStartClient();
-        //if (base.IsOwner)
-        //{
-        //    playerCamera = Camera.main;
-        //    playerCamera.transform.position = new Vector3(0, 0, 0);
-        //    playerCamera.transform.SetParent(transform);
-        //}
-        //else
-        //{
-        //    gameObject.GetComponent<PlayerController>().enabled = false;
-        //}
-    }
 
     void Start()
     {

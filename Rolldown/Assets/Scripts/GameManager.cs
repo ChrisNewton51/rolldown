@@ -1,39 +1,94 @@
+using FishNet;
+using FishNet.Connection;
+using FishNet.Managing;
+using FishNet.Object;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.SearchService;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class GameManager : MonoBehaviour
 {
-    public GameObject titleScreen;
+    public static GameManager instance;
+
+    [Tooltip("Prefab to spawn for the player.")]
+    [SerializeField]
+    private NetworkObject playerPrefab;
+
     public GameObject pauseScreen;
 
     private GameObject[] players;
+    private Transform[] spawns;
+    private int spawnIndex = 0;
 
-    // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
-        //players = GameObject.FindGameObjectsWithTag("Player");
-        //foreach (var player in players)
-        //{
-        //    player.gameObject.SetActive(false);
-        //}
+        instance = this;
     }
 
-    // Update is called once per frame
+    private void Start()
+    {
+        SpawnPlayer(BootstrapSceneManager.instance.clientConnection);
+    }
+
     void Update()
     {
-        // Pause game
         if (Input.GetKeyDown(KeyCode.Escape))
             PauseGame();
     }
 
-    public void StartGame()
+    public void FindSpawns()
     {
-        foreach (var player in players)
+        GameObject[] spawners = GameObject.FindGameObjectsWithTag("Spawn");
+        spawns = new Transform[spawners.Length];
+
+        for (int i = 0; i < spawners.Length; i++)
         {
-            player.gameObject.SetActive(true);
+            
+            spawns[i] = spawners[i].transform;
         }
-        titleScreen.SetActive(false);
+    }
+
+    public void SpawnPlayer(NetworkConnection conn)
+    {
+        
+
+
+        if (playerPrefab == null)
+        {
+            Debug.LogWarning($"Player prefab is empty and cannot be spawned for connection {conn.ClientId}.");
+            return;
+        }
+
+        FindSpawns();
+
+        Vector3 position;
+        Quaternion rotation;
+
+        if (spawns.Length > 0)
+        {
+            Debug.Log(spawns[spawnIndex].localPosition);
+            position = spawns[spawnIndex].position;
+            rotation = spawns[spawnIndex].rotation;
+
+            spawnIndex++;
+            if (spawnIndex >= spawns.Length)
+                spawnIndex = 0;
+        }
+        else
+        {
+            position = playerPrefab.transform.position;
+            rotation = playerPrefab.transform.rotation;
+        }
+
+        Debug.Log($"Position: {position}");
+        Debug.Log($"Rotation: {rotation}");
+
+        playerPrefab.transform.position = position;
+        NetworkObject nob = BootstrapNetworkManager.instance._networkManager.GetPooledInstantiated(playerPrefab, true);
+        nob.transform.SetPositionAndRotation(position, rotation);
+        InstanceFinder.ServerManager.Spawn(nob, conn, UnityEngine.SceneManagement.SceneManager.GetSceneByName("Game"));
     }
 
     public void PauseGame()
@@ -52,7 +107,6 @@ public class GameManager : MonoBehaviour
             player.gameObject.SetActive(false);
         }
         pauseScreen.SetActive(false);
-        titleScreen.SetActive(true);
     }
 
     public void ExitGame()

@@ -17,13 +17,11 @@ public class CameraController : MonoBehaviour
     private float rvZ = 19.3f;
     private float rvY = 5.2f;
     private Camera thisCamera;
-    private GameObject camObject;
 
     // Start is called before the first frame update
     void Awake()
     {
         thisCamera = GameObject.Find("Main Camera").GetComponent<Camera>();
-        thisCamera.gameObject.AddComponent<AudioListener>();
     }
 
     void LateUpdate()

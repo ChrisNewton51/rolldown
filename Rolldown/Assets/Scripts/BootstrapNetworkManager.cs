@@ -16,7 +16,7 @@ public class BootstrapNetworkManager : NetworkBehaviour
 {
     public static BootstrapNetworkManager instance;
 
-    [SerializeField] private NetworkManager _networkManager;
+    [SerializeField] public NetworkManager _networkManager;
     [SerializeField] private FishySteamworks.FishySteamworks _fishySteamworks;
 
     private void Awake()
