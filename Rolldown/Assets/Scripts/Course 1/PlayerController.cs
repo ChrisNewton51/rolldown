@@ -38,6 +38,18 @@ public class PlayerController : NetworkBehaviour
     private float courseDecline = 12;
     private bool invincible = false;
 
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+        if (base.IsOwner)
+        { 
+
+        } else
+        {
+            gameObject.GetComponent<PlayerController>().enabled = false;
+        }
+    }
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();

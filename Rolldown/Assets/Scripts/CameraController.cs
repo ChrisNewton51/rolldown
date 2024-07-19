@@ -1,16 +1,19 @@
+using FishNet.Example.ColliderRollbacks;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
+using FishNet.Connection;
+using FishNet.Object;
 using static UnityEngine.GraphicsBuffer;
 
-public class CameraController : MonoBehaviour
+public class CameraController : NetworkBehaviour
 {
     public float sensitivity = 40.0f;
     public float distance = 12.0f;
-    public PlayerController player;
-
+    
+    private PlayerController player;
     private float orbitDamping = 10f;
     private float x = 0.0f;
     private float lookRange = 60f;
@@ -22,6 +25,22 @@ public class CameraController : MonoBehaviour
     void Awake()
     {
         thisCamera = GameObject.Find("Main Camera").GetComponent<Camera>();
+        player = thisCamera.transform.parent.GetComponent<PlayerController>();
+        //player = GameObject.Find("Player").GetComponent<PlayerController>();
+    }
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+        if (base.IsOwner)
+        {
+            thisCamera = Camera.main;
+            thisCamera.transform.SetParent(transform);
+        }
+        else
+        {
+            gameObject.GetComponent<PlayerController>().enabled = false;
+        }
     }
 
     void LateUpdate()
@@ -48,17 +67,17 @@ public class CameraController : MonoBehaviour
             if (player.inRArch)
             {
                 thisCamera.nearClipPlane = 2;
-                transform.position = Vector3.Lerp(transform.position, new Vector3(8.33f, position.y - rvY, position.z + rvZ), Time.deltaTime * orbitDamping);
+                transform.position = new Vector3(8.33f, position.y - rvY, position.z + rvZ);
             }
             else if (player.inLArch)
             {
                 thisCamera.nearClipPlane = 2;
-                transform.position = Vector3.Lerp(transform.position, new Vector3(-8.33f, position.y - rvY, position.z + rvZ), Time.deltaTime * orbitDamping);
+                transform.position = new Vector3(-8.33f, position.y - rvY, position.z + rvZ);
             }
             else
             {
                 thisCamera.nearClipPlane = 0.3f;
-                transform.position = Vector3.Lerp(transform.position, new Vector3(position.x, position.y - rvY, position.z + rvZ), Time.deltaTime * orbitDamping);
+                transform.position = new Vector3(position.x, position.y - rvY, position.z + rvZ);
             }
             transform.rotation = Quaternion.Euler(195, 0, 180);
         } else
@@ -67,17 +86,17 @@ public class CameraController : MonoBehaviour
             if (player.inRArch)
             {
                 thisCamera.nearClipPlane = 2;
-                transform.position = Vector3.Lerp(transform.position, new Vector3(8.33f, position.y, position.z), Time.deltaTime * orbitDamping);
+                transform.position = new Vector3(8.33f, position.y, position.z);
             }
             else if (player.inLArch)
             {
                 thisCamera.nearClipPlane = 2;
-                transform.position = Vector3.Lerp(transform.position, new Vector3(-8.33f, position.y, position.z), Time.deltaTime * orbitDamping);
+                transform.position = new Vector3(-8.33f, position.y, position.z);
             }
             else
             {
                 thisCamera.nearClipPlane = 0.3f;
-                transform.position = Vector3.Lerp(transform.position, position, Time.deltaTime * orbitDamping);
+                transform.position = position; // Vector3.Lerp(transform.position, position, Time.deltaTime * orbitDamping);
             }
             transform.rotation = rotation; //Quaternion.Lerp(transform.rotation, rotation, Time.deltaTime * orbitDamping);
         }

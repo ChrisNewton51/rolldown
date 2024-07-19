@@ -2,25 +2,39 @@ using FishNet;
 using FishNet.Connection;
 using FishNet.Managing;
 using FishNet.Object;
+using FishNet.Transporting;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.SearchService;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public class GameManager : MonoBehaviour
+public class GameManager : NetworkBehaviour
 {
     public static GameManager instance;
 
     [Tooltip("Prefab to spawn for the player.")]
     [SerializeField]
-    private NetworkObject playerPrefab;
+    private GameObject playerPrefab;
 
     public GameObject pauseScreen;
+    public GameObject cameraMain;
 
     private GameObject[] players;
     private Transform[] spawns;
     private int spawnIndex = 0;
+
+    [HideInInspector] public GameObject spawnedObject;
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+        if (!base.IsOwner)
+        {
+            this.GiveOwnership(BootstrapSceneManager.instance.clientConnection);
+        }
+    }
 
     void Awake()
     {
@@ -29,7 +43,10 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        SpawnPlayer(BootstrapSceneManager.instance.clientConnection);
+        FindSpawns();
+        //SpawnPlayer(BootstrapSceneManager.instance.clientConnection, this);
+        //SpawnPlayer(playerPrefab, spawns[0].transform, this);
+        
     }
 
     void Update()
@@ -50,11 +67,50 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void SpawnPlayer(NetworkConnection conn)
+    
+
+    public void PauseGame()
     {
-        
+        //pauseScreen.SetActive(true);
+        cameraMain.SetActive(false);
+        SpawnPlayer(BootstrapSceneManager.instance.clientConnection, this);
+    }
 
+    public void RestartGame()
+    {
+        foreach (var player in players)
+        {
+            player.gameObject.transform.localPosition = new Vector3(0, -6.41f, -266.4171f);
+            player.gameObject.GetComponent<Rigidbody>().velocity = Vector3.zero;
+            player.gameObject.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
+            player.gameObject.transform.rotation = Quaternion.identity;
+            player.gameObject.SetActive(false);
+        }
+        pauseScreen.SetActive(false);
+    }
 
+    public void ExitGame()
+    {
+        #if UNITY_STANDALONE
+                Application.Quit();
+        #endif
+        #if UNITY_EDITOR
+                UnityEditor.EditorApplication.isPlaying = false;
+        #endif
+    }
+
+    private void OnRCS(RemoteConnectionStateArgs remoteConnectionStateArgs)
+    {
+        Debug.Log($"RCS => {remoteConnectionStateArgs.ConnectionState} {ServerManager.Clients.Count}");
+
+        if (IsHostStarted)
+            SpawnPlayer(BootstrapSceneManager.instance.clientConnection, this);
+    }
+
+    [ServerRpc]
+    public void SpawnPlayer(NetworkConnection conn, GameManager script)
+    {
+        //Debug.Log($"Received on the server.");
         if (playerPrefab == null)
         {
             Debug.LogWarning($"Player prefab is empty and cannot be spawned for connection {conn.ClientId}.");
@@ -89,33 +145,25 @@ public class GameManager : MonoBehaviour
         NetworkObject nob = BootstrapNetworkManager.instance._networkManager.GetPooledInstantiated(playerPrefab, true);
         nob.transform.SetPositionAndRotation(position, rotation);
         InstanceFinder.ServerManager.Spawn(nob, conn, UnityEngine.SceneManagement.SceneManager.GetSceneByName("Game"));
+        //SetSpawnedPlayer(nob, script);
     }
 
-    public void PauseGame()
+    //public void SpawnPlayer(GameObject obj, Transform player, GameManager script)
+    //{
+    //    GameObject spawned = Instantiate(obj, player.position + player.forward, Quaternion.identity);
+    //    InstanceFinder.ServerManager.Spawn(spawned);
+    //    SetSpawnedPlayer(spawned, script);
+    //}
+
+    //[ObserversRpc]
+    public void SetSpawnedPlayer(GameObject spawned, GameManager script)
     {
-        pauseScreen.SetActive(true);
+        script.spawnedObject = spawned;
     }
 
-    public void RestartGame()
+    [ServerRpc(RequireOwnership = false)]
+    public void DespawnObject(GameObject obj)
     {
-        foreach (var player in players)
-        {
-            player.gameObject.transform.localPosition = new Vector3(0, -6.41f, -266.4171f);
-            player.gameObject.GetComponent<Rigidbody>().velocity = Vector3.zero;
-            player.gameObject.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
-            player.gameObject.transform.rotation = Quaternion.identity;
-            player.gameObject.SetActive(false);
-        }
-        pauseScreen.SetActive(false);
-    }
-
-    public void ExitGame()
-    {
-        #if UNITY_STANDALONE
-                Application.Quit();
-        #endif
-        #if UNITY_EDITOR
-                UnityEditor.EditorApplication.isPlaying = false;
-        #endif
+        ServerManager.Despawn(obj);
     }
 }

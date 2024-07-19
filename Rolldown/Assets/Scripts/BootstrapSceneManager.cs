@@ -94,7 +94,6 @@ public class BootstrapSceneManager : MonoBehaviour
             else if (sceneLoadQueue.Count > 0)
             {
                 string sceneName = sceneLoadQueue.Dequeue();
-
                 LoadScene(sceneName);
             }
         }
