@@ -6,6 +6,7 @@ using FishNet.Transporting;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor.SearchService;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -30,8 +31,10 @@ public class GameManager : NetworkBehaviour
     public override void OnStartClient()
     {
         base.OnStartClient();
-        if (IsServerInitialized) 
-            this.GiveOwnership(BootstrapSceneManager.instance.serverClientConnection);
+        if (IsServerInitialized)
+        {
+            this.GiveOwnership(InstanceFinder.ServerManager.Clients.Values.ElementAt(0));
+        } 
     }
 
     void Awake()
@@ -71,7 +74,10 @@ public class GameManager : NetworkBehaviour
     {
         //pauseScreen.SetActive(true);
         cameraMain.SetActive(false);
-        SpawnPlayer(BootstrapSceneManager.instance.serverClientConnection, this);
+        foreach (NetworkConnection conn in InstanceFinder.ServerManager.Clients.Values)
+        {
+            SpawnPlayer(conn, this);
+        }
     }
 
     public void RestartGame()

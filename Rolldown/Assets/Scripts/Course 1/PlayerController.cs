@@ -41,12 +41,9 @@ public class PlayerController : NetworkBehaviour
     public override void OnStartClient()
     {
         base.OnStartClient();
-        if (base.IsOwner)
-        { 
-
-        } else
+        if (!base.IsOwner)
         {
-            gameObject.GetComponent<PlayerController>().enabled = false;
+            this.enabled = false;
         }
     }
 

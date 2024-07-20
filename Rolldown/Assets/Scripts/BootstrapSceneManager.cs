@@ -44,8 +44,12 @@ public class BootstrapSceneManager : MonoBehaviour
     {
         if (!asServer)
             return;
-
-        serverClientConnection = conn;
+        
+        if (asServer)
+        {
+            Debug.Log(conn.ClientId);
+            serverClientConnection = conn;
+        }
     }
     private void OnDisable()
     {
