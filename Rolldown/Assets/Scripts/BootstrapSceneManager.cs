@@ -17,7 +17,7 @@ public class BootstrapSceneManager : MonoBehaviour
     private Queue<string> sceneUnloadQueue = new Queue<string>();
     private bool isSceneLoading = false;
     
-    public NetworkConnection clientConnection;
+    public NetworkConnection serverClientConnection;
 
     void Awake()
     {
@@ -44,8 +44,8 @@ public class BootstrapSceneManager : MonoBehaviour
     {
         if (!asServer)
             return;
-        
-        clientConnection = conn;
+
+        serverClientConnection = conn;
     }
     private void OnDisable()
     {

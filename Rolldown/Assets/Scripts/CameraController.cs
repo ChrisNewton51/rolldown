@@ -14,7 +14,7 @@ public class CameraController : NetworkBehaviour
     public float distance = 12.0f;
     
     private PlayerController player;
-    private float orbitDamping = 10f;
+    //private float orbitDamping = 10f;
     private float x = 0.0f;
     private float lookRange = 60f;
     private float rvZ = 19.3f;
@@ -63,7 +63,7 @@ public class CameraController : NetworkBehaviour
 
         if (Input.GetKey(KeyCode.Tab))
         {
-            orbitDamping = 100;
+            //orbitDamping = 100;
             if (player.inRArch)
             {
                 thisCamera.nearClipPlane = 2;
@@ -82,7 +82,7 @@ public class CameraController : NetworkBehaviour
             transform.rotation = Quaternion.Euler(195, 0, 180);
         } else
         {
-            orbitDamping = 10;
+            //orbitDamping = 10;
             if (player.inRArch)
             {
                 thisCamera.nearClipPlane = 2;

@@ -30,10 +30,8 @@ public class GameManager : NetworkBehaviour
     public override void OnStartClient()
     {
         base.OnStartClient();
-        if (!base.IsOwner)
-        {
-            this.GiveOwnership(BootstrapSceneManager.instance.clientConnection);
-        }
+        if (IsServerInitialized) 
+            this.GiveOwnership(BootstrapSceneManager.instance.serverClientConnection);
     }
 
     void Awake()
@@ -44,7 +42,7 @@ public class GameManager : NetworkBehaviour
     private void Start()
     {
         FindSpawns();
-        //SpawnPlayer(BootstrapSceneManager.instance.clientConnection, this);
+        //SpawnPlayer(BootstrapSceneManager.instance.serverClientConnection, this);
         //SpawnPlayer(playerPrefab, spawns[0].transform, this);
         
     }
@@ -73,7 +71,7 @@ public class GameManager : NetworkBehaviour
     {
         //pauseScreen.SetActive(true);
         cameraMain.SetActive(false);
-        SpawnPlayer(BootstrapSceneManager.instance.clientConnection, this);
+        SpawnPlayer(BootstrapSceneManager.instance.serverClientConnection, this);
     }
 
     public void RestartGame()
@@ -97,14 +95,6 @@ public class GameManager : NetworkBehaviour
         #if UNITY_EDITOR
                 UnityEditor.EditorApplication.isPlaying = false;
         #endif
-    }
-
-    private void OnRCS(RemoteConnectionStateArgs remoteConnectionStateArgs)
-    {
-        Debug.Log($"RCS => {remoteConnectionStateArgs.ConnectionState} {ServerManager.Clients.Count}");
-
-        if (IsHostStarted)
-            SpawnPlayer(BootstrapSceneManager.instance.clientConnection, this);
     }
 
     [ServerRpc]
@@ -145,6 +135,7 @@ public class GameManager : NetworkBehaviour
         NetworkObject nob = BootstrapNetworkManager.instance._networkManager.GetPooledInstantiated(playerPrefab, true);
         nob.transform.SetPositionAndRotation(position, rotation);
         InstanceFinder.ServerManager.Spawn(nob, conn, UnityEngine.SceneManagement.SceneManager.GetSceneByName("Game"));
+        nob.GiveOwnership(conn);
         //SetSpawnedPlayer(nob, script);
     }
 
