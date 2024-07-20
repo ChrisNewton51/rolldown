@@ -321,7 +321,7 @@ MonoBehaviour:
     LocalScale: {x: 1, y: 1, z: 1}
   _isNetworked: 1
   _isSpawnable: 1
-  _isGlobal: 1
+  _isGlobal: 0
   _initializeOrder: 0
   _defaultDespawnType: 0
   NetworkObserver: {fileID: 0}
@@ -340,7 +340,7 @@ MonoBehaviour:
   _teleportThreshold: 1
   <PrefabId>k__BackingField: 0
   <SpawnableCollectionId>k__BackingField: 0
-  <SceneId>k__BackingField: 2038296537
+  <SceneId>k__BackingField: 2071813977
   <AssetPathHash>k__BackingField: 0
 --- !u!114 &903868869
 MonoBehaviour:
