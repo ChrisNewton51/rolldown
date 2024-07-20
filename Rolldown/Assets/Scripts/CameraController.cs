@@ -32,14 +32,16 @@ public class CameraController : NetworkBehaviour
     public override void OnStartClient()
     {
         base.OnStartClient();
+        Debug.Log(base.IsOwner);
         if (base.IsOwner)
         {
             thisCamera = Camera.main;
-            thisCamera.transform.SetParent(transform);
+            thisCamera.transform.SetParent(player.transform);
         }
         else
         {
-            gameObject.GetComponent<PlayerController>().enabled = false;
+            this.gameObject.SetActive(false);
+            Destroy(this.gameObject.GetComponent<AudioListener>());
         }
     }
 

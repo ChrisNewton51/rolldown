@@ -1,6 +1,7 @@
 using FishNet;
 using FishNet.Connection;
 using FishNet.Managing;
+using FishNet.Managing.Timing;
 using FishNet.Object;
 using FishNet.Transporting;
 using System;
@@ -34,7 +35,7 @@ public class GameManager : NetworkBehaviour
         if (IsServerInitialized)
         {
             this.GiveOwnership(InstanceFinder.ServerManager.Clients.Values.ElementAt(0));
-        } 
+        }
     }
 
     void Awake()
@@ -47,7 +48,7 @@ public class GameManager : NetworkBehaviour
         FindSpawns();
         //SpawnPlayer(BootstrapSceneManager.instance.serverClientConnection, this);
         //SpawnPlayer(playerPrefab, spawns[0].transform, this);
-        
+
     }
 
     void Update()
@@ -63,17 +64,17 @@ public class GameManager : NetworkBehaviour
 
         for (int i = 0; i < spawners.Length; i++)
         {
-            
+
             spawns[i] = spawners[i].transform;
         }
     }
 
-    
+
 
     public void PauseGame()
     {
         //pauseScreen.SetActive(true);
-        cameraMain.SetActive(false);
+
         foreach (NetworkConnection conn in InstanceFinder.ServerManager.Clients.Values)
         {
             SpawnPlayer(conn, this);
@@ -95,17 +96,18 @@ public class GameManager : NetworkBehaviour
 
     public void ExitGame()
     {
-        #if UNITY_STANDALONE
-                Application.Quit();
-        #endif
-        #if UNITY_EDITOR
-                UnityEditor.EditorApplication.isPlaying = false;
-        #endif
+#if UNITY_STANDALONE
+        Application.Quit();
+#endif
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#endif
     }
 
     [ServerRpc]
     public void SpawnPlayer(NetworkConnection conn, GameManager script)
     {
+        KillMainCam();
         //Debug.Log($"Received on the server.");
         if (playerPrefab == null)
         {
@@ -152,11 +154,15 @@ public class GameManager : NetworkBehaviour
     //    SetSpawnedPlayer(spawned, script);
     //}
 
-    //[ObserversRpc]
-    public void SetSpawnedPlayer(GameObject spawned, GameManager script)
+    [ObserversRpc]
+    private void KillMainCam()
     {
-        script.spawnedObject = spawned;
+        cameraMain.SetActive(false);
     }
+    //public void SetSpawnedPlayer(GameObject spawned, GameManager script)
+    //{
+    //    script.spawnedObject = spawned;
+    //}
 
     [ServerRpc(RequireOwnership = false)]
     public void DespawnObject(GameObject obj)

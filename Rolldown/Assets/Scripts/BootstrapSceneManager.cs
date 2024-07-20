@@ -38,19 +38,13 @@ public class BootstrapSceneManager : MonoBehaviour
         InstanceFinder.SceneManager.OnUnloadEnd += OnSceneUnloadEnd;
         InstanceFinder.SceneManager.OnLoadStart += OnSceneLoadStart;
         InstanceFinder.SceneManager.OnUnloadStart += OnSceneUnloadStart;
-        InstanceFinder.SceneManager.OnClientLoadedStartScenes += OnClientLoadedStartScene;
+        //InstanceFinder.SceneManager.OnClientLoadedStartScenes += OnClientLoadedStartScene;
     }
-    public void OnClientLoadedStartScene(NetworkConnection conn, bool asServer)
-    {
-        if (!asServer)
-            return;
-        
-        if (asServer)
-        {
-            Debug.Log(conn.ClientId);
-            serverClientConnection = conn;
-        }
-    }
+    //public void OnClientLoadedStartScene(NetworkConnection conn, bool asServer)
+    //{
+    //    if (!asServer)
+    //        return;
+    //}
     private void OnDisable()
     {
         InstanceFinder.SceneManager.OnLoadEnd -= OnSceneLoadEnd;
