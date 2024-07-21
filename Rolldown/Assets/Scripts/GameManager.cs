@@ -133,15 +133,12 @@ public class GameManager : NetworkBehaviour
             rotation = playerPrefab.transform.rotation;
         }
 
-        Debug.Log($"Position: {position}");
-        Debug.Log($"Rotation: {rotation}");
-
         playerPrefab.transform.position = position;
         NetworkObject nob = BootstrapNetworkManager.instance._networkManager.GetPooledInstantiated(playerPrefab, true);
+        
         nob.transform.SetPositionAndRotation(position, rotation);
         InstanceFinder.ServerManager.Spawn(nob, conn, UnityEngine.SceneManagement.SceneManager.GetSceneByName("Game"));
         nob.GiveOwnership(conn);
-        //SetSpawnedPlayer(nob, script);
     }
 
     //public void SpawnPlayer(GameObject obj, Transform player, GameManager script)
@@ -151,19 +148,9 @@ public class GameManager : NetworkBehaviour
     //    SetSpawnedPlayer(spawned, script);
     //}
 
-    [ObserversRpc]
-    private void KillMainCam()
-    {
-        cameraMain.SetActive(false);
-    }
-    //public void SetSpawnedPlayer(GameObject spawned, GameManager script)
-    //{
-    //    script.spawnedObject = spawned;
-    //}
-
     [ServerRpc(RequireOwnership = false)]
     public void DespawnObject(GameObject obj)
     {
-        ServerManager.Despawn(obj);
+        InstanceFinder.ServerManager.Despawn(obj);
     }
 }

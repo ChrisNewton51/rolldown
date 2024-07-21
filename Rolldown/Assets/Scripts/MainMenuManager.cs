@@ -8,6 +8,7 @@ using UnityEngine.UI;
 using FishNet.Managing.Scened;
 using FishNet.Managing;
 using FishNet.Connection;
+using UnityEngine.SceneManagement;
 
 
 public class MainMenuManager : MonoBehaviour
@@ -85,8 +86,11 @@ public class MainMenuManager : MonoBehaviour
             return;
         }
 
-        Destroy(panel.gameObject);
-        _lobbyUserPanels.Remove(userLeaveData.user);
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainMenu")
+        {
+            Destroy(panel.gameObject);
+            _lobbyUserPanels.Remove(userLeaveData.user);
+        }
     }
 
     public void OpenLobby()

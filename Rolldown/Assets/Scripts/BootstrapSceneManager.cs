@@ -32,19 +32,25 @@ public class BootstrapSceneManager : MonoBehaviour
         }
     }
 
+    //private void ListSceneObjects()
+    //{
+    //    if (InstanceFinder.SceneManager != null)
+    //    {
+    //        foreach (var sceneObject in InstanceFinder.SceneManager.SceneObjects)
+    //        {
+    //            Debug.Log($"SceneObject: {sceneObject.Name}, SceneId: {sceneObject.SceneId}");
+    //        }
+    //    }
+    //}
+
     private void OnEnable()
     {
         InstanceFinder.SceneManager.OnLoadEnd += OnSceneLoadEnd;
         InstanceFinder.SceneManager.OnUnloadEnd += OnSceneUnloadEnd;
         InstanceFinder.SceneManager.OnLoadStart += OnSceneLoadStart;
         InstanceFinder.SceneManager.OnUnloadStart += OnSceneUnloadStart;
-        //InstanceFinder.SceneManager.OnClientLoadedStartScenes += OnClientLoadedStartScene;
     }
-    //public void OnClientLoadedStartScene(NetworkConnection conn, bool asServer)
-    //{
-    //    if (!asServer)
-    //        return;
-    //}
+
     private void OnDisable()
     {
         InstanceFinder.SceneManager.OnLoadEnd -= OnSceneLoadEnd;
@@ -60,12 +66,16 @@ public class BootstrapSceneManager : MonoBehaviour
     { 
         isSceneLoading = false;
         TryProcessNextScene();
+        InstanceFinder.SceneManager.OnLoadStart -= OnSceneLoadStart;
+        InstanceFinder.SceneManager.OnLoadEnd -= OnSceneLoadEnd;
     }
 
     private void OnSceneUnloadEnd(SceneUnloadEndEventArgs obj)
     {
         isSceneLoading = false;
         TryProcessNextScene();
+        InstanceFinder.SceneManager.OnUnloadEnd -= OnSceneUnloadEnd;
+        InstanceFinder.SceneManager.OnUnloadStart -= OnSceneUnloadStart;
     }
 
     public void QueueLoadScene(string sceneName)
@@ -101,11 +111,6 @@ public class BootstrapSceneManager : MonoBehaviour
     {
         QueueUnloadScene("MainMenu");
         QueueLoadScene("Game");
-    }
-
-    private void Update()
-    {
-        
     }
 
     private void LoadScene(string sceneName)
