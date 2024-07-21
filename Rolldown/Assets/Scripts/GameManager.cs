@@ -8,7 +8,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.SearchService;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -74,7 +73,7 @@ public class GameManager : NetworkBehaviour
     public void PauseGame()
     {
         //pauseScreen.SetActive(true);
-
+        Destroy(cameraMain);
         foreach (NetworkConnection conn in InstanceFinder.ServerManager.Clients.Values)
         {
             SpawnPlayer(conn, this);
@@ -107,8 +106,6 @@ public class GameManager : NetworkBehaviour
     [ServerRpc]
     public void SpawnPlayer(NetworkConnection conn, GameManager script)
     {
-        KillMainCam();
-        //Debug.Log($"Received on the server.");
         if (playerPrefab == null)
         {
             Debug.LogWarning($"Player prefab is empty and cannot be spawned for connection {conn.ClientId}.");
@@ -118,7 +115,7 @@ public class GameManager : NetworkBehaviour
         FindSpawns();
 
         Vector3 position;
-        Quaternion rotation;
+        Quaternion rotation; 
 
         if (spawns.Length > 0)
         {

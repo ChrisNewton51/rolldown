@@ -340,7 +340,7 @@ MonoBehaviour:
   _teleportThreshold: 1
   <PrefabId>k__BackingField: 0
   <SpawnableCollectionId>k__BackingField: 0
-  <SceneId>k__BackingField: 2071949176
+  <SceneId>k__BackingField: 4013916026
   <AssetPathHash>k__BackingField: 0
 --- !u!114 &903868869
 MonoBehaviour:
@@ -1150,7 +1150,6 @@ GameObject:
   - component: {fileID: 7443408887301174055}
   - component: {fileID: 7443408887301174052}
   - component: {fileID: 1446744578}
-  - component: {fileID: 7443408887301174060}
   - component: {fileID: 7443408887301174061}
   m_Layer: 0
   m_Name: NetworkManager
@@ -1175,18 +1174,6 @@ Transform:
   - {fileID: 4393252311112109850}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7443408887301174060
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7443408887301174053}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ef4bffeda13d7a748973ff9204401c07, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &7443408887301174061
 MonoBehaviour:
   m_ObjectHideFlags: 0
