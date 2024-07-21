@@ -317,7 +317,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &140219433
 RectTransform:
   m_ObjectHideFlags: 0
@@ -578,7 +578,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &388812362
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1071,7 +1071,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 119.5}
+  m_AnchoredPosition: {x: 0, y: 57.7}
   m_SizeDelta: {x: 200, y: 56.3}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &641364716
@@ -1448,6 +1448,7 @@ GameObject:
   m_Component:
   - component: {fileID: 748615332}
   - component: {fileID: 748615331}
+  - component: {fileID: 748615333}
   m_Layer: 0
   m_Name: MainMenuManager
   m_TagString: Untagged
@@ -1467,11 +1468,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 391cb30c1102c6045ba4913d5718a30d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _componentIndexCache: 0
+  _addedNetworkObject: {fileID: 748615333}
+  _networkObjectCache: {fileID: 748615333}
   mainMenuObject: {fileID: 1455396676}
   hostButton: {fileID: 641364716}
   lobbyObject: {fileID: 140219432}
   lobbyTitle: {fileID: 1676102763}
   leaveButton: {fileID: 578340282}
+  startButton: {fileID: 934747974}
   lobbyUserPanelPrefab: {fileID: 6677383895239789645, guid: e3d254f4542d9e143ba4ca7664486647,
     type: 3}
   lobbyUserHolder: {fileID: 131469481}
@@ -1491,6 +1496,52 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &748615333
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 748615330}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26b716c41e9b56b4baafaf13a523ba2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <IsNested>k__BackingField: 0
+  <ComponentIndex>k__BackingField: 0
+  <PredictedSpawn>k__BackingField: {fileID: 0}
+  _networkBehaviours:
+  - {fileID: 748615331}
+  <SerializedRootNetworkBehaviour>k__BackingField: {fileID: 0}
+  <NestedRootNetworkBehaviours>k__BackingField: []
+  SerializedTransformProperties:
+    Position: {x: 1021.6605, y: -282.35352, z: 1165.5182}
+    Rotation: {x: -0, y: -0, z: -0, w: 1}
+    LocalScale: {x: 1, y: 1, z: 1}
+  _isNetworked: 1
+  _isSpawnable: 1
+  _isGlobal: 0
+  _initializeOrder: 0
+  _defaultDespawnType: 0
+  NetworkObserver: {fileID: 0}
+  _enablePrediction: 0
+  _predictionType: 0
+  _graphicalObject: {fileID: 0}
+  _detachGraphicalObject: 0
+  _enableStateForwarding: 1
+  _networkTransform: {fileID: 0}
+  _ownerInterpolation: 1
+  _ownerSmoothedProperties: 255
+  _adaptiveInterpolation: 3
+  _spectatorSmoothedProperties: 255
+  _spectatorInterpolation: 2
+  _enableTeleport: 0
+  _teleportThreshold: 1
+  <PrefabId>k__BackingField: 0
+  <SpawnableCollectionId>k__BackingField: 0
+  <SceneId>k__BackingField: 3183058686
+  <AssetPathHash>k__BackingField: 0
 --- !u!1 &752261377
 GameObject:
   m_ObjectHideFlags: 0
@@ -3812,7 +3863,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2112804249
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3945,7 +3996,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2141536448
 RectTransform:
   m_ObjectHideFlags: 0

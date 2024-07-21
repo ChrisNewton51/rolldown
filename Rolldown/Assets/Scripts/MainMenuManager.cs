@@ -9,9 +9,10 @@ using FishNet.Managing.Scened;
 using FishNet.Managing;
 using FishNet.Connection;
 using UnityEngine.SceneManagement;
+using FishNet.Object;
 
 
-public class MainMenuManager : MonoBehaviour
+public class MainMenuManager : NetworkBehaviour
 {
     public static MainMenuManager instance;
 
@@ -23,6 +24,7 @@ public class MainMenuManager : MonoBehaviour
     [SerializeField] private GameObject lobbyObject;
     [SerializeField] private TextMeshProUGUI lobbyTitle;
     [SerializeField] private Button leaveButton;
+    [SerializeField] private Button startButton;
 
     [Header("User lobby setup")]
     [SerializeField] private LobbyUserPanel lobbyUserPanelPrefab;
@@ -44,7 +46,10 @@ public class MainMenuManager : MonoBehaviour
         hostButton.onClick.AddListener(CreateLobby);
     }
 
-    public void CreateLobby() => BootstrapManager.instance.lobbyManager.Create();
+    public void CreateLobby()
+    {
+        BootstrapManager.instance.lobbyManager.Create();
+    }
 
     public void OnLobbyCreated(LobbyData lobbyData)
     {
