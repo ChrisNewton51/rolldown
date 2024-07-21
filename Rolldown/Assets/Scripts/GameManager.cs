@@ -9,7 +9,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.UIElements;
+using UnityEngine.UI;
 
 public class GameManager : NetworkBehaviour
 {
@@ -21,6 +21,7 @@ public class GameManager : NetworkBehaviour
 
     public GameObject pauseScreen;
     public GameObject cameraMain;
+    public Button startButton;
 
     private GameObject[] players;
     private Transform[] spawns;
@@ -34,6 +35,7 @@ public class GameManager : NetworkBehaviour
         if (IsServerInitialized)
         {
             this.GiveOwnership(InstanceFinder.ServerManager.Clients.Values.ElementAt(0));
+            startButton.gameObject.SetActive(true);
         }
     }
 
@@ -45,8 +47,6 @@ public class GameManager : NetworkBehaviour
     private void Start()
     {
         FindSpawns();
-        //SpawnPlayer(BootstrapSceneManager.instance.serverClientConnection, this);
-        //SpawnPlayer(playerPrefab, spawns[0].transform, this);
 
     }
 
@@ -68,16 +68,19 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-
-
-    public void PauseGame()
+    public void StartGame()
     {
-        //pauseScreen.SetActive(true);
         Destroy(cameraMain);
         foreach (NetworkConnection conn in InstanceFinder.ServerManager.Clients.Values)
         {
             SpawnPlayer(conn, this);
         }
+        startButton.gameObject.SetActive(false);
+    }
+
+    public void PauseGame()
+    {
+        pauseScreen.SetActive(true);
     }
 
     public void RestartGame()

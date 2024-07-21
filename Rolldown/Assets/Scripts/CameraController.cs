@@ -31,7 +31,6 @@ public class CameraController : NetworkBehaviour
     public override void OnStartClient()
     {
         base.OnStartClient();
-        Debug.Log(base.IsOwner);
         if (base.IsOwner)
         {
             thisCamera = Camera.main;

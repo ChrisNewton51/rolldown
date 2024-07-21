@@ -10,6 +10,7 @@ using FishNet.Managing;
 using FishNet.Connection;
 using UnityEngine.SceneManagement;
 using FishNet.Object;
+using FishNet;
 
 
 public class MainMenuManager : NetworkBehaviour
@@ -44,6 +45,14 @@ public class MainMenuManager : NetworkBehaviour
 
         leaveButton.onClick.AddListener(LeaveLobby);
         hostButton.onClick.AddListener(CreateLobby);
+    }
+
+    private void Update()
+    {
+        if (IsServerInitialized)
+        {
+            startButton.gameObject.SetActive(true);
+        }
     }
 
     public void CreateLobby()
