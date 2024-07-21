@@ -24,9 +24,8 @@ public class CameraController : NetworkBehaviour
     // Start is called before the first frame update
     void Awake()
     {
-        thisCamera = GameObject.Find("Main Camera").GetComponent<Camera>();
+        thisCamera = this.gameObject.GetComponent<Camera>();
         player = thisCamera.transform.parent.GetComponent<PlayerController>();
-        //player = GameObject.Find("Player").GetComponent<PlayerController>();
     }
 
     public override void OnStartClient()

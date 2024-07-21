@@ -5,6 +5,7 @@ using UnityEngine;
 using FishNet.Connection;
 using FishNet.Object;
 using FishNet.Example.ColliderRollbacks;
+using FishNet.Component.Transforming;
 
 public class PlayerController : NetworkBehaviour
 {
@@ -38,6 +39,8 @@ public class PlayerController : NetworkBehaviour
     private float courseDecline = 12;
     private bool invincible = false;
 
+    private NetworkTransform networkTransform;
+
     public override void OnStartClient()
     {
         base.OnStartClient();
@@ -50,6 +53,7 @@ public class PlayerController : NetworkBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+        networkTransform = this.gameObject.GetComponent<NetworkTransform>();
     }
 
     void Update()
