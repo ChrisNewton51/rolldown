@@ -28,6 +28,14 @@ public class BootstrapManager : MonoBehaviour
         UnityEngine.SceneManagement.SceneManager.LoadScene(menuName, LoadSceneMode.Additive);
     }
 
-    
-    
+    public void ExitGame()
+    {
+#if UNITY_STANDALONE
+        Application.Quit();
+#endif
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#endif
+    }
+
 }

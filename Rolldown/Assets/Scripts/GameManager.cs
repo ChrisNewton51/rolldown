@@ -19,7 +19,6 @@ public class GameManager : NetworkBehaviour
     [SerializeField]
     private GameObject playerPrefab;
 
-    public GameObject pauseScreen;
     public GameObject cameraMain;
     public Button startButton;
 
@@ -50,12 +49,6 @@ public class GameManager : NetworkBehaviour
 
     }
 
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Escape))
-            PauseGame();
-    }
-
     public void FindSpawns()
     {
         GameObject[] spawners = GameObject.FindGameObjectsWithTag("Spawn");
@@ -78,11 +71,6 @@ public class GameManager : NetworkBehaviour
         startButton.gameObject.SetActive(false);
     }
 
-    public void PauseGame()
-    {
-        pauseScreen.SetActive(true);
-    }
-
     public void RestartGame()
     {
         foreach (var player in players)
@@ -93,17 +81,6 @@ public class GameManager : NetworkBehaviour
             player.gameObject.transform.rotation = Quaternion.identity;
             player.gameObject.SetActive(false);
         }
-        pauseScreen.SetActive(false);
-    }
-
-    public void ExitGame()
-    {
-#if UNITY_STANDALONE
-        Application.Quit();
-#endif
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#endif
     }
 
     [ServerRpc]
@@ -122,7 +99,6 @@ public class GameManager : NetworkBehaviour
 
         if (spawns.Length > 0)
         {
-            Debug.Log(spawns[spawnIndex].localPosition);
             position = spawns[spawnIndex].position;
             rotation = spawns[spawnIndex].rotation;
 

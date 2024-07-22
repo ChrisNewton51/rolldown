@@ -340,7 +340,7 @@ MonoBehaviour:
   _teleportThreshold: 1
   <PrefabId>k__BackingField: 0
   <SpawnableCollectionId>k__BackingField: 0
-  <SceneId>k__BackingField: 4286570492
+  <SceneId>k__BackingField: 3913113597
   <AssetPathHash>k__BackingField: 0
 --- !u!114 &903868869
 MonoBehaviour:
@@ -692,7 +692,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &4393252311112109848
 MonoBehaviour:
   m_ObjectHideFlags: 0

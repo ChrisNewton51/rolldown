@@ -155,8 +155,8 @@ public class MainMenuManager : NetworkBehaviour
         BootstrapSceneManager.instance.StartGame();
     }
 
-    public void ListConnections()
+    public void ExitGame()
     {
-        BootstrapNetworkManager.instance.ListConnectedClients();
+        BootstrapManager.instance.ExitGame();
     }
 }
