@@ -63,7 +63,6 @@ public class PlayerController : NetworkBehaviour
 
         // Powerups
         HandlePowerups();
-        
     }
 
     void FixedUpdate()
@@ -100,6 +99,7 @@ public class PlayerController : NetworkBehaviour
     void DetectLRInput()
     {
         horizontalInput = Input.GetAxis("Horizontal");
+        //if (Input.GetKeyUp(KeyCode.A) || Input.GetKeyUp(KeyCode.D)) rb.AddForce(Vector3.zero);
     }
 
     void HandleLRMovement(float horizontalInput)

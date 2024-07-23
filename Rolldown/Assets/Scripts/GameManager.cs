@@ -55,18 +55,17 @@ public class GameManager : NetworkBehaviour
         spawns = new Transform[spawners.Length];
 
         for (int i = 0; i < spawners.Length; i++)
-        {
-
             spawns[i] = spawners[i].transform;
-        }
     }
 
     public void StartGame()
     {
         Destroy(cameraMain);
+        FindSpawns();
         foreach (NetworkConnection conn in InstanceFinder.ServerManager.Clients.Values)
         {
-            SpawnPlayer(conn, this);
+            SpawnPlayer(conn, spawns[spawnIndex]);
+            spawnIndex++;
         }
         startButton.gameObject.SetActive(false);
     }
@@ -84,7 +83,7 @@ public class GameManager : NetworkBehaviour
     }
 
     [ServerRpc]
-    public void SpawnPlayer(NetworkConnection conn, GameManager script)
+    public void SpawnPlayer(NetworkConnection conn, Transform spawn)
     {
         if (playerPrefab == null)
         {
@@ -97,20 +96,8 @@ public class GameManager : NetworkBehaviour
         Vector3 position;
         Quaternion rotation; 
 
-        if (spawns.Length > 0)
-        {
-            position = spawns[spawnIndex].position;
-            rotation = spawns[spawnIndex].rotation;
-
-            spawnIndex++;
-            if (spawnIndex >= spawns.Length)
-                spawnIndex = 0;
-        }
-        else
-        {
-            position = playerPrefab.transform.position;
-            rotation = playerPrefab.transform.rotation;
-        }
+        position = spawns[spawnIndex].position;
+        rotation = spawns[spawnIndex].rotation;
 
         playerPrefab.transform.position = position;
         NetworkObject nob = BootstrapNetworkManager.instance._networkManager.GetPooledInstantiated(playerPrefab, true);
@@ -119,13 +106,6 @@ public class GameManager : NetworkBehaviour
         InstanceFinder.ServerManager.Spawn(nob, conn, UnityEngine.SceneManagement.SceneManager.GetSceneByName("Game"));
         nob.GiveOwnership(conn);
     }
-
-    //public void SpawnPlayer(GameObject obj, Transform player, GameManager script)
-    //{
-    //    GameObject spawned = Instantiate(obj, player.position + player.forward, Quaternion.identity);
-    //    InstanceFinder.ServerManager.Spawn(spawned);
-    //    SetSpawnedPlayer(spawned, script);
-    //}
 
     [ServerRpc(RequireOwnership = false)]
     public void DespawnObject(GameObject obj)
