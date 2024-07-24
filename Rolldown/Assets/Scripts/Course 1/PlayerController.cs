@@ -63,6 +63,9 @@ public class PlayerController : NetworkBehaviour
 
         // Powerups
         HandlePowerups();
+
+        //TEST//
+        rb.AddForce(Vector3.forward * steadyForce * Input.GetAxis("Vertical"));
     }
 
     void FixedUpdate()
