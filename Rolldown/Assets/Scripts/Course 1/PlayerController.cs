@@ -66,6 +66,12 @@ public class PlayerController : NetworkBehaviour
 
         //TEST//
         rb.AddForce(Vector3.forward * steadyForce * Input.GetAxis("Vertical"));
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            rb.velocity = Vector3.zero;
+            rb.rotation = Quaternion.identity;
+            rb.angularVelocity = Vector3.zero;
+        }
     }
 
     void FixedUpdate()
