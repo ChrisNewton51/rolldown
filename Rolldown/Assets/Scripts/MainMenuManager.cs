@@ -13,7 +13,7 @@ using FishNet.Object;
 using FishNet;
 
 
-public class MainMenuManager : NetworkBehaviour
+public class MainMenuManager : MonoBehaviour
 {
     public static MainMenuManager instance;
 
@@ -49,9 +49,12 @@ public class MainMenuManager : NetworkBehaviour
 
     private void Update()
     {
-        if (IsServerInitialized)
+        if (BootstrapManager.instance.lobbyManager.IsPlayerOwner)
         {
             startButton.gameObject.SetActive(true);
+        } else
+        {
+            startButton.gameObject.SetActive(false);
         }
     }
 
@@ -99,7 +102,7 @@ public class MainMenuManager : NetworkBehaviour
             Debug.LogError("Tried to remove user that doesn't exist");
             return;
         }
-
+        Debug.Log("Test leave");
         if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainMenu")
         {
             Destroy(panel.gameObject);
