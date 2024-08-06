@@ -1,11 +1,25 @@
+using FishNet;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using FishNet;
+using FishNet.Connection;
+using FishNet.Object;
+using System.Linq;
 
-public class HorizShooter : MonoBehaviour
+public class HorizShooter : NetworkBehaviour
 {
     public GameObject smallBomb;
     public GameObject smallBombParent;
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+        if (IsServerInitialized)
+        {
+            this.GiveOwnership(InstanceFinder.ServerManager.Clients.Values.ElementAt(0));
+        }
+    }
 
     // Start is called before the first frame update
     void Start()
@@ -13,15 +27,14 @@ public class HorizShooter : MonoBehaviour
         InvokeRepeating("SpawnSmallBomb", Random.Range(0,3), Random.Range(1,3));
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
+    [ServerRpc]
     void SpawnSmallBomb()
     {
-        GameObject inSmallBomb = Instantiate(smallBomb, transform.position, Quaternion.Euler(15,0,0));
-        inSmallBomb.transform.SetParent(smallBombParent.transform);
+        foreach (NetworkConnection conn in InstanceFinder.ServerManager.Clients.Values)
+        {
+            GameObject inSmallBomb = Instantiate(smallBomb, transform.position, Quaternion.Euler(15, 0, 0));
+            inSmallBomb.transform.SetParent(smallBombParent.transform);
+            InstanceFinder.ServerManager.Spawn(inSmallBomb);
+        }
     }
 }

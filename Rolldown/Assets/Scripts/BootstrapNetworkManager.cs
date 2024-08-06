@@ -41,7 +41,6 @@ public class BootstrapNetworkManager : NetworkBehaviour
         else if (obj.ConnectionState == LocalConnectionState.Stopped)
         {
             Debug.Log("Server stopped.");
-            MainMenuManager.instance.LeaveLobby();
         }
     }
 
@@ -54,7 +53,6 @@ public class BootstrapNetworkManager : NetworkBehaviour
         else if (obj.ConnectionState == LocalConnectionState.Stopped)
         {
             Debug.Log("Client disconnected from server.");
-            MainMenuManager.instance.LeaveLobby();
         }
     }
 

@@ -20,17 +20,6 @@ public class BombObstacle : MonoBehaviour
         if (transform.localPosition.y < -20)
         {
             Destroy(gameObject);
-            //GameObject exp = Instantiate(explosion, gameObject.transform.position, Quaternion.identity);
-            //exp.transform.SetParent(bombParent.transform);
-            //exp.transform.localPosition = transform.position;
-        }
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.gameObject.CompareTag("Ramp") || other.gameObject.CompareTag("SideR") || other.gameObject.CompareTag("SideL"))
-        {
-            
         }
     }
 

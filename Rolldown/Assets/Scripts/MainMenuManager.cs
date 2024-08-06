@@ -102,8 +102,8 @@ public class MainMenuManager : MonoBehaviour
             Debug.LogError("Tried to remove user that doesn't exist");
             return;
         }
-        Debug.Log("Test leave");
-        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainMenu")
+        
+        if (IsSceneLoaded("MainMenu"))
         {
             Destroy(panel.gameObject);
             _lobbyUserPanels.Remove(userLeaveData.user);
@@ -161,5 +161,18 @@ public class MainMenuManager : MonoBehaviour
     public void ExitGame()
     {
         BootstrapManager.instance.ExitGame();
+    }
+
+    public bool IsSceneLoaded(string sceneName)
+    {
+        for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
+        {
+            Scene scene = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
+            if (scene.name == sceneName && scene.isLoaded)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }
