@@ -36,14 +36,10 @@ public class BombSpawner : NetworkBehaviour
     [ServerRpc]
     void SpawnBomb()
     {
-        foreach (NetworkConnection conn in InstanceFinder.ServerManager.Clients.Values)
-        {
-            Vector3 localPos = new Vector3(Random.Range(-26, 26), 200, Random.Range(500, 700));
-            GameObject newBomb = Instantiate(bomb, transform);
-            newBomb.transform.SetParent(bombParent.transform);
-            newBomb.transform.localPosition = localPos;
-            InstanceFinder.ServerManager.Spawn(newBomb);
-        }
-        
+        Vector3 localPos = new Vector3(Random.Range(-26, 26), 200, Random.Range(500, 700));
+        GameObject newBomb = Instantiate(bomb, transform);
+        newBomb.transform.SetParent(bombParent.transform);
+        newBomb.transform.localPosition = localPos;
+        InstanceFinder.ServerManager.Spawn(newBomb);
     }
 }

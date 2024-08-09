@@ -2,7 +2,6 @@ using FishNet;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using FishNet;
 using FishNet.Connection;
 using FishNet.Object;
 using System.Linq;
@@ -30,11 +29,8 @@ public class HorizShooter : NetworkBehaviour
     [ServerRpc]
     void SpawnSmallBomb()
     {
-        foreach (NetworkConnection conn in InstanceFinder.ServerManager.Clients.Values)
-        {
-            GameObject inSmallBomb = Instantiate(smallBomb, transform.position, Quaternion.Euler(15, 0, 0));
-            inSmallBomb.transform.SetParent(smallBombParent.transform);
-            InstanceFinder.ServerManager.Spawn(inSmallBomb);
-        }
+        GameObject inSmallBomb = Instantiate(smallBomb, transform.position, Quaternion.Euler(15, 0, 0));
+        inSmallBomb.transform.SetParent(smallBombParent.transform);
+        InstanceFinder.ServerManager.Spawn(inSmallBomb);
     }
 }
