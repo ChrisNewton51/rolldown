@@ -12,6 +12,7 @@ public class CameraController : NetworkBehaviour
 {
     public float sensitivity = 40.0f;
     public float distance = 12.0f;
+    public float height = 4f;
     
     private PlayerController player;
     //private float orbitDamping = 10f;
@@ -20,6 +21,7 @@ public class CameraController : NetworkBehaviour
     private float rvZ = 19.3f;
     private float rvY = 5.2f;
     private Camera thisCamera;
+    private Transform rTunnel, lTunnel;
 
     // Start is called before the first frame update
     void Awake()
@@ -43,6 +45,12 @@ public class CameraController : NetworkBehaviour
         }
     }
 
+    private void Start()
+    {
+        rTunnel = GameObject.Find("RArch").transform;
+        lTunnel = GameObject.Find("LArch").transform;
+    }
+
     void LateUpdate()
     {
         if (player != null) 
@@ -59,7 +67,7 @@ public class CameraController : NetworkBehaviour
         }
         x = Mathf.Clamp(x, -lookRange, lookRange);
         Quaternion rotation = Quaternion.Euler(15, 0, 0);
-        Vector3 position = rotation * new Vector3(0.0f, 4f, -distance) + player.transform.position;
+        Vector3 position = rotation * new Vector3(0.0f, height, -distance) + player.transform.position;
 
         if (Input.GetKey(KeyCode.Tab))
         {
@@ -85,16 +93,17 @@ public class CameraController : NetworkBehaviour
             //orbitDamping = 10;
             if (player.inRArch)
             {
-                thisCamera.nearClipPlane = 2;
-                transform.position = new Vector3(8.33f, position.y, position.z);
+                transform.position = new Vector3(Mathf.Clamp(position.x, 5.33f, 11.33f), Mathf.Clamp(position.y, position.y - 1, position.y + 1), position.z);
+                height = 1;
             }
             else if (player.inLArch)
             {
-                thisCamera.nearClipPlane = 2;
-                transform.position = new Vector3(-8.33f, position.y, position.z);
+                transform.position = new Vector3(Mathf.Clamp(position.x, -11.33f, -5.33f), Mathf.Clamp(position.y, position.y - 1, position.y + 1), position.z);
+                height = 1;
             }
             else
             {
+                height = 4f;
                 thisCamera.nearClipPlane = 0.3f;
                 transform.position = position; // Vector3.Lerp(transform.position, position, Time.deltaTime * orbitDamping);
             }

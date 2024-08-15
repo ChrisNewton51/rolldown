@@ -18,6 +18,7 @@ TagManager:
   - LowBoost
   - Laser
   - Spawn
+  - Tunnel
   layers:
   - Default
   - TransparentFX

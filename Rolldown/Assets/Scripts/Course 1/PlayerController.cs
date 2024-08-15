@@ -324,22 +324,34 @@ public class PlayerController : NetworkBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.CompareTag("ArchR"))
+        if (other.gameObject.CompareTag("ArchR") && !inRArch)
         {
             inRArch = true;
-        }
-        if (other.gameObject.CompareTag("ArchL"))
-        {
-            inLArch = true;
-        }
-
-        if (other.gameObject.CompareTag("ArchREnd"))
+        } else if (other.gameObject.CompareTag("ArchR") && inRArch)
         {
             inRArch = false;
         }
-        if (other.gameObject.CompareTag("ArchLEnd"))
+        if (other.gameObject.CompareTag("ArchL") && !inLArch)
+        {
+            inLArch = true;
+        } else if (other.gameObject.CompareTag("ArchL") && inLArch)
         {
             inLArch = false;
+        }
+
+        if (other.gameObject.CompareTag("ArchREnd") && inRArch)
+        {
+            inRArch = false;
+        } else if (other.gameObject.CompareTag("ArchREnd") && !inRArch)
+        {
+            inRArch = true;
+        }
+        if (other.gameObject.CompareTag("ArchLEnd") && inLArch)
+        {
+            inLArch = false;
+        } else if (other.gameObject.CompareTag("ArchLEnd") && !inLArch)
+        {
+            inLArch = true;
         }
 
         if (other.gameObject.CompareTag("Puncher"))
