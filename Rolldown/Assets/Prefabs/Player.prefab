@@ -33,7 +33,7 @@ Transform:
   m_GameObject: {fileID: 241532838827486296}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3, y: -6.4100037, z: -266.4171}
+  m_LocalPosition: {x: 3, y: 62.762215, z: -258.9982}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -426,6 +426,7 @@ MonoBehaviour:
   _networkObjectCache: {fileID: 3793094446195492701}
   sensitivity: 80
   distance: 12
+  height: 4
 --- !u!135 &604180316727539377
 SphereCollider:
   m_ObjectHideFlags: 0

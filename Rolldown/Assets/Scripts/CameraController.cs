@@ -94,12 +94,10 @@ public class CameraController : NetworkBehaviour
             if (player.inRArch)
             {
                 transform.position = new Vector3(Mathf.Clamp(position.x, 5.33f, 11.33f), Mathf.Clamp(position.y, position.y - 1, position.y + 1), position.z);
-                height = 1;
             }
             else if (player.inLArch)
             {
                 transform.position = new Vector3(Mathf.Clamp(position.x, -11.33f, -5.33f), Mathf.Clamp(position.y, position.y - 1, position.y + 1), position.z);
-                height = 1;
             }
             else
             {
