@@ -26,7 +26,7 @@ public class MovePanel : MonoBehaviour
         {
             if (transform.position.x < sideBound)
             {
-                transform.Translate(Vector3.right * Time.deltaTime * moveSpeed);
+                transform.Translate(Vector3.right * Time.deltaTime * moveSpeed, transform.parent);
             }
             else
             {
@@ -37,7 +37,7 @@ public class MovePanel : MonoBehaviour
         {
             if (transform.position.x >= -sideBound)
             {
-                transform.Translate(Vector3.left * Time.deltaTime * moveSpeed);
+                transform.Translate(Vector3.left * Time.deltaTime * moveSpeed, transform.parent);
             }
             else
             {

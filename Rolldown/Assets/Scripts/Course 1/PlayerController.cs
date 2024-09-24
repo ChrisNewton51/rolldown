@@ -232,7 +232,7 @@ public class PlayerController : NetworkBehaviour
     // Disable //
     void Respawn()
     {
-        transform.position = new Vector3(0, 71, -265);
+        transform.position = GameObject.Find("Spawn 0").transform.position;
         rb.velocity = new Vector3(0, 0, 0);
         rb.angularVelocity = new Vector3(0, 0, 0);
     }
@@ -369,12 +369,12 @@ public class PlayerController : NetworkBehaviour
 
         if (other.gameObject.CompareTag("HighBoost"))
         {
-            rb.AddForce(new Vector3(0,-.2f, 1) * highBoostForce, ForceMode.Impulse);
+            rb.AddForce(new Vector3(0,-.4f, 1) * highBoostForce, ForceMode.Impulse);
         }
 
         if (other.gameObject.CompareTag("LowBoost"))
         {
-            rb.AddForce(new Vector3(0, -.2f, 1) * lowBoostForce, ForceMode.Impulse);
+            rb.AddForce(new Vector3(0, -.4f, 1) * lowBoostForce, ForceMode.Impulse);
         }
 
         if (other.gameObject.CompareTag("Finish"))
