@@ -11,8 +11,7 @@ Material:
   m_Shader: {fileID: -6465566751694194690, guid: 86523186989ebbe48bb3bce0bb9ecd08, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - BOOLEAN_6665D7DA7AE94B969750A2E30E35C4B3_ON
+  m_ValidKeywords: []
   m_InvalidKeywords:
   - BOOLEAN_CUBEMAP_ON
   - BOOLEAN_GLITCHYMOON_ON
@@ -25,6 +24,7 @@ Material:
   - TransparentDepthPrepass
   - TransparentDepthPostpass
   - TransparentBackface
+  - MOTIONVECTORS
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
@@ -55,7 +55,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - BOOLEAN_6665D7DA7AE94B969750A2E30E35C4B3: 1
+    - BOOLEAN_6665D7DA7AE94B969750A2E30E35C4B3: 0
     - BOOLEAN_CUBEMAP: 1
     - BOOLEAN_GLITCHYMOON: 1
     - Vector1_7d421ef4d57f45e586330be25bfb5941: 10
@@ -128,6 +128,7 @@ Material:
     - _SunColorOne: {r: 1, g: 0.8820755, b: 0.41037735, a: 1}
     - _SunColorTwo: {r: 0.99056596, g: 0.26633137, b: 0.675045, a: 1}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!114 &3632235004332457258
 MonoBehaviour:
   m_ObjectHideFlags: 11
@@ -156,4 +157,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  version: 7
+  version: 9

@@ -68,7 +68,7 @@ public class PlayerController : NetworkBehaviour
         rb.AddForce(Vector3.forward * steadyForce * Input.GetAxis("Vertical"));
         if (Input.GetKeyDown(KeyCode.F))
         {
-            rb.velocity = Vector3.zero;
+            rb.linearVelocity = Vector3.zero;
             rb.rotation = Quaternion.identity;
             rb.angularVelocity = Vector3.zero;
         }
@@ -147,15 +147,15 @@ public class PlayerController : NetworkBehaviour
 
     void BasicLR(float horizontalInput)
     {
-        if (Mathf.Abs(rb.velocity.x) < maxHorizSpeed)
+        if (Mathf.Abs(rb.linearVelocity.x) < maxHorizSpeed)
         {
             rb.AddForce(new Vector3(horizontalInput, 0, 0) * steadyForce);
         }
-        else if (rb.velocity.x >= maxHorizSpeed && horizontalInput < 0)
+        else if (rb.linearVelocity.x >= maxHorizSpeed && horizontalInput < 0)
         {
             rb.AddForce(new Vector3(horizontalInput, 0, 0) * steadyForce);
         }
-        else if (-rb.velocity.x >= maxHorizSpeed && horizontalInput > 0)
+        else if (-rb.linearVelocity.x >= maxHorizSpeed && horizontalInput > 0)
         {
             rb.AddForce(new Vector3(horizontalInput, 0, 0) * steadyForce);
         }
@@ -189,7 +189,7 @@ public class PlayerController : NetworkBehaviour
         {
             if (Mathf.Abs(transform.position.x) > sideBound)
             {
-                if ((rb.velocity.x < 0 && onSideR) || (rb.velocity.x > 0 && onSideL))
+                if ((rb.linearVelocity.x < 0 && onSideR) || (rb.linearVelocity.x > 0 && onSideL))
                 {
                     rb.AddForce(new Vector3(0, jumpForce, 0), ForceMode.Impulse);
                 } else {
@@ -223,7 +223,7 @@ public class PlayerController : NetworkBehaviour
 
     void SlowdownHandle(float verticalInput)
     {
-        if (verticalInput < 0 && rb.velocity.z > 0)
+        if (verticalInput < 0 && rb.linearVelocity.z > 0)
         {
             rb.AddForce(new Vector3(0, 0, verticalInput) * steadyForce);
         }
@@ -233,13 +233,13 @@ public class PlayerController : NetworkBehaviour
     void Respawn()
     {
         transform.position = GameObject.Find("Spawn 0").transform.position;
-        rb.velocity = new Vector3(0, 0, 0);
+        rb.linearVelocity = new Vector3(0, 0, 0);
         rb.angularVelocity = new Vector3(0, 0, 0);
     }
 
     void Disable()
     {
-        rb.velocity /= 4;
+        rb.linearVelocity /= 4;
         rb.angularVelocity = Vector3.zero;
 
         StartCoroutine(Invincible());

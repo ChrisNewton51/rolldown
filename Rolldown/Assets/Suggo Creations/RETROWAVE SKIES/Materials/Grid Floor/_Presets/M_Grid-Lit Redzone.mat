@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  version: 7
+  version: 9
 --- !u!21 &2100000
 Material:
   serializedVersion: 8
@@ -26,20 +26,23 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - BOOLEAN_WORLDSPACEUV_ON
+  - _ENABLE_PARALLAX_EFFECT
   m_InvalidKeywords:
   - BOOLEAN_USETEXTURE_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
+  stringTagMap:
+    RenderType: Opaque
+  disabledShaderPasses:
+  - MOTIONVECTORS
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
     - _GridTexture:
-        m_Texture: {fileID: 2800000, guid: 369edb6aece671e4eb92a153d08c1322, type: 3}
+        m_Texture: {fileID: 2800000, guid: cdfb219d1bec4f843b94ff000163a2cf, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
@@ -57,14 +60,36 @@ Material:
     m_Ints: []
     m_Floats:
     - BOOLEAN_WORLDSPACEUV: 1
+    - _AlphaClip: 0
+    - _AlphaToMask: 0
+    - _Blend: 0
+    - _BlendModePreserveSpecular: 0
+    - _CastShadows: 1
+    - _Cull: 2
+    - _DstBlend: 0
+    - _ENABLE_PARALLAX_EFFECT: 1
     - _GridRotation: 0
+    - _Grid_Line_X_Width: 0.9
+    - _Grid_Line_Y_Width: 0.9
     - _Metallic: 0.2
+    - _Parallax_Distance: -0.66
+    - _Parallax_Offset: -0.66
     - _QueueControl: 0
     - _QueueOffset: 0
+    - _ReceiveShadows: 1
     - _Smoothness: 0.95
+    - _SrcBlend: 1
+    - _Surface: 0
+    - _USETEXTUREBOOL: 1
+    - _WorkflowMode: 1
+    - _ZTest: 4
+    - _ZWrite: 1
+    - _ZWriteControl: 0
     m_Colors:
-    - _GridColor: {r: 1.4039216, g: 0, b: 0, a: 1}
-    - _GridSpeed: {r: 0, g: -0.2, b: 0, a: 0}
+    - _GridColor: {r: 3.7486908, g: 0.19110973, b: 0.19110973, a: 1}
+    - _GridSpeed: {r: 0, g: -0.05, b: 0, a: 0}
     - _GroundColor: {r: 0.11320752, g: 0.11320752, b: 0.11320752, a: 1}
+    - _Parallax_Color: {r: 1.2627451, g: 0.039215688, b: 0, a: 1}
     - _Tiling: {r: 0.1, g: 0.1, b: 0, a: 0}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  version: 7
+  version: 9
 --- !u!21 &2100000
 Material:
   serializedVersion: 8
@@ -27,8 +27,9 @@ Material:
   m_ValidKeywords:
   - BOOLEAN_6665D7DA7AE94B969750A2E30E35C4B3_ON
   - BOOLEAN_CUBEMAP_ON
-  - BOOLEAN_FF1E9D2611CF4E959316C577475EA27F_ON
+  - BOOLEAN_PREVENTSTARS_ON
   m_InvalidKeywords:
+  - BOOLEAN_FF1E9D2611CF4E959316C577475EA27F_ON
   - BOOLEAN_GLITCHYMOON_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -39,6 +40,7 @@ Material:
   - TransparentDepthPrepass
   - TransparentDepthPostpass
   - TransparentBackface
+  - MOTIONVECTORS
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
@@ -69,6 +71,7 @@ Material:
     - BOOLEAN_CUBEMAP: 1
     - BOOLEAN_FF1E9D2611CF4E959316C577475EA27F: 1
     - BOOLEAN_GLITCHYMOON: 1
+    - BOOLEAN_PREVENTSTARS: 1
     - Vector1_7d421ef4d57f45e586330be25bfb5941: 11.97
     - Vector1_a770b768a8ca40a9b814a01444e6b850: 1.9
     - _AddPrecomputedVelocity: 0
@@ -80,6 +83,7 @@ Material:
     - _BlendMode: 0
     - _CubemapOpacity: 0.15
     - _CubemapRotation: 41
+    - _Cubemap_Color_Opacity: 1
     - _CullMode: 2
     - _CullModeForward: 2
     - _DepthOffsetEnable: 0
@@ -103,6 +107,7 @@ Material:
     - _RenderQueueType: 1
     - _SrcBlend: 1
     - _StarDensity: 0
+    - _StarSize: 100
     - _StencilRef: 0
     - _StencilRefDepth: 0
     - _StencilRefDistortionVec: 4
@@ -130,6 +135,7 @@ Material:
     - _ZTestTransparent: 4
     - _ZWrite: 1
     m_Colors:
+    - _Cubemap_Color: {r: 1, g: 1, b: 1, a: 0}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _HorizonColor: {r: 0.29411766, g: 0.81568635, b: 1, a: 1}
@@ -139,6 +145,7 @@ Material:
     - _SunColorOne: {r: 1, g: 0.8217414, b: 0, a: 1}
     - _SunColorTwo: {r: 0, g: 1, b: 0.87230086, a: 1}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!114 &7309655974731120432
 MonoBehaviour:
   m_ObjectHideFlags: 11

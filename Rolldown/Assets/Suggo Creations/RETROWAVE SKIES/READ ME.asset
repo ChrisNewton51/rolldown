@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d444ca49ad5ebc439b6a451e1c85d23, type: 3}
+  m_Name: READ ME
+  m_EditorClassIdentifier: 
+  icon: {fileID: 2800000, guid: 14bd827504b287245b209b87f914c0fb, type: 3}
+  title: RETROWAVE SKIES
+  sections:
+  - heading: Thank you for purchasing Retrowave Skies!
+    text: 
+    linkText: 
+    url: 
+  - heading: 
+    text: Retrowave Skies is a dynamic and highly customizable Skybox Shader for
+      the <b>Universal Render Pipeline (URP)</b> that'll instantly give your project
+      a unique retro neon look.
+    linkText: 
+    url: 
+  - heading: 
+    text: The materials in the <i>Skybox Materials folder</i> are great to quick-start
+      using the asset, just <b>drag and drop</b> onto the <b>scene sky</b>! Check
+      out the <i>"_Demo Scenes" folder</i> for preset scenes to see how to use the
+      content and for inspiration.
+    linkText: 
+    url: 
+  - heading: 
+    text: <i>Using this asset in a project you want to share? Tag me in a tweet,
+      I'd love to see it!</i>
+    linkText: <i>@suggocreations</i>
+    url: https://twitter.com/SuggoCreations
+  - heading: Documentation
+    text: Be sure to check the documentation .pdf file. It includes <b>troubleshooting
+      guides</b> to help solve issues or learn more about the asset pack.
+    linkText: 
+    url: 
+  - heading: Support
+    text: Still have an issue or question? Message my support email!
+    linkText: support@suggocreations.com
+    url: mailto:support@suggocreations.com
+  - heading: Enjoying Retrowave Skies?
+    text: 
+    linkText: ‣ Leave a review!
+    url: https://assetstore.unity.com/packages/vfx/shaders/retrowave-skies-dynamic-synthwave-skybox-asset-pack-197258#reviews
+  loadedLayout: 1

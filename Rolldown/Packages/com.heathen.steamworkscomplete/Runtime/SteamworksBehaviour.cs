@@ -40,6 +40,11 @@ namespace HeathenEngineering.SteamworksIntegration
             settings.Initialize();
         }
 
+        private void Start()
+        {
+            
+        }
+
         private void OnDestroy()
         {
             API.App.evtSteamInitialized.RemoveListener(HandleInitialization);

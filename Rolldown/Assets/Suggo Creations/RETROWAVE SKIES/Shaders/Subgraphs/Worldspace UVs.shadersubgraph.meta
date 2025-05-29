@@ -8,3 +8,11 @@ ScriptedImporter:
   assetBundleName: 
   assetBundleVariant: 
   script: {fileID: 11500000, guid: 60072b568d64c40a485e0fc55012dc9f, type: 3}
+AssetOrigin:
+  serializedVersion: 1
+  productId: 280818
+  packageName: RETROWAVE SKIES - Dynamic Skybox Asset Pack
+  packageVersion: 3.0.0
+  assetPath: Assets/Suggo Creations/RETROWAVE SKIES/Shaders/Subgraphs/Worldspace
+    UVs.shadersubgraph
+  uploadId: 693760

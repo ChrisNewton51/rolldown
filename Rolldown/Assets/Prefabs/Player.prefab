@@ -65,6 +65,9 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -156,7 +159,7 @@ MonoBehaviour:
   steadyForce: 35
   airForce: 30
   sideForce: 15
-  jumpForce: 0.76
+  jumpForce: 1.4
   sideJumpForce: 22
   sideJumpHorizForce: 0.002
   gravityScale: 1.8
@@ -181,22 +184,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <IsNested>k__BackingField: 0
+  WasActiveDuringEdit: 0
+  WasActiveDuringEdit_Set1: 1
   <ComponentIndex>k__BackingField: 0
   <PredictedSpawn>k__BackingField: {fileID: 0}
-  _networkBehaviours:
+  <PredictedOwner>k__BackingField: {fileID: 0}
+  NetworkBehaviours:
   - {fileID: 3056378906667008358}
   - {fileID: 172746011998089268}
   - {fileID: 2907272489448529502}
-  <SerializedRootNetworkBehaviour>k__BackingField: {fileID: 0}
-  <NestedRootNetworkBehaviours>k__BackingField: []
-  SerializedTransformProperties:
-    Position: {x: 1, y: 62.762215, z: -258.9982}
-    Rotation: {x: 0, y: 0, z: 0, w: 1}
-    LocalScale: {x: 1, y: 1, z: 1}
+  InitializedParentNetworkBehaviour: {fileID: 0}
+  InitializedNestedNetworkObjects: []
+  RuntimeParentNetworkBehaviour: {fileID: 0}
+  RuntimeChildNetworkBehaviours: []
   _isNetworked: 1
   _isSpawnable: 1
   _isGlobal: 1
   _initializeOrder: 0
+  _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
@@ -214,8 +219,13 @@ MonoBehaviour:
   _teleportThreshold: 1
   <PrefabId>k__BackingField: 7
   <SpawnableCollectionId>k__BackingField: 0
-  <SceneId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 7807759643866311769
+  <SceneId>k__BackingField: 0
+  SerializedTransformProperties:
+    Position: {x: 3, y: 85.09659, z: -252.54254}
+    Rotation: {x: 0, y: 0, z: 0, w: 1}
+    Scale: {x: 1, y: 1, z: 1}
+    IsValid: 1
 --- !u!114 &172746011998089268
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -241,10 +251,8 @@ MonoBehaviour:
   _extrapolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  _scaleThreshold: 1
   _clientAuthoritative: 1
   _sendToOwner: 1
-  _enableNetworkLod: 0
   _interval: 1
   _synchronizePosition: 1
   _positionSnapping:
@@ -403,12 +411,12 @@ MonoBehaviour:
   m_RequiresColorTexture: 0
   m_Version: 2
   m_TaaSettings:
-    quality: 3
-    frameInfluence: 0.1
-    jitterScale: 1
-    mipBias: 0
-    varianceClampScale: 0.9
-    contrastAdaptiveSharpening: 0
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
 --- !u!114 &2907272489448529502
 MonoBehaviour:
   m_ObjectHideFlags: 0

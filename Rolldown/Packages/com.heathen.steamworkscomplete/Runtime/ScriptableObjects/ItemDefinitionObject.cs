@@ -1318,7 +1318,7 @@ namespace HeathenEngineering.SteamworksIntegration
                 sb.Append(",\n\t\t\"icon_url\": \"" + item_icon_url + "\"");
 
             if (!string.IsNullOrEmpty(item_icon_url_large))
-                sb.Append(",\n\t\t\"item_icon_url_large\": \"" + item_icon_url_large + "\"");
+                sb.Append(",\n\t\t\"icon_url_large\": \"" + item_icon_url_large + "\"");
 
             sb.Append(",\n\t\t\"marketable\": " + item_marketable.ToString().ToLower());
             sb.Append(",\n\t\t\"tradable\": " + item_tradable.ToString().ToLower());
@@ -1437,7 +1437,7 @@ namespace HeathenEngineering.SteamworksIntegration
                 sb.Append(",\n\t\t\"icon_url\": \"" + item_icon_url + "\"");
 
             if (!string.IsNullOrEmpty(item_icon_url_large))
-                sb.Append(",\n\t\t\"item_icon_url_large\": \"" + item_icon_url_large + "\"");
+                sb.Append(",\n\t\t\"icon_url_large\": \"" + item_icon_url_large + "\"");
 
             if (item_store_tags.Count > 0)
             {
@@ -1633,12 +1633,12 @@ namespace HeathenEngineering.SteamworksIntegration
         /// <param name="callback"></param>
         public void GenerateItem(uint quantity, Action<InventoryResult> callback) => Data.GenerateItem(quantity, callback);
         /// <summary>
-        /// Starts the purchase process for the user, given a shopping cart of item definitons that the user would like to buy
+        /// Starts the purchase process for the user, given a shopping cart of item definitions that the user would like to buy
         /// </summary>
         /// <param name="callback"></param>
         public void StartPurchase(Action<SteamInventoryStartPurchaseResult_t, bool> callback) => Data.StartPurchase(callback);
         /// <summary>
-        /// Starts the purchase process for the user, given a shopping cart of item definitons that the user would like to buy
+        /// Starts the purchase process for the user, given a shopping cart of item definitions that the user would like to buy
         /// </summary>
         public void StartPurchase(uint count, Action<SteamInventoryStartPurchaseResult_t, bool> callback) => Data.StartPurchase(count, callback);
         /// <summary>
@@ -1654,29 +1654,29 @@ namespace HeathenEngineering.SteamworksIntegration
         /// <param name="callback"></param>
         public void TriggerDrop(Action<InventoryResult> callback) => Data.TriggerDrop(callback);
         /// <summary>
-        /// Builds up a list of ExchangeEntries that can be used with the Exchange method to create this item form a recipie
+        /// Builds up a list of ExchangeEntries that can be used with the Exchange method to create this item form a recipe
         /// </summary>
         /// <remarks>
-        /// This only works on recipies that only use item referencs. if the recipie requires a specific tag type it will not resolve
+        /// This only works on recipies that only use item references. if the recipe requires a specific tag type it will not resolve
         /// </remarks>
-        /// <param name="recipie">The recipie to try and build ... you can see all recipies for an item in the item_exchange.recipe member</param>
+        /// <param name="recipe">The recipe to try and build ... you can see all recipies for an item in the item_exchange.recipe member</param>
         /// <param name="entries"></param>
         /// <returns></returns>
-        public bool CanExchange(ItemDefinitionObject.ExchangeRecipe recipie, out List<ExchangeEntry> entries)
+        public bool CanExchange(ItemDefinitionObject.ExchangeRecipe recipe, out List<ExchangeEntry> entries)
         {
-            if (!recipie.Valid)
+            if (!recipe.Valid)
             {
                 entries = null;
-                Debug.LogWarning("The indicated recipie appears to be invalid and cannot automatically be resolved to an ExchangeEntry list.");
+                Debug.LogWarning("The indicated recipe appears to be invalid and cannot automatically be resolved to an ExchangeEntry list.");
                 return false;
             }
 
             entries = new List<ExchangeEntry>();
-            foreach (var mat in recipie.materials)
+            foreach (var mat in recipe.materials)
             {
                 if (mat.item.item == null)
                 {
-                    Debug.LogWarning("We can only build recipies that take specific items. This recipie uses tag types");
+                    Debug.LogWarning("We can only build recipies that take specific items. This recipe uses tag types");
                     entries = null;
                     return false;
                 }
@@ -1688,7 +1688,7 @@ namespace HeathenEngineering.SteamworksIntegration
                     }
                     else
                     {
-                        Debug.LogWarning("Insufficent quantity of item " + mat.item.item.name);
+                        Debug.LogWarning("Insufficient quantity of item " + mat.item.item.name);
                         entries = null;
                         return false;
                     }
@@ -1699,13 +1699,13 @@ namespace HeathenEngineering.SteamworksIntegration
         }
 
         /// <summary>
-        /// This will only work well with currency formats broken into 1/100th e.g. dollars, euro, punds, etc.
+        /// This will only work well with currency formats broken into 1/100th e.g. dollars, euro, pounds, etc.
         /// </summary>
         /// <returns></returns>
         public string CurrentPriceString() => Data.CurrentPriceString();
 
         /// <summary>
-        /// This will only work well with currency formats broken into 1/100th e.g. dollars, euro, punds, etc.
+        /// This will only work well with currency formats broken into 1/100th e.g. dollars, euro, pounds, etc.
         /// </summary>
         /// <returns></returns>
         public string BasePriceString() => Data.BasePriceString();
@@ -1764,8 +1764,8 @@ namespace HeathenEngineering.SteamworksIntegration
             item_price = serializedObject.FindProperty("item_price");
             item_background_color = serializedObject.FindProperty("item_background_color");
             item_name_color = serializedObject.FindProperty("item_name_color");
-            item_icon_url = serializedObject.FindProperty("item_icon_url");
-            item_icon_url_large = serializedObject.FindProperty("item_icon_url_large");
+            item_icon_url = serializedObject.FindProperty("icon_url");
+            item_icon_url_large = serializedObject.FindProperty("icon_url_large");
             item_marketable = serializedObject.FindProperty("item_marketable");
             item_tradable = serializedObject.FindProperty("item_tradable");
             item_tags = serializedObject.FindProperty("item_tags");

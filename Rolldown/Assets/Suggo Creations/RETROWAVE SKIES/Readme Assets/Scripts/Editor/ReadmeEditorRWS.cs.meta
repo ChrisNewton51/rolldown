@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 73ee732d16ca5b843b6336a916e742f3
+timeCreated: 1484146680
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 280818
+  packageName: RETROWAVE SKIES - Dynamic Skybox Asset Pack
+  packageVersion: 3.0.0
+  assetPath: Assets/Suggo Creations/RETROWAVE SKIES/Readme Assets/Scripts/Editor/ReadmeEditorRWS.cs
+  uploadId: 693760

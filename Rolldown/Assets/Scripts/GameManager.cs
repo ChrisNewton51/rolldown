@@ -75,7 +75,7 @@ public class GameManager : NetworkBehaviour
         foreach (var player in players)
         {
             player.gameObject.transform.localPosition = new Vector3(0, -6.41f, -266.4171f);
-            player.gameObject.GetComponent<Rigidbody>().velocity = Vector3.zero;
+            player.gameObject.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
             player.gameObject.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
             player.gameObject.transform.rotation = Quaternion.identity;
             player.gameObject.SetActive(false);

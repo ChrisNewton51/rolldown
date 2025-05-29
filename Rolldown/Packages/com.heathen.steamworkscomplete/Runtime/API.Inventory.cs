@@ -451,7 +451,10 @@ namespace HeathenEngineering.SteamworksIntegration.API
                     return value;
                 }
                 else
+                {
+                    Debug.LogWarning($"Steam has reported that the item definitions have not been loaded from the server, or no item definitions exist for the current application, or `{propertyName}` is not a valid property.");
                     return string.Empty;
+                }
             }
             /// <summary>
             /// Returns a list of the available properties on a given item
@@ -461,9 +464,22 @@ namespace HeathenEngineering.SteamworksIntegration.API
             public static string[] GetItemDefinitionProperties(SteamItemDef_t item)
             {
                 uint count = 0;
-                SteamInventory.GetItemDefinitionProperty(item, null, out string value, ref count);
-                SteamInventory.GetItemDefinitionProperty(item, null, out value, ref count);
-                return value.Split(',');
+                if (SteamInventory.GetItemDefinitionProperty(item, null, out string value, ref count))
+                {
+                    SteamInventory.GetItemDefinitionProperty(item, null, out value, ref count);
+                    if (value != null)
+                        return value.Split(',');
+                    else
+                    {
+                        Debug.LogWarning($"Steam has reported that the item definitions have not been loaded from the server, or no item definitions exist for the current application.");
+                        return new string[0];
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning($"Steam has reported that the item definitions have not been loaded from the server, or no item definitions exist for the current application.");
+                    return new string[0];
+                }
             }
             /// <summary>
             /// Gets the state of a subset of the current user's inventory.

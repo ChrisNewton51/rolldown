@@ -84,7 +84,7 @@ namespace HeathenEngineering.SteamworksIntegration
                     && content != null
                     && preview.Exists
                     && content.Exists
-                    && !tags.Any(p => p.Length > 255);
+                    && (tags == null || tags.Length == 0 || !tags.Any(p => p.Length > 255));
             }
         }
         /// <summary>

@@ -115,8 +115,9 @@ namespace HeathenEngineering.SteamworksIntegration.API
             {
                 m_AppResumingFromSuspend_t = null;
                 m_FloatingGamepadTextInputDismissed_t = null;
-                eventKeyboardShown = new UnityEvent();
-                eventKeyboardClosed = new UnityEvent();
+                eventKeyboardShown = new();
+                eventKeyboardClosed = new();
+                eventAppResumeFromSuspend = new();
             }
 
 #pragma warning disable IDE0052 // Remove unread private members
@@ -197,7 +198,6 @@ namespace HeathenEngineering.SteamworksIntegration.API
             public static bool ShowVirtualKeyboard(EFloatingGamepadTextInputMode mode, RectTransform fieldTransform, Canvas canvas)
             {
                 var rect = RectTransformUtility.PixelAdjustRect(fieldTransform, canvas);
-
                 if (SteamUtils.ShowFloatingGamepadTextInput(mode, (int)rect.x, (int)rect.y, (int)rect.size.x, (int)rect.size.y))
                 {
                     eventKeyboardShown.Invoke();

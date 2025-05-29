@@ -18,10 +18,8 @@ namespace HeathenEngineering.SteamworksIntegration
         /// <summary>
         /// The native <see cref="CSteamID"/> of the lobby
         /// </summary>
-        public readonly CSteamID SteamId
-        { 
-             get => new(id);
-        }
+        public readonly CSteamID SteamId => new(id);
+        
         /// <summary>
         /// The native <see cref="AccountID_t"/> of the lobby
         /// </summary>
@@ -681,7 +679,7 @@ namespace HeathenEngineering.SteamworksIntegration
         /// <param name="accountId">The ID of the lobby as a string to return</param>
         /// <returns>The related lobby</returns>
         public static LobbyData Get(string accountId)
-        {
+        {            
             uint id = Convert.ToUInt32(accountId, 16);
             if (id > 0)
                 return Get(id);
