@@ -1,8 +1,9 @@
+using FishNet.Object;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SmallBombObstacle : MonoBehaviour
+public class SmallBombObstacle : NetworkBehaviour
 {
     private float speed;
 
@@ -23,10 +24,13 @@ public class SmallBombObstacle : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // Ensure only the server runs this logic
+        if (!IsServerInitialized) return;
+
         transform.Translate(Vector3.right * Time.deltaTime * speed);
         if (transform.position.x > rightBound || transform.position.x < leftBound)
         {
-            Destroy(gameObject);
+            Despawn();
         } 
     }
 }

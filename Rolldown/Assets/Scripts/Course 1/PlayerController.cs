@@ -363,7 +363,7 @@ public class PlayerController : NetworkBehaviour
         if (other.gameObject.CompareTag("Bomb") && !invincible)
         {
             rb.AddExplosionForce(bombForce, other.gameObject.transform.position, 30);
-            Destroy(other.gameObject);
+            Despawn(other.gameObject);
             StartCoroutine(Invincible());
         }
 
