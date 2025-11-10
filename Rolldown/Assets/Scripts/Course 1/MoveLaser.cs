@@ -6,8 +6,8 @@ public class MoveLaser : MonoBehaviour
 {
     public float speed = 10;
     private int direction = 1;
-    private int backBound = 320;
-    private int forwardBound = 396;
+    public int backBound = 320;
+    public int forwardBound = 396;
 
     // Start is called before the first frame update
     void Start()

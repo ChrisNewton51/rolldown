@@ -65,13 +65,13 @@ public class PlayerController : NetworkBehaviour
         HandlePowerups();
 
         //TEST//
-        rb.AddForce(Vector3.forward * steadyForce * Input.GetAxis("Vertical"));
-        if (Input.GetKeyDown(KeyCode.F))
-        {
-            rb.linearVelocity = Vector3.zero;
-            rb.rotation = Quaternion.identity;
-            rb.angularVelocity = Vector3.zero;
-        }
+        //rb.AddForce(Vector3.forward * steadyForce * Input.GetAxis("Vertical"));
+        //if (Input.GetKeyDown(KeyCode.F))
+        //{
+        //    rb.linearVelocity = Vector3.zero;
+        //    rb.rotation = Quaternion.identity;
+        //    rb.angularVelocity = Vector3.zero;
+        //}
     }
 
     void FixedUpdate()
