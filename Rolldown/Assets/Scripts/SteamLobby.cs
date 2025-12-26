@@ -1,62 +1,56 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using Steamworks;
-using TMPro;
-using Heathen.SteamworksIntegration;
+using Heathen.SteamworksIntegration; // Your preferred namespace
 
 public class SteamLobby : MonoBehaviour
-{
+{   
+    public static SteamLobby Instance;
+
     [SerializeField] private LobbyManager lobbyManager;
     [SerializeField] private BootstrapNetworkManager bootstrapNetworkManager;
 
     private void Awake()
     {
-
+        if (Instance == null) Instance = this;
     }
 
+    // Linked to LobbyManager.evtCreated
     public void OnLobbyCreated(LobbyData lobbyData)
     {
-        // UI
         MainMenuManager.instance.OnLobbyCreated(lobbyData);
 
-        // Network
-        string hostId = UserData.Get().SteamId.ToString();
-        lobbyManager.SetLobbyData("HostID", hostId);
+        // Use UserData.Me for the local user and indexers for metadata
+        string hostId = UserData.Me.SteamId.ToString();
+        lobbyData["HostID"] = hostId;
+        
         bootstrapNetworkManager.LobbyCreated(hostId);
     }
 
-    public void OnLobbyJoined(LobbyData lobbyData)
+    // Linked to LobbyManager.evtEnterSuccess
+    public void OnLobbyJoined(LobbyData lobbyData) 
     {
-        // UI
         MainMenuManager.instance.OnLobbyJoined(lobbyData);
 
-        // Network
-        string hostId = lobbyManager.GetLobbyData("HostID");
+        // Get metadata using the indexer
+        string hostId = lobbyData["HostID"];
         bootstrapNetworkManager.LobbyJoined(hostId);
     }
 
+    // Linked to LobbyManager.evtUserJoined (passes UserData)
     public void OtherUserJoin(UserData userData)
     {
-        // UI
-        MainMenuManager.instance.OtherUserJoin(userData);
+        MainMenuManager.instance.SetupCard(userData);
     }
 
+    // Linked to LobbyManager.evtUserLeft (passes UserLobbyLeaveData)
     public void OnUserLeft(UserLobbyLeaveData userLeaveData)
     {
-        // UI
-        MainMenuManager.instance.OnUserLeft(userLeaveData);
+        // UserLobbyLeaveData contains the UserData object
+        MainMenuManager.instance.RemoveCard(userLeaveData.user);
     }
 
     public void LobbyLeave()
     {
-        // Network
         BootstrapNetworkManager.instance.LeaveLobby();
-    }
-
-    public void InviteFriend()
-    {
-        // Ensure the Steam overlay is enabled and working
-        //SteamFriends.ActivateGameOverlayInviteDialog(currentLobbyID);
     }
 }

@@ -371,8 +371,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1169188511}
-  - component: {fileID: 1169188510}
   - component: {fileID: 1169188512}
+  - component: {fileID: 1169188513}
   m_Layer: 0
   m_Name: BootstrapManager
   m_TagString: Untagged
@@ -380,40 +380,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1169188510
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1169188509}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4882e1f0baaa18a45836edebb1e6b881, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  settings: {fileID: 11400000, guid: 5fb4adf3d6d957043b56a47edcf44348, type: 2}
-  evtSteamInitialized:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1169188512}
-        m_TargetAssemblyTypeName: BootstrapManager, Assembly-CSharp
-        m_MethodName: GoToMenu
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  evtSteamInitializationError:
-    m_PersistentCalls:
-      m_Calls: []
-  evtLobbyInviteArgumentDetected:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!4 &1169188511
 Transform:
   m_ObjectHideFlags: 0
@@ -441,8 +407,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d8bec688d1a48f4486cb4197b1f651b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lobbyManager: {fileID: 7206590778558908862}
+  lobbyManager: {fileID: 0}
   menuName: MainMenu
+--- !u!114 &1169188513
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1169188509}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 872f6ae278cb0644882f90fe4993b93f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &1446744578
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -620,9 +598,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6406726008088544480}
-  - component: {fileID: 7206590778558908862}
   - component: {fileID: 4784849132868737574}
   - component: {fileID: 7206590778558908863}
+  - component: {fileID: 7206590778558908864}
   m_Layer: 0
   m_Name: LobbyManager
   m_TagString: Untagged
@@ -975,7 +953,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7206590778558908862
+--- !u!114 &7206590778558908863
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -984,10 +962,24 @@ MonoBehaviour:
   m_GameObject: {fileID: 4104052368523602415}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0f314bc6f3466b54da82e29cdd36fe44, type: 3}
+  m_Script: {fileID: 11500000, guid: dc8b75e6337cfa54e98ce1e43bcea88c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Delegates: 03000000060000000a0000000700000009000000
+  lobbyManager: {fileID: 7206590778558908864}
+  bootstrapNetworkManager: {fileID: 903868869}
+--- !u!114 &7206590778558908864
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4104052368523602415}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18447b16fab2424499532c23559e1e37, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Delegates: 030000000a0000000600000007000000
   searchArguments:
     slots: -1
     distance: 1
@@ -995,9 +987,9 @@ MonoBehaviour:
     numericFilters: []
     stringFilters: []
   createArguments:
-    usageHint: 2
+    usageHint: 1
     name: 
-    slots: 10
+    slots: 0
     type: 0
     metadata: []
     richPresenceFields: []
@@ -1092,13 +1084,13 @@ MonoBehaviour:
   evtUserLeft:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 7206590778558908863}
-        m_TargetAssemblyTypeName: SteamLobby, Assembly-CSharp
-        m_MethodName: OnUserLeft
-        m_Mode: 0
+      - m_Target: {fileID: 11500000, guid: dc8b75e6337cfa54e98ce1e43bcea88c, type: 3}
+        m_TargetAssemblyTypeName: 
+        m_MethodName: 
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_ObjectArgumentAssemblyTypeName: 
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -1107,20 +1099,6 @@ MonoBehaviour:
   evtAuthenticationSessionResult:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &7206590778558908863
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4104052368523602415}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc8b75e6337cfa54e98ce1e43bcea88c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  lobbyManager: {fileID: 7206590778558908862}
-  bootstrapNetworkManager: {fileID: 903868869}
 --- !u!114 &7443408887301174052
 MonoBehaviour:
   m_ObjectHideFlags: 0
