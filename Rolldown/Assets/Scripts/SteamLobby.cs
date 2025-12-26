@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Steamworks;
 using TMPro;
-using HeathenEngineering.SteamworksIntegration;
+using Heathen.SteamworksIntegration;
 
 public class SteamLobby : MonoBehaviour
 {

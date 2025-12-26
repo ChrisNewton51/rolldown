@@ -51,6 +51,6 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "Rolldown.sln",
+    "dotnet.defaultSolution": "Rolldown.slnx",
     "dotnet.preferCSharpExtension": true
 }

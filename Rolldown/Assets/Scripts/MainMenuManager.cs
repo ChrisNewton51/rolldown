@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Steamworks;
 using TMPro;
-using HeathenEngineering.SteamworksIntegration;
+using Heathen.SteamworksIntegration;
 using UnityEngine.UI;
 using FishNet.Managing.Scened;
 using FishNet.Managing;
@@ -41,7 +41,7 @@ public class MainMenuManager : MonoBehaviour
 
         OpenMainMenu();
 
-        HeathenEngineering.SteamworksIntegration.API.Overlay.Client.EventGameLobbyJoinRequested.AddListener(OverlayJoinButton);
+        Heathen.SteamworksIntegration.API.Overlay.Client.OnGameLobbyJoinRequested.AddListener(OverlayJoinButton);
 
         leaveButton.onClick.AddListener(LeaveLobby);
         hostButton.onClick.AddListener(CreateLobby);

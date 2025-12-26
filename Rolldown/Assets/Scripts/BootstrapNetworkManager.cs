@@ -9,7 +9,7 @@ using FishNet.Managing.Client;
 using FishNet.Object;
 using FishNet.Transporting;
 using FishySteamworks;
-using HeathenEngineering.SteamworksIntegration;
+using Heathen.SteamworksIntegration;
 using UnityEngine;
 
 public class BootstrapNetworkManager : NetworkBehaviour

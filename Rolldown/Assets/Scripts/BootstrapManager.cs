@@ -6,7 +6,7 @@ using FishNet.Connection;
 using Steamworks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using HeathenEngineering.SteamworksIntegration;
+using Heathen.SteamworksIntegration;
 using FishySteamworks;
 
 public class BootstrapManager : MonoBehaviour
@@ -21,6 +21,7 @@ public class BootstrapManager : MonoBehaviour
 
     private void Start()
     {
+        GoToMenu();
     }
 
     public void GoToMenu()

@@ -321,6 +321,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
+  _initializedTimestamp: 0
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -338,7 +339,7 @@ MonoBehaviour:
   <PrefabId>k__BackingField: 0
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 0
-  <SceneId>k__BackingField: 3921534847
+  SceneId: 4290727897
   SerializedTransformProperties:
     Position: {x: -179.30846, y: -6.639412, z: 355.5039}
     Rotation: {x: 0, y: 0, z: 0, w: 1}
