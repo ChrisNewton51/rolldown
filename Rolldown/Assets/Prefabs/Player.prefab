@@ -159,7 +159,7 @@ MonoBehaviour:
   steadyForce: 35
   airForce: 30
   sideForce: 15
-  jumpForce: 1.4
+  jumpForce: 1.55
   sideJumpForce: 22
   sideJumpHorizForce: 0.002
   gravityScale: 1.8
@@ -203,7 +203,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584349162783459761
+  _initializedTimestamp: -8584347591759959943
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
