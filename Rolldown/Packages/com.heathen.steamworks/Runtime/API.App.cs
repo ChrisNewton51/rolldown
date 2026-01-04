@@ -52,11 +52,13 @@ namespace Heathen.SteamworksIntegration.API
                     callbackWaitThread.ProgressChanged -= CallbackWaitThread_ProgressChanged;
 
                     callbackWaitThread.CancelAsync();
-                    callbackWaitThread.Dispose();
                 }
 
+                callbackWaitThread.Dispose();
                 callbackWaitThread = null;
             }
+
+            _suspendCallbacks = false;
         }
 
         private static void Application_quitting()
@@ -142,6 +144,7 @@ namespace Heathen.SteamworksIntegration.API
         public static UnityEvent<string> onSteamInitializationError = new();
 
         private static BackgroundWorker callbackWaitThread = null;
+        private static bool _suspendCallbacks = false;
 
         private static void CallbackWaitThread_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
@@ -335,6 +338,7 @@ namespace Heathen.SteamworksIntegration.API
                     
 #endif
                     Application.quitting += Application_quitting;
+                    Application.focusChanged += Application_focusChanged;
 
                     if (Initialized)
                     {
@@ -348,6 +352,10 @@ namespace Heathen.SteamworksIntegration.API
                                 while (true)
                                 {
                                     Thread.Sleep(callbackTick_Milliseconds);
+
+                                    if (_suspendCallbacks)
+                                        continue;
+
                                     callbackWaitThread.ReportProgress(1);
                                 }
                             };
@@ -356,7 +364,6 @@ namespace Heathen.SteamworksIntegration.API
                         }
 
                         callbackWaitThread.RunWorkerAsync();
-                        Web.LoadAppNames(null);
                         Overlay.Client.RegisterEvents();
 
                         if(actions != null
@@ -383,6 +390,11 @@ namespace Heathen.SteamworksIntegration.API
                         Debug.LogError("[Steamworks.NET] Steam Initialization failed, check the log for more information");
                     }
                 }
+            }
+
+            private static void Application_focusChanged(bool hasFocus)
+            {
+                _suspendCallbacks = !hasFocus && !Application.runInBackground;
             }
 
             /// <summary>

@@ -1,7 +1,6 @@
 ﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
 using Steamworks;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 

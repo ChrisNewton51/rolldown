@@ -57,31 +57,50 @@ namespace Heathen.SteamworksIntegration.Editors
                 return;
 
             string activeDefine = $"APP{settings.ActiveApp.Value}";
-            NamedBuildTarget buildTarget = NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
 
-            string defines = PlayerSettings.GetScriptingDefineSymbols(buildTarget);
-            var defineList = defines.Split(';').ToList();
-
-            // Remove other APP#### defines
-            for (int i = defineList.Count - 1; i >= 0; i--)
+            var targets = new NamedBuildTarget[]
             {
-                string d = defineList[i];
-                if (d.StartsWith("APP"))
+                NamedBuildTarget.Standalone,
+                NamedBuildTarget.Server,
+            };
+
+            foreach (var buildTarget in targets)
+            {
+                string defines = PlayerSettings.GetScriptingDefineSymbols(buildTarget);
+                var defineList = new HashSet<string>(defines.Split(';', System.StringSplitOptions.RemoveEmptyEntries));
+
+                // Remove all APP#### defines except active
+                var toRemove = new List<string>();
+                bool hasActive = false;
+
+                foreach (var d in defineList)
                 {
-                    string numberPart = d.Substring(3);
-                    if (uint.TryParse(numberPart, out _))
+                    if (d == activeDefine)
                     {
-                        if (d != activeDefine)
-                            defineList.RemoveAt(i);
+                        hasActive = true;
+                        continue;
+                    }
+
+                    if (d.StartsWith("APP") &&
+                        d.Length > 3 &&
+                        uint.TryParse(d.Substring(3), out _) &&
+                        d != activeDefine)
+                    {
+                        toRemove.Add(d);
                     }
                 }
-            }
 
-            // Add active define if not present
-            if (!defineList.Contains(activeDefine))
+                if (hasActive && toRemove.Count == 0)
+                    continue;
+
+                foreach (var d in toRemove)
+                    defineList.Remove(d);
+
+                // Add active define
                 defineList.Add(activeDefine);
 
-            PlayerSettings.SetScriptingDefineSymbols(buildTarget, string.Join(";", defineList));
+                PlayerSettings.SetScriptingDefineSymbols(buildTarget, string.Join(";", defineList));
+            }
         }
 
         public override void OnGUI(string searchContext)
@@ -131,6 +150,7 @@ namespace Heathen.SteamworksIntegration.Editors
             bool needRestart = false;
             if (nIndex != settings.activeAppIndex)
             {
+                EditorUtility.SetDirty(this.settings);
                 settings.activeAppIndex = nIndex;
                 needRestart = true;
             }
@@ -154,8 +174,10 @@ namespace Heathen.SteamworksIntegration.Editors
             
             EditorGUILayout.Space();
             EditorGUILayout.Space();
-            GUIStyle nStyle = new GUIStyle(EditorStyles.boldLabel);
-            nStyle.fontSize = 18;
+            GUIStyle nStyle = new(EditorStyles.boldLabel)
+            {
+                fontSize = 18
+            };
             EditorGUILayout.LabelField(" Global", nStyle);
             EditorGUILayout.BeginHorizontal();
             if (EditorGUILayout.LinkButton("Knowledge Base"))
@@ -301,7 +323,6 @@ namespace Heathen.SteamworksIntegration.Editors
 
         private void DrawCommonSettings(SteamToolsSettings.AppSettings settings)
         {
-
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Open Debug Window"))
             {
@@ -411,6 +432,16 @@ namespace Heathen.SteamworksIntegration.Editors
             {
                 Undo.RecordObject(settings, "editor");
                 settings.defaultServerSettings.serverName = serverName;
+                settings.isDirty = true;
+                EditorUtility.SetDirty(settings);
+            }
+
+            var serverVersion = EditorGUILayout.TextField("Server Version", settings.defaultServerSettings.serverVersion);
+
+            if (serverVersion != settings.defaultServerSettings.serverVersion)
+            {
+                Undo.RecordObject(settings, "editor");
+                settings.defaultServerSettings.serverVersion = serverVersion;
                 settings.isDirty = true;
                 EditorUtility.SetDirty(settings);
             }

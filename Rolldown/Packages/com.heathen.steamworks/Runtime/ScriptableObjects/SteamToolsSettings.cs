@@ -2,6 +2,7 @@
 using Steamworks;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace Heathen.SteamworksIntegration
@@ -378,6 +379,18 @@ namespace Heathen.SteamworksIntegration
             lastGenerated = DateTime.Now;
         }
 
+        string MakeValidIdentifier(string name)
+        {
+            // Replace any non-letter/digit/_ with _
+            string identifier = Regex.Replace(name, @"[^a-zA-Z0-9_]", "_");
+
+            // If it starts with a digit, prepend _
+            if (char.IsDigit(identifier[0]))
+                identifier = "_" + identifier;
+
+            return identifier;
+        }
+
         private string GenerateWrapperCode()
         {
             var sb = new System.Text.StringBuilder();
@@ -425,7 +438,8 @@ namespace Heathen.SteamworksIntegration
                 for (int ii = 0; ii < dlcNames.Count; ii++)
                 {
                     var foundItem = dlc[ii];
-                    sb.AppendLine($"            public static DlcData {dlcNames[ii].Replace(' ', '_')} = {foundItem};");
+                    string safeName = MakeValidIdentifier(dlcNames[ii]);
+                    sb.AppendLine($"            public static DlcData {safeName} = {foundItem};");
                 }
 
                 if (wroteDlc)
@@ -542,7 +556,7 @@ namespace Heathen.SteamworksIntegration
                                 sb.AppendLine($"            LeaderboardData.GetOrCreate(\"{leaderboard.name}\", {display}, {sort}, (result, ioError) =>");
                                 sb.AppendLine($"            {{");
                                 sb.AppendLine($"                if(!ioError)");
-                                sb.AppendLine($"                    Leaderboards.{leaderboard.name.Replace(' ', '_')} = result;");
+                                sb.AppendLine($"                    Leaderboards.{MakeValidIdentifier(leaderboard.name)} = result;");
                                 sb.AppendLine();
                                 sb.AppendLine($"                returnedBoards++;");
                                 sb.AppendLine($"                if(returnedBoards >= boardCount)");
@@ -572,7 +586,7 @@ namespace Heathen.SteamworksIntegration
                                 sb.AppendLine($"            LeaderboardData.Get(\"{leaderboard.name}\", (result, ioError) =>");
                                 sb.AppendLine($"            {{");
                                 sb.AppendLine($"                if(!ioError)");
-                                sb.AppendLine($"                    Leaderboards.{leaderboard.name.Replace(' ', '_')} = result;");
+                                sb.AppendLine($"                    Leaderboards.{MakeValidIdentifier(leaderboard.name)} = result;");
                                 sb.AppendLine();
                                 sb.AppendLine($"                returnedBoards++;");
                                 sb.AppendLine($"                if(returnedBoards >= boardCount)");
@@ -665,9 +679,9 @@ namespace Heathen.SteamworksIntegration
                     {
                         var matchStat = appSettings.stats.Find(s => s.ApiName == statName);
                         if (string.IsNullOrEmpty(matchStat))
-                            sb.AppendLine($"            public static StatData {statName.Replace(' ', '_')};");
+                            sb.AppendLine($"            public static StatData {MakeValidIdentifier(statName)};");
                         else
-                            sb.AppendLine($"            public static StatData {statName.Replace(' ', '_')} = \"{matchStat.ApiName}\";");
+                            sb.AppendLine($"            public static StatData {MakeValidIdentifier(statName)} = \"{matchStat.ApiName}\";");
                     }
                 }
 
@@ -675,7 +689,7 @@ namespace Heathen.SteamworksIntegration
                 {
                     sb.AppendLine("#else");
                     foreach (var statName in stats)
-                        sb.AppendLine($"            public static StatData {statName.Replace(' ', '_')};");
+                        sb.AppendLine($"            public static StatData {MakeValidIdentifier(statName)};");
                     sb.AppendLine("#endif");
                     sb.AppendLine("        }");
                     sb.AppendLine();
@@ -705,9 +719,9 @@ namespace Heathen.SteamworksIntegration
                     {
                         var matchApiName = appSettings.achievements.Find(p => p.ApiName == achievementName);
                         if (string.IsNullOrEmpty(matchApiName))
-                            sb.AppendLine($"            public static AchievementData {achievementName.Replace(' ', '_')};");
+                            sb.AppendLine($"            public static AchievementData {MakeValidIdentifier(achievementName)};");
                         else
-                            sb.AppendLine($"            public static AchievementData {achievementName.Replace(' ', '_')} = \"{matchApiName.ApiName}\";");
+                            sb.AppendLine($"            public static AchievementData {MakeValidIdentifier(achievementName)} = \"{matchApiName.ApiName}\";");
                     }
                 }
 
@@ -715,7 +729,7 @@ namespace Heathen.SteamworksIntegration
                 {
                     sb.AppendLine("#else");
                     foreach (var achievementName in achievements)
-                        sb.AppendLine($"            public static AchievementData {achievementName.Replace(' ', '_')};");
+                        sb.AppendLine($"            public static AchievementData {MakeValidIdentifier(achievementName)};");
                     sb.AppendLine("#endif");
                     sb.AppendLine("        }");
                     sb.AppendLine();
@@ -735,7 +749,7 @@ namespace Heathen.SteamworksIntegration
                     wroteLeaderboards = true;
                     foreach (var leaderboardName in leaderboards)
                     {
-                        sb.AppendLine($"            public static LeaderboardData {leaderboardName.Replace(' ', '_')};");
+                        sb.AppendLine($"            public static LeaderboardData {MakeValidIdentifier(leaderboardName)};");
                     }
                     sb.AppendLine();
                     sb.AppendLine("            public static Dictionary<string, LeaderboardData> GetMap()");
@@ -763,7 +777,7 @@ namespace Heathen.SteamworksIntegration
             if (inputSets.Count > 0)
             {
                 sb.AppendLine("        public static class Inputs");
-                sb.AppendLine("        {");
+                sb.AppendLine("        {");                
 
                 // ---- Sets ----
                 if (inputSets.Count > 0)
@@ -776,13 +790,14 @@ namespace Heathen.SteamworksIntegration
                     sb.AppendLine("                var map = new Dictionary<string, InputActionSetData>();");
                     foreach (var setName in inputSets)
                     {
-                        sb.AppendLine($"                map.Add(\"{setName}\", {setName.Replace(' ', '_')});");
+                        sb.AppendLine($"                map.Add(\"{setName}\", {MakeValidIdentifier(setName)});");
                     }
                     sb.AppendLine("                return map;");
                     sb.AppendLine("            }");
                     sb.AppendLine();
                     sb.AppendLine("            public static void Initialize()");
                     sb.AppendLine("            {");
+                    sb.AppendLine("#if UNITY_SERVER\r\n                    return;\r\n#endif");
 
                     for (int i = 0; i < appIds.Count; i++)
                     {
@@ -819,13 +834,13 @@ namespace Heathen.SteamworksIntegration
                         {
                             bool exists = appSettings.actionSetLayers.Contains(layerName);
                             sb.AppendLine(exists
-                                ? $"                public static InputActionSetLayerData {layerName.Replace(' ', '_')} = new(){{ layerName = \"{layerName}\" }};"
-                                : $"                public static InputActionSetLayerData {layerName.Replace(' ', '_')};");
+                                ? $"                public static InputActionSetLayerData {MakeValidIdentifier(layerName)} = new(){{ layerName = \"{layerName}\" }};"
+                                : $"                public static InputActionSetLayerData {MakeValidIdentifier(layerName)};");
                         }
                     }
                     sb.AppendLine("#else");
                     foreach (var layerName in inputLayers)
-                        sb.AppendLine($"                public static InputActionSetLayerData {layerName.Replace(' ', '_')};");
+                        sb.AppendLine($"                public static InputActionSetLayerData {MakeValidIdentifier(layerName)};");
                     sb.AppendLine("#endif");
                     sb.AppendLine("            }");
                     sb.AppendLine();
@@ -887,7 +902,7 @@ namespace Heathen.SteamworksIntegration
                     //if (foundItem != null && foundItem.id <= 0)
                     //    sb.AppendLine($"            public static ItemData {itemName.Replace(' ', '_')};");
                     //else
-                        sb.AppendLine($"            public static ItemData {itemNameAndId.name.Replace(' ', '_')} = {itemNameAndId.id};");
+                        sb.AppendLine($"            public static ItemData {MakeValidIdentifier(itemNameAndId.name)} = {itemNameAndId.id};");
                 }
 
                 sb.AppendLine("        }");

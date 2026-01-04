@@ -1789,8 +1789,7 @@ namespace Heathen.SteamworksIntegration.API
                 if (callback == null)
                     return;
 
-                if (m_SubmitItemUpdateResult == null)
-                    m_SubmitItemUpdateResult = CallResult<SubmitItemUpdateResult_t>.Create();
+                m_SubmitItemUpdateResult ??= CallResult<SubmitItemUpdateResult_t>.Create();
 
                 var call = SteamUGC.SubmitItemUpdate(handle, changeNote);
                 m_SubmitItemUpdateResult.Set(call, callback.Invoke);
