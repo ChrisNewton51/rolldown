@@ -33,7 +33,7 @@ Transform:
   m_GameObject: {fileID: 241532838827486296}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3, y: 85.97999, z: -254.96967}
+  m_LocalPosition: {x: 5, y: 85.97999, z: -254.96967}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -203,7 +203,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584347591759959943
+  _initializedTimestamp: -8584340507776150765
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0

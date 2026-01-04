@@ -19,6 +19,8 @@ public class SteamLobby : MonoBehaviour
     {
         MainMenuManager.instance.OnLobbyCreated(lobbyData);
 
+        lobbyData.SetGameServer();
+        
         // Use UserData.Me for the local user and indexers for metadata
         string hostId = UserData.Me.SteamId.ToString();
         lobbyData["HostID"] = hostId;

@@ -22,18 +22,23 @@ public class BombSpawner : NetworkBehaviour
     {
         Vector3 basePos = bombParent.position;
 
-        // 1. Compute a world position
-        Vector3 spawnPos = basePos + new Vector3(Random.Range(-26f, 26f),200f,Random.Range(500f, 700f));
+        // 1. Compute the exact world position
+        Vector3 spawnPos = basePos + new Vector3(Random.Range(-26f, 26f), 200f, Random.Range(500f, 700f));
 
-        // 2. Instantiate a NetworkObject instance at that position
+        // 2. Instantiate with NULL parent to ensure spawnPos is treated as absolute World Space
         NetworkObject instance = Instantiate(
             bombPrefab,
             spawnPos,
             Quaternion.identity,
-            bombParent
+            null // Set parent to null initially
         );
 
-        // 3. Spawn it so all clients get the same transform
+        // 3. Spawn it to the network
         InstanceFinder.ServerManager.Spawn(instance);
+
+        // 4. (Optional) Re-parent for organization on the server
+        // Note: Only do this if bombParent also has a NetworkObject. 
+        // If it doesn't, it's safer to leave them unparented.
+        instance.transform.SetParent(bombParent);
     }
 }

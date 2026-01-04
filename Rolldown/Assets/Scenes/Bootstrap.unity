@@ -989,8 +989,8 @@ MonoBehaviour:
   createArguments:
     usageHint: 1
     name: 
-    slots: 0
-    type: 0
+    slots: 4
+    type: 1
     metadata: []
     richPresenceFields: []
   richPresenceFields: []
