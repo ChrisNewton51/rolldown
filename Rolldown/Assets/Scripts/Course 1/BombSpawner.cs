@@ -39,6 +39,6 @@ public class BombSpawner : NetworkBehaviour
         // 4. (Optional) Re-parent for organization on the server
         // Note: Only do this if bombParent also has a NetworkObject. 
         // If it doesn't, it's safer to leave them unparented.
-        instance.transform.SetParent(bombParent);
+        // instance.transform.SetParent(bombParent);
     }
 }
