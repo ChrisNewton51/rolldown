@@ -12,7 +12,6 @@ using FishySteamworks;
 public class BootstrapManager : MonoBehaviour
 {
     public static BootstrapManager instance;
-    [SerializeField] public LobbyManager lobbyManager;
 
     private void Awake() => instance = this;
     
