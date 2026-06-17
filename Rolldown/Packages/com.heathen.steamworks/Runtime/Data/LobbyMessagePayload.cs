@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using System;
 
 namespace Heathen.SteamworksIntegration
@@ -9,8 +9,17 @@ namespace Heathen.SteamworksIntegration
     [Serializable]
     public struct LobbyMessagePayload
     {
+        /// <summary>
+        /// The Steam ID of the user.
+        /// </summary>
         public ulong id;
+        /// <summary>
+        /// The authentication ticket data.
+        /// </summary>
         public byte[] data;
+        /// <summary>
+        /// The inventory ownership validation data.
+        /// </summary>
         public byte[] inventory;
     }
 }

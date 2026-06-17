@@ -1,4 +1,5 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
+using System;
 using System.Collections;
 using UnityEngine;
 using Friends = Heathen.SteamworksIntegration.API.Friends;
@@ -17,21 +18,7 @@ namespace Heathen.SteamworksIntegration
 
         private void OnEnable()
         {
-            if(API.App.Initialized)
-            {
-                if (setOnEnable)
-                {
-                    if (Application.isFocused)
-                        Set(withFocus);
-                    else
-                        Set(withoutFocus);
-                }
-            }
-            else
-            {
-                API.App.onSteamInitialized.AddListener(DelayUpdate);
-            }
-
+            SteamTools.Interface.WhenReady(DelayUpdate);
             Application.focusChanged += Application_focusChanged;
         }
 
@@ -39,13 +26,8 @@ namespace Heathen.SteamworksIntegration
         {
             if (setOnEnable)
             {
-                if (Application.isFocused)
-                    Set(withFocus);
-                else
-                    Set(withoutFocus);
+                Set(Application.isFocused ? withFocus : withoutFocus);
             }
-
-            API.App.onSteamInitialized.RemoveListener(DelayUpdate);
         }
 
         private void OnDisable()

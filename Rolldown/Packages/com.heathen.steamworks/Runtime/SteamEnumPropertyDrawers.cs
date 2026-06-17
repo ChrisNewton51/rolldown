@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 #if UNITY_EDITOR
 using Steamworks;
 using System.Linq;
@@ -7,9 +7,18 @@ using UnityEngine;
 
 namespace Heathen.SteamworksIntegration
 {
+    /// <summary>
+    /// A custom property drawer for <see cref="ERemoteStoragePublishedFileVisibility"/>.
+    /// </summary>
     [CustomPropertyDrawer(typeof(ERemoteStoragePublishedFileVisibility))]
     public class SteamVisibilityDrawer : PropertyDrawer
     {
+        /// <summary>
+        /// Draws the property GUI.
+        /// </summary>
+        /// <param name="position">The rectangle on the screen to use for the property GUI.</param>
+        /// <param name="property">The SerializedProperty to make the custom GUI for.</param>
+        /// <param name="label">The label of this property.</param>
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             var names = System.Enum.GetNames(typeof(ERemoteStoragePublishedFileVisibility))
@@ -28,9 +37,18 @@ namespace Heathen.SteamworksIntegration
         }
     }
 
+    /// <summary>
+    /// A custom property drawer for <see cref="EItemPreviewType"/>.
+    /// </summary>
     [CustomPropertyDrawer(typeof(EItemPreviewType))]
     public class ItemPreviewTypeDrawer : PropertyDrawer
     {
+        /// <summary>
+        /// Draws the property GUI.
+        /// </summary>
+        /// <param name="position">The rectangle on the screen to use for the property GUI.</param>
+        /// <param name="property">The SerializedProperty to make the custom GUI for.</param>
+        /// <param name="label">The label of this property.</param>
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             var names = System.Enum.GetNames(typeof(EItemPreviewType))
@@ -49,9 +67,18 @@ namespace Heathen.SteamworksIntegration
         }
     }
 
+    /// <summary>
+    /// A custom property drawer for <see cref="EResult"/>.
+    /// </summary>
     [CustomPropertyDrawer(typeof(EResult))]
     public class EResultDrawer : PropertyDrawer
     {
+        /// <summary>
+        /// Draws the property GUI.
+        /// </summary>
+        /// <param name="position">The rectangle on the screen to use for the property GUI.</param>
+        /// <param name="property">The SerializedProperty to make the custom GUI for.</param>
+        /// <param name="label">The label of this property.</param>
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             // Get enum names and remove Steam prefix

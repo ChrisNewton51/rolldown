@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -6,88 +6,114 @@ using UnityEngine;
 using System.Collections.Generic;
 using Steamworks;
 using System;
+using UnityEngine.Serialization;
 
 namespace Heathen.SteamworksIntegration
 {
+    /// <summary>
+    /// Represents a component that holds data for a specific Steam Inventory item.
+    /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("Steamworks/Inventory Item")]
-    [HelpURL("https://kb.heathen.group/steam/features/achievements")]
+    [HelpURL("https://heathen.group/kb/inventory/")]
     public class SteamInventoryItemData : MonoBehaviour
     {
+        /// <summary>
+        /// The unique identifier for the Steam Inventory item.
+        /// </summary>
         public int id;
+        /// <summary>
+        /// Gets or sets the item data associated with this component.
+        /// </summary>
         public ItemData Data
         {
             get => id;
             set
             {
                 id = value.id;
-                if (m_Events != null)
-                    m_Events.onChange?.Invoke();
+                if (_mEvents != null)
+                    _mEvents.onChange?.Invoke();
             }
         }
 
-        [SerializeField]
-        private List<string> m_Delegates;
-        private SteamInventoryItemDataEvents m_Events;
+        [FormerlySerializedAs("m_Delegates")] [SerializeField]
+        private List<string> mDelegates;
+        private SteamInventoryItemDataEvents _mEvents;
 
         private void Awake()
         {
-            m_Events = GetComponent<SteamInventoryItemDataEvents>();
+            _mEvents = GetComponent<SteamInventoryItemDataEvents>();
         }
 
+        /// <summary>
+        /// Consumes a single instance of this item from the user's inventory.
+        /// </summary>
         public void ConsumeOne()
         {
             var requestResult = Data.Consume(result =>
             {
                 if (result.result != EResult.k_EResultOK)
                 {
-                    if (m_Events != null)
-                        m_Events.onConsumeRequestFailed?.Invoke(result.result);
+                    if (_mEvents != null)
+                        _mEvents.onConsumeRequestFailed?.Invoke(result.result);
                 }
-                else if (m_Events != null)
-                    m_Events.onConsumeRequestComplete?.Invoke(result.items);
+                else if (_mEvents != null)
+                    _mEvents.onConsumeRequestComplete?.Invoke(result.items);
             });
-            if (!requestResult && m_Events != null)
-                m_Events.onConsumeRequestRejected?.Invoke();
+            if (!requestResult && _mEvents != null)
+                _mEvents.onConsumeRequestRejected?.Invoke();
         }
 
+        /// <summary>
+        /// Consumes a specified quantity of this item from the user's inventory.
+        /// </summary>
+        /// <param name="quantity">The number of items to consume.</param>
         public void ConsumeMany(int quantity)
         {
             var requestResult = Data.Consume(Convert.ToUInt32(quantity), result =>
             {
                 if (result.result != EResult.k_EResultOK)
                 {
-                    if (m_Events != null)
-                        m_Events.onConsumeRequestFailed?.Invoke(result.result);
+                    if (_mEvents != null)
+                        _mEvents.onConsumeRequestFailed?.Invoke(result.result);
                 }
-                else if (m_Events != null)
-                    m_Events.onConsumeRequestComplete?.Invoke(result.items);
+                else if (_mEvents != null)
+                    _mEvents.onConsumeRequestComplete?.Invoke(result.items);
             });
 
-            if (!requestResult && m_Events != null)
-                m_Events.onConsumeRequestRejected?.Invoke();
+            if (!requestResult && _mEvents != null)
+                _mEvents.onConsumeRequestRejected?.Invoke();
         }
 
+        /// <summary>
+        /// Attempts to add a promotional item to the user's inventory.
+        /// </summary>
         public void AddPromo()
         {
             var requestResult = Data.AddPromoItem(HandleAddPromoResults);
-            if(!requestResult && m_Events != null)
-                m_Events.onAddPromoRejected?.Invoke();
+            if(!requestResult && _mEvents != null)
+                _mEvents.onAddPromoRejected?.Invoke();
         }
 
+        /// <summary>
+        /// Requests a refresh of all inventory items for the current user.
+        /// </summary>
         public void GetAll()
         {
-            API.Inventory.Client.GetAllItems(null);
+            API.Inventory.Client.GetAllItems();
         }
 
+        /// <summary>
+        /// Initiates the purchase process for this item.
+        /// </summary>
         public void StartPurchase()
         {
             Data.StartPurchase((result, ioError) =>
             {
                 if (!ioError && result.m_result == EResult.k_EResultOK)
-                    m_Events.onPurchaseStarted?.Invoke(result);
+                    _mEvents.onPurchaseStarted?.Invoke(result);
                 else
-                    m_Events.onPurchaseStartFailed?.Invoke(result.m_result);
+                    _mEvents.onPurchaseStartFailed?.Invoke(result.m_result);
             });
         }
 
@@ -95,26 +121,29 @@ namespace Heathen.SteamworksIntegration
         {
             if (results.result != EResult.k_EResultOK)
             {
-                if (m_Events != null)
-                    m_Events.onAddPromoFailed?.Invoke(results.result);
+                if (_mEvents != null)
+                    _mEvents.onAddPromoFailed?.Invoke(results.result);
             }
-            else if (m_Events != null)
-                m_Events.onAddPromoComplete?.Invoke(results.items);
+            else if (_mEvents != null)
+                _mEvents.onAddPromoComplete?.Invoke(results.items);
         }
     }
 #if UNITY_EDITOR
-    [UnityEditor.CustomEditor(typeof(SteamInventoryItemData), true)]
+    /// <summary>
+    /// Custom editor for <see cref="SteamInventoryItemData"/>.
+    /// </summary>
+    [CustomEditor(typeof(SteamInventoryItemData), true)]
     public class SteamInventoryItemDataEditor : ModularEditor
     {
         private string[] _options;
         private int[] _ids;
         private SteamToolsSettings.NameAndID[] _nameAndIds;
         private int _selectedIndex;
-        private SerializedProperty idProp;
-        private SteamToolsSettings settings;
+        private SerializedProperty _idProp;
+        private SteamToolsSettings _settings;
 
         // --- Allowed types for this editor ---
-        protected override Type[] AllowedTypes => new Type[]
+        protected override Type[] AllowedTypes => new[]
         {            
             typeof(SteamInventoryItemQuantity),
             typeof(SteamInventoryItemName),
@@ -126,15 +155,15 @@ namespace Heathen.SteamworksIntegration
 
         private void OnEnable()
         {
-            idProp = serializedObject.FindProperty("id");
+            _idProp = serializedObject.FindProperty("id");
             RefreshOptions();
         }
 
         private void RefreshOptions()
         {
-            settings = SteamToolsSettings.GetOrCreate();
-            var list = settings != null && settings.items != null
-                ? settings.items
+            _settings = SteamToolsSettings.GetOrCreate();
+            var list = _settings != null && _settings.items != null
+                ? _settings.items
                 : new List<SteamToolsSettings.NameAndID>();
 
             if (list.Count > 0)
@@ -149,8 +178,8 @@ namespace Heathen.SteamworksIntegration
                     _ids[i] = _nameAndIds[i].id;
                 }
 
-                var current = idProp.intValue;
-                _selectedIndex = Mathf.Max(0, System.Array.IndexOf(_ids, current));
+                var current = _idProp.intValue;
+                _selectedIndex = Mathf.Max(0, Array.IndexOf(_ids, current));
                 if (_selectedIndex < 0)
                     _selectedIndex = 0;
             }
@@ -160,10 +189,13 @@ namespace Heathen.SteamworksIntegration
             }
         }
 
+        /// <summary>
+        /// Draws the inspector GUI for the component.
+        /// </summary>
         public override void OnInspectorGUI()
         {
-            if (settings != null)
-                settings = SteamToolsSettings.GetOrCreate();
+            if (_settings)
+                _settings = SteamToolsSettings.GetOrCreate();
 
             serializedObject.Update();
 
@@ -171,7 +203,9 @@ namespace Heathen.SteamworksIntegration
             if (EditorGUILayout.LinkButton("Settings"))
                 SettingsService.OpenProjectSettings("Project/Player/Steamworks");
             if (EditorGUILayout.LinkButton("Portal"))
-                Application.OpenURL("https://partner.steamgames.com/apps/landing/" + settings.Get(settings.ActiveApp.Value).applicationId.ToString());
+                if (_settings.ActiveApp != null)
+                    Application.OpenURL("https://partner.steamgames.com/apps/landing/" +
+                                        _settings.Get(_settings.ActiveApp.Value).applicationId.ToString());
             if (EditorGUILayout.LinkButton("Guide"))
                 Application.OpenURL("https://kb.heathen.group/steam/features/inventory");
             if (EditorGUILayout.LinkButton("Support"))
@@ -195,7 +229,7 @@ namespace Heathen.SteamworksIntegration
 
             _selectedIndex = EditorGUILayout.Popup(_selectedIndex, _options);
             if (_selectedIndex >= 0 && _selectedIndex < _options.Length)
-                idProp.intValue = _ids[_selectedIndex];
+                _idProp.intValue = _ids[_selectedIndex];
 
             EditorGUILayout.Space();
 

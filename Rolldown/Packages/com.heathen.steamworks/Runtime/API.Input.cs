@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using System.Collections.Generic;
@@ -16,81 +16,86 @@ namespace Heathen.SteamworksIntegration.API
     /// </remarks>
     public static class Input
     {
+        /// <summary>
+        /// Provides methods and events for interacting with Steam Input devices and managing controller states.
+        /// </summary>
+        /// <remarks>
+        /// This class simplifies handling controller connections, input states, action sets, and analogue actions
+        /// within the Steam Input framework, allowing for seamless integration of Steamworks controller support.
+        /// </remarks>
         public static class Client
         {
             [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
             static void RuntimeInit()
             {
-                m_inputActionSetHandles = new Dictionary<string, InputActionSetHandle_t>();
-                m_inputAnalogActionHandles = new Dictionary<string, InputAnalogActionHandle_t>();
-                m_inputDigitalActionHandles = new Dictionary<string, InputDigitalActionHandle_t>();
+                _mInputActionSetHandles = new Dictionary<string, InputActionSetHandle_t>();
+                _mInputAnalogActionHandles = new Dictionary<string, InputAnalogActionHandle_t>();
+                _mInputDigitalActionHandles = new Dictionary<string, InputDigitalActionHandle_t>();
 
-                foreach (var pair in glyphs)
+                foreach (var pair in _glyphs)
                 {
                     if (pair.Value != null)
                         GameObject.Destroy(pair.Value);
                 }
 
-                glyphs = new Dictionary<EInputActionOrigin, Texture2D>();
-                actions = new List<(string name, InputActionType type)>();
-                controllers = new Dictionary<InputHandle_t, InputControllerStateData>();
-                controllerUpdates = new Dictionary<InputHandle_t, int>();
-
-                onInputDataChanged = new();
-                onControllerConnected = new();
-                onControllerLost = new();
-                controllerHandleBuffer = new InputHandle_t[Constants.STEAM_INPUT_MAX_COUNT];
-                currentControllers = new HashSet<InputHandle_t>();
-                currentArrayBuffer = new InputHandle_t[Constants.STEAM_INPUT_MAX_COUNT];
-                addedBuffer = new InputHandle_t[Constants.STEAM_INPUT_MAX_COUNT];
-                removedBuffer = new InputHandle_t[Constants.STEAM_INPUT_MAX_COUNT];
-                connectedControllers = new(Constants.STEAM_INPUT_MAX_COUNT);
-                m_Initialized = false;
+                _glyphs = new Dictionary<EInputActionOrigin, Texture2D>();
+                _actions = new List<(string name, InputActionType type)>();
+                _controllers = new Dictionary<InputHandle_t, InputControllerStateData>();
+                _controllerUpdates = new Dictionary<InputHandle_t, int>();
+                
+                _controllerHandleBuffer = new InputHandle_t[Constants.STEAM_INPUT_MAX_COUNT];
+                _currentControllers = new HashSet<InputHandle_t>();
+                _currentArrayBuffer = new InputHandle_t[Constants.STEAM_INPUT_MAX_COUNT];
+                _addedBuffer = new InputHandle_t[Constants.STEAM_INPUT_MAX_COUNT];
+                _removedBuffer = new InputHandle_t[Constants.STEAM_INPUT_MAX_COUNT];
+                ConnectedControllers = new(Constants.STEAM_INPUT_MAX_COUNT);
+                _mInitialized = false;
             }
 
-            private static InputHandle_t[] currentArrayBuffer = new InputHandle_t[Constants.STEAM_INPUT_MAX_COUNT];
-            private static InputHandle_t[] addedBuffer = new InputHandle_t[Constants.STEAM_INPUT_MAX_COUNT];
-            private static InputHandle_t[] removedBuffer = new InputHandle_t[Constants.STEAM_INPUT_MAX_COUNT];
-            private static InputHandle_t[] controllerHandleBuffer = new InputHandle_t[Constants.STEAM_INPUT_MAX_COUNT];
-            private static HashSet<InputHandle_t> currentControllers = new HashSet<InputHandle_t>();
+            private static InputHandle_t[] _currentArrayBuffer = new InputHandle_t[Constants.STEAM_INPUT_MAX_COUNT];
+            private static InputHandle_t[] _addedBuffer = new InputHandle_t[Constants.STEAM_INPUT_MAX_COUNT];
+            private static InputHandle_t[] _removedBuffer = new InputHandle_t[Constants.STEAM_INPUT_MAX_COUNT];
+            private static InputHandle_t[] _controllerHandleBuffer = new InputHandle_t[Constants.STEAM_INPUT_MAX_COUNT];
+            private static HashSet<InputHandle_t> _currentControllers = new HashSet<InputHandle_t>();
 
-            public static ControllerDataEvent onInputDataChanged = new();
-            public static UnityEvent<InputHandle_t> onControllerConnected = new();
-            public static UnityEvent<InputHandle_t> onControllerLost = new();
-
-            public static bool Initialized => m_Initialized;
+            /// <summary>
+            /// Indicates whether the Steam Input system is successfully initialized.
+            /// This property reflects the current state of the initialization process for
+            /// managing controller inputs through the Steamworks SDK.
+            /// </summary>
+            public static bool Initialized => _mInitialized;
             /// <summary>
             /// This will allocate new memory for each controller on each frame but provides an easy to use map of input changes
-            /// If your sensitive about allocations use actions directly for each control as needed
-            /// If your sensitive to code maintenance then use this
+            /// If you're sensitive about allocations use actions directly for each control as needed
+            /// If you're sensitive to code maintenance, then use this
             /// </summary>
             public static bool IsAutoRefreshControllerState = false;
 
-            private static bool m_Initialized = false;
-            private static Dictionary<string, InputActionSetHandle_t> m_inputActionSetHandles = new();
-            private static Dictionary<string, InputAnalogActionHandle_t> m_inputAnalogActionHandles = new();
-            private static Dictionary<string, InputDigitalActionHandle_t> m_inputDigitalActionHandles = new();
-            private static Dictionary<EInputActionOrigin, Texture2D> glyphs = new();
-            private static List<(string name, InputActionType type)> actions = new();
-            private static Dictionary<InputHandle_t, InputControllerStateData> controllers = new();
-            private static Dictionary<InputHandle_t, int> controllerUpdates = new();
+            private static bool _mInitialized = false;
+            private static Dictionary<string, InputActionSetHandle_t> _mInputActionSetHandles = new();
+            private static Dictionary<string, InputAnalogActionHandle_t> _mInputAnalogActionHandles = new();
+            private static Dictionary<string, InputDigitalActionHandle_t> _mInputDigitalActionHandles = new();
+            private static Dictionary<EInputActionOrigin, Texture2D> _glyphs = new();
+            private static List<(string name, InputActionType type)> _actions = new();
+            private static Dictionary<InputHandle_t, InputControllerStateData> _controllers = new();
+            private static Dictionary<InputHandle_t, int> _controllerUpdates = new();
 
             /// <summary>
             /// Poles for and returns the handles for all connected controllers
             /// </summary>
-            public static List<InputHandle_t> connectedControllers = new(Constants.STEAM_INPUT_MAX_COUNT);
+            public static List<InputHandle_t> ConnectedControllers = new(Constants.STEAM_INPUT_MAX_COUNT);
 
             /// <summary>
             /// Record an input to be tracked
             /// </summary>
             /// <param name="name"></param>
             /// <param name="type"></param>
-            public static void AddInput(string name, InputActionType type) => actions.Add((name, type));
+            public static void AddInput(string name, InputActionType type) => _actions.Add((name, type));
             /// <summary>
             /// Remove an input from tracking
             /// </summary>
             /// <param name="name"></param>
-            public static void RemoveInput(string name) => actions.RemoveAll(p => p.name == name);
+            public static void RemoveInput(string name) => _actions.RemoveAll(p => p.name == name);
             /// <summary>
             /// Gets the data for the action from the first controller in the collection
             /// </summary>
@@ -98,62 +103,69 @@ namespace Heathen.SteamworksIntegration.API
             /// <returns></returns>
             public static InputActionStateData GetActionData(string name)
             {
-                if(controllers.Count > 0)
-                    return controllers.First().Value.GetActionData(name);
+                if(_controllers.Count > 0)
+                    return _controllers.First().Value.GetActionData(name);
                 else
                 {
-                    if (connectedControllers.Count > 0)
+                    if (ConnectedControllers.Count > 0)
                     {
-                        var controllerData = Update(connectedControllers[0]);
+                        var controllerData = Update(ConnectedControllers[0]);
                         return controllerData.GetActionData(name);
                     }
                     else
                         return default;
                 }
             }
+
+            /// <summary>
+            /// Retrieves the action data for a specific controller and action name.
+            /// </summary>
+            /// <param name="controller">The input handle representing the specific controller.</param>
+            /// <param name="name">The name of the action for which data is being requested.</param>
+            /// <returns>An <see cref="InputActionStateData"/> structure containing the action data for the specified controller and action name. Returns the default value if the controller or action name is not found.</returns>
             public static InputActionStateData GetActionData(InputHandle_t controller, string name)
             {
-                if (controllers.ContainsKey(controller))
-                    return controllers[controller].GetActionData(name);
+                if (_controllers.ContainsKey(controller))
+                    return _controllers[controller].GetActionData(name);
                 else
                     return default;
             }
 
             /// <summary>
-            /// This will allocate new memory each call but provides an easy to use map of input changes
-            /// If your sensitive about allocations use actions directly for each control as needed
-            /// If your sensitive to code maintenance then use this
+            /// This will allocate new memory for each call but provides an easy-to-use map of input changes
+            /// If you're sensitive about allocations, use actions directly for each control as needed
+            /// If you're sensitive to code maintenance, then use this
             /// </summary>
             /// <param name="controller"></param>
             /// <returns></returns>
             public static InputControllerStateData Update(InputHandle_t controller)
             {
-                if (!controllerUpdates.ContainsKey(controller))
-                    controllerUpdates.Add(controller, -1);
+                if (!_controllerUpdates.ContainsKey(controller))
+                    _controllerUpdates.Add(controller, -1);
 
-                if (controllerUpdates[controller] != Time.frameCount)
+                if (_controllerUpdates[controller] != Time.frameCount)
                 {
-                    controllerUpdates[controller] = Time.frameCount;
+                    _controllerUpdates[controller] = Time.frameCount;
 
                     InputControllerStateData conData = new InputControllerStateData
                     {
                         handle = controller,
-                        inputs = new InputActionStateData[actions.Count],
+                        inputs = new InputActionStateData[_actions.Count],
                     };
 
-                    if (!controllers.ContainsKey(controller))
-                        controllers.Add(controller, new()
+                    if (!_controllers.ContainsKey(controller))
+                        _controllers.Add(controller, new()
                         {
                             handle = controller,
                             inputs = new InputActionStateData[0]
                         });
 
-                    var currentController = controllers[controller];
+                    var currentController = _controllers[controller];
                     var updates = new List<InputActionUpdate>();
 
-                    for (int i = 0; i < actions.Count; i++)
+                    for (int i = 0; i < _actions.Count; i++)
                     {
-                        var (name, type) = actions[i];
+                        var (name, type) = _actions[i];
                         if (type == InputActionType.Analog)
                         {
                             var handle = GetAnalogActionHandle(name);
@@ -202,7 +214,7 @@ namespace Heathen.SteamworksIntegration.API
                                 {
                                     name = name,
                                     controller = controller,
-                                    mode = Steamworks.EInputSourceMode.k_EInputSourceMode_None,
+                                    mode = EInputSourceMode.k_EInputSourceMode_None,
                                     type = currentInput.type,
                                     wasActive = currentInput.active,
                                     wasState = currentInput.state,
@@ -225,16 +237,15 @@ namespace Heathen.SteamworksIntegration.API
 
                     conData.changes = updates.ToArray();
 
-                    controllers[controller] = conData;
+                    _controllers[controller] = conData;
 
-                    if (conData.changes != null
-                        && conData.changes.Length > 0)
-                        onInputDataChanged?.Invoke(conData);
+                    if (conData.changes.Length > 0)
+                        SteamTools.Events.InvokeOnInputDataChanged(conData);
 
                     return conData;
                 }
                 else
-                    return controllers[controller];
+                    return _controllers[controller];
             }
                         
             /// <summary>
@@ -243,15 +254,20 @@ namespace Heathen.SteamworksIntegration.API
             /// <param name="controllerHandle">The handle of the controller you want to activate an action set for.</param>
             /// <param name="actionSetHandle">The handle of the action set you want to activate.</param>
             public static void ActivateActionSet(InputHandle_t controllerHandle, InputActionSetHandle_t actionSetHandle) => SteamInput.ActivateActionSet(controllerHandle, actionSetHandle);
+
+            /// <summary>
+            /// Activates the specified action set for a controller. If no specific controller is provided, it applies to the first available connected controller.
+            /// </summary>
+            /// <param name="actionSetHandle">The handle of the action set to be activated.</param>
             public static void ActivateActionSet(InputActionSetHandle_t actionSetHandle)
             {
-                if (controllers.Count > 0)
-                    ActivateActionSet(controllers.First().Key, actionSetHandle);
+                if (_controllers.Count > 0)
+                    ActivateActionSet(_controllers.First().Key, actionSetHandle);
                 else
                 {
-                    if (connectedControllers.Count > 0)
+                    if (ConnectedControllers.Count > 0)
                     {
-                        var controllerData = Update(connectedControllers[0]);
+                        var controllerData = Update(ConnectedControllers[0]);
                         ActivateActionSet(controllerData.handle, actionSetHandle);
                     }
                 }
@@ -263,12 +279,12 @@ namespace Heathen.SteamworksIntegration.API
             /// <param name="actionSet">The name of the set to use ... we will read this from cache if available or fetch it if required</param>
             public static void ActivateActionSet(InputHandle_t controllerHandle, string actionSet)
             {
-                if (m_inputActionSetHandles.ContainsKey(actionSet))
-                    SteamInput.ActivateActionSet(controllerHandle, m_inputActionSetHandles[actionSet]);
+                if (_mInputActionSetHandles.ContainsKey(actionSet))
+                    SteamInput.ActivateActionSet(controllerHandle, _mInputActionSetHandles[actionSet]);
                 else
                 {
                     var handle = GetActionSetHandle(actionSet);
-                    SteamInput.ActivateActionSet(controllerHandle, m_inputActionSetHandles[actionSet]);
+                    SteamInput.ActivateActionSet(controllerHandle, _mInputActionSetHandles[actionSet]);
                 }
             }
             /// <summary>
@@ -277,15 +293,21 @@ namespace Heathen.SteamworksIntegration.API
             /// <param name="controllerHandle">The handle of the controller you want to activate an action set layer for.</param>
             /// <param name="actionSetHandle">The handle of the action set layer you want to activate.</param>
             public static void ActivateActionSetLayer(InputHandle_t controllerHandle, InputActionSetHandle_t actionSetHandle) => SteamInput.ActivateActionSetLayer(controllerHandle, actionSetHandle);
+
+            /// <summary>
+            /// Activates a specific action set layer for the provided controller.
+            /// </summary>
+            /// <param name="controllerHandle">The handle of the controller for which the action set layer should be activated.</param>
+            /// <param name="actionSetHandle">The handle of the action set layer to activate.</param>
             public static void ActivateActionSetLayer(InputActionSetHandle_t actionSetHandle)
             {
-                if (controllers.Count > 0)
-                    ActivateActionSetLayer(controllers.First().Key, actionSetHandle);
+                if (_controllers.Count > 0)
+                    ActivateActionSetLayer(_controllers.First().Key, actionSetHandle);
                 else
                 {
-                    if (connectedControllers.Count > 0)
+                    if (ConnectedControllers.Count > 0)
                     {
-                        var controllerData = Update(connectedControllers[0]);
+                        var controllerData = Update(ConnectedControllers[0]);
                         ActivateActionSetLayer(controllerData.handle, actionSetHandle);
                     }
                 }
@@ -297,12 +319,12 @@ namespace Heathen.SteamworksIntegration.API
             /// <param name="actionSet">The name of the set to use ... we will read this from cache if available or fetch it if required</param>
             public static void ActivateActionSetLayer(InputHandle_t controllerHandle, string actionSet)
             {
-                if (m_inputActionSetHandles.ContainsKey(actionSet))
-                    SteamInput.ActivateActionSetLayer(controllerHandle, m_inputActionSetHandles[actionSet]);
+                if (_mInputActionSetHandles.ContainsKey(actionSet))
+                    SteamInput.ActivateActionSetLayer(controllerHandle, _mInputActionSetHandles[actionSet]);
                 else
                 {
                     var handle = GetActionSetHandle(actionSet);
-                    SteamInput.ActivateActionSetLayer(controllerHandle, m_inputActionSetHandles[actionSet]);
+                    SteamInput.ActivateActionSetLayer(controllerHandle, _mInputActionSetHandles[actionSet]);
                 }
             }
             /// <summary>
@@ -318,12 +340,12 @@ namespace Heathen.SteamworksIntegration.API
             /// <param name="actionSet">The action set layer you want to deactivate.</param>
             public static void DeactivateActionSetLayer(InputHandle_t controllerHandle, string actionSet)
             {
-                if (m_inputActionSetHandles.ContainsKey(actionSet))
-                    SteamInput.DeactivateActionSetLayer(controllerHandle, m_inputActionSetHandles[actionSet]);
+                if (_mInputActionSetHandles.ContainsKey(actionSet))
+                    SteamInput.DeactivateActionSetLayer(controllerHandle, _mInputActionSetHandles[actionSet]);
                 else
                 {
                     var handle = GetActionSetHandle(actionSet);
-                    SteamInput.DeactivateActionSetLayer(controllerHandle, m_inputActionSetHandles[actionSet]);
+                    SteamInput.DeactivateActionSetLayer(controllerHandle, _mInputActionSetHandles[actionSet]);
                 }
             }
             /// <summary>
@@ -351,30 +373,30 @@ namespace Heathen.SteamworksIntegration.API
             public static InputActionSetHandle_t GetActionSetHandle(string setName)
             {
                 var result = SteamInput.GetActionSetHandle(setName);
-                if (m_inputActionSetHandles.ContainsKey(setName))
-                    m_inputActionSetHandles[setName] = result;
+                if (_mInputActionSetHandles.ContainsKey(setName))
+                    _mInputActionSetHandles[setName] = result;
                 else
-                    m_inputActionSetHandles.Add(setName, result);
+                    _mInputActionSetHandles.Add(setName, result);
 
                 return result;
             }
             /// <summary>
-            /// Returns the current state of the supplied analog game action.
+            /// Returns the current state of the supplied analogue game action.
             /// </summary>
             /// <param name="controllerHandle">The handle of the controller you want to query.</param>
-            /// <param name="analogActionHandle">The handle of the analog action you want to query.</param>
+            /// <param name="analogActionHandle">The handle of the analogue action you want to query.</param>
             /// <returns></returns>
             public static InputAnalogActionData_t GetAnalogActionData(InputHandle_t controllerHandle, InputAnalogActionHandle_t analogActionHandle) => SteamInput.GetAnalogActionData(controllerHandle, analogActionHandle);
             /// <summary>
-            /// Returns the current state of the supplied analog game action.
+            /// Returns the current state of the supplied analogue game action.
             /// </summary>
             /// <param name="controllerHandle">The handle of the controller you want to query.</param>
             /// <param name="actionName">The analog action you want to query.</param>
             /// <returns></returns>
             public static InputAnalogActionData_t GetAnalogActionData(InputHandle_t controllerHandle, string actionName)
             {
-                if (m_inputAnalogActionHandles.ContainsKey(actionName))
-                    return SteamInput.GetAnalogActionData(controllerHandle, m_inputAnalogActionHandles[actionName]);
+                if (_mInputAnalogActionHandles.ContainsKey(actionName))
+                    return SteamInput.GetAnalogActionData(controllerHandle, _mInputAnalogActionHandles[actionName]);
                 else
                 {
                     var handle = GetAnalogActionHandle(actionName);
@@ -382,25 +404,25 @@ namespace Heathen.SteamworksIntegration.API
                 }
             }
             /// <summary>
-            /// Get the handle of the specified Analog action.
+            /// Get the handle of the specified Analogue action.
             /// </summary>
             /// <remarks>
             /// This function does not take an action set handle parameter. That means that each action in your VDF file must have a unique string identifier. In other words, if you use an action called "up" in two different action sets, this function will only ever return one of them and the other will be ignored.
             /// </remarks>
-            /// <param name="actionName">The string identifier of the analog action defined in the game's VDF file.</param>
+            /// <param name="actionName">The string identifier of the analogue action defined in the game's VDF file.</param>
             /// <returns></returns>
             public static InputAnalogActionHandle_t GetAnalogActionHandle(string actionName)
             {
                 var result = SteamInput.GetAnalogActionHandle(actionName);
-                if (m_inputAnalogActionHandles.ContainsKey(actionName))
-                    m_inputAnalogActionHandles[actionName] = result;
+                if (_mInputAnalogActionHandles.ContainsKey(actionName))
+                    _mInputAnalogActionHandles[actionName] = result;
                 else
-                    m_inputAnalogActionHandles.Add(actionName, result);
+                    _mInputAnalogActionHandles.Add(actionName, result);
 
                 return result;
             }
             /// <summary>
-            /// Get the origin(s) for an analog action within an action set by filling originsOut with EInputActionOrigin handles. Use this to display the appropriate on-screen prompt for the action.
+            /// Get the origin(s) for an analogue action within an action set by filling originsOut with EInputActionOrigin handles. Use this to display the appropriate on-screen prompt for the action.
             /// </summary>
             /// <param name="controllerHandle"></param>
             /// <param name="actionSetHandle"></param>
@@ -425,13 +447,13 @@ namespace Heathen.SteamworksIntegration.API
             {
                 var origins = new EInputActionOrigin[Constants.STEAM_INPUT_MAX_ORIGINS];
 
-                if (!m_inputAnalogActionHandles.ContainsKey(analogName))
+                if (!_mInputAnalogActionHandles.ContainsKey(analogName))
                     GetAnalogActionHandle(analogName);
 
-                if (!m_inputActionSetHandles.ContainsKey(actionSet))
+                if (!_mInputActionSetHandles.ContainsKey(actionSet))
                     GetActionSetHandle(actionSet);
 
-                SteamInput.GetAnalogActionOrigins(controllerHandle, m_inputActionSetHandles[actionSet], m_inputAnalogActionHandles[analogName], origins);
+                SteamInput.GetAnalogActionOrigins(controllerHandle, _mInputActionSetHandles[actionSet], _mInputAnalogActionHandles[analogName], origins);
 
                 return origins;
             }
@@ -462,14 +484,14 @@ namespace Heathen.SteamworksIntegration.API
             /// <returns></returns>
             public static InputDigitalActionData_t GetDigitalActionData(InputHandle_t controllerHandle, string actionName)
             {
-                if (!m_inputDigitalActionHandles.ContainsKey(actionName))
+                if (!_mInputDigitalActionHandles.ContainsKey(actionName))
                 {
                     var actionHandle = GetDigitalActionHandle(actionName);
                     return SteamInput.GetDigitalActionData(controllerHandle, actionHandle);
                 }
                 else
                 {
-                    return SteamInput.GetDigitalActionData(controllerHandle, m_inputDigitalActionHandles[actionName]);
+                    return SteamInput.GetDigitalActionData(controllerHandle, _mInputDigitalActionHandles[actionName]);
                 }
             }
             /// <summary>
@@ -483,10 +505,10 @@ namespace Heathen.SteamworksIntegration.API
             public static InputDigitalActionHandle_t GetDigitalActionHandle(string actionName)
             {
                 var result = SteamInput.GetDigitalActionHandle(actionName);
-                if (m_inputDigitalActionHandles.ContainsKey(actionName))
-                    m_inputDigitalActionHandles[actionName] = result;
+                if (_mInputDigitalActionHandles.ContainsKey(actionName))
+                    _mInputDigitalActionHandles[actionName] = result;
                 else
-                    m_inputDigitalActionHandles.Add(actionName, result);
+                    _mInputDigitalActionHandles.Add(actionName, result);
 
                 return result;
             }
@@ -506,7 +528,7 @@ namespace Heathen.SteamworksIntegration.API
                 return origins;
             }
             /// <summary>
-            /// Get the origin(s) for an analog action within an action set by filling originsOut with EInputActionOrigin handles. Use this to display the appropriate on-screen prompt for the action.
+            /// Get the origin(s) for an analogue action within an action set by filling originsOut with EInputActionOrigin handles. Use this to display the appropriate on-screen prompt for the action.
             /// </summary>
             /// <param name="controllerHandle"></param>
             /// <param name="actionSet"></param>
@@ -516,13 +538,13 @@ namespace Heathen.SteamworksIntegration.API
             {
                 var origins = new EInputActionOrigin[Constants.STEAM_INPUT_MAX_ORIGINS];
 
-                if (!m_inputDigitalActionHandles.ContainsKey(actionName))
+                if (!_mInputDigitalActionHandles.ContainsKey(actionName))
                     GetDigitalActionHandle(actionName);
 
-                if (!m_inputDigitalActionHandles.ContainsKey(actionSet))
+                if (!_mInputDigitalActionHandles.ContainsKey(actionSet))
                     GetActionSetHandle(actionSet);
 
-                SteamInput.GetDigitalActionOrigins(controllerHandle, m_inputActionSetHandles[actionSet], m_inputDigitalActionHandles[actionName], origins);
+                SteamInput.GetDigitalActionOrigins(controllerHandle, _mInputActionSetHandles[actionSet], _mInputDigitalActionHandles[actionName], origins);
 
                 return origins;
             }
@@ -539,8 +561,8 @@ namespace Heathen.SteamworksIntegration.API
             /// <returns></returns>
             public static Texture2D GetGlyphActionOrigin(EInputActionOrigin origin)
             {
-                if (glyphs.ContainsKey(origin))
-                    return glyphs[origin];
+                if (_glyphs.ContainsKey(origin))
+                    return _glyphs[origin];
                 else
                 {
                     var path = GetGlyphPNGForActionOrigin(origin, ESteamInputGlyphSize.k_ESteamInputGlyphSize_Large, 0);
@@ -552,7 +574,7 @@ namespace Heathen.SteamworksIntegration.API
                             var tex = new Texture2D(2, 2);
                             tex.LoadImage(fileData);
 
-                            glyphs.Add(origin, tex);
+                            _glyphs.Add(origin, tex);
                             return tex;
                         }
                         else
@@ -562,18 +584,40 @@ namespace Heathen.SteamworksIntegration.API
                         return null;
                 }
             }
+
+            /// <summary>
+            /// Releases and clears all glyph images being tracked, freeing up resources.
+            /// </summary>
             public static void UnloadGlyphImages()
             {
-                foreach (var pair in glyphs)
+                foreach (var pair in _glyphs)
                 {
                     if (pair.Value != null)
                         GameObject.Destroy(pair.Value);
                 }
 
-                glyphs = new Dictionary<EInputActionOrigin, Texture2D>();
+                _glyphs = new Dictionary<EInputActionOrigin, Texture2D>();
             }
-            public static string GetGlyphPNGForActionOrigin(EInputActionOrigin origin, ESteamInputGlyphSize size, uint flags) => SteamInput.GetGlyphPNGForActionOrigin(origin, size, flags);
-            public static string GetGlyphSVGForActionOrigin(EInputActionOrigin origin, uint flags) => SteamInput.GetGlyphSVGForActionOrigin(origin, flags);
+
+            /// <summary>
+            /// Retrieves the PNG image path for the glyph associated with a specific input action origin.
+            /// </summary>
+            /// <param name="origin">The input action origin for which the glyph is requested.</param>
+            /// <param name="size">The desired size of the glyph image.</param>
+            /// <param name="flags">Optional flags to customise the retrieval of the glyph image.</param>
+            /// <returns>A string representing the path to the glyph PNG image for the specified input action origin.</returns>
+            public static string GetGlyphPNGForActionOrigin(EInputActionOrigin origin, ESteamInputGlyphSize size,
+                uint flags) => SteamInput.GetGlyphPNGForActionOrigin(origin, size, flags);
+
+            /// <summary>
+            /// Retrieves the SVG glyph representation for a specified input action origin.
+            /// </summary>
+            /// <param name="origin">The input action origin for which the SVG glyph is to be retrieved.</param>
+            /// <param name="flags">Flags that modify how the glyph is retrieved.</param>
+            /// <returns>A string containing the SVG glyph for the specified input action origin.</returns>
+            public static string GetGlyphSvgForActionOrigin(EInputActionOrigin origin, uint flags) =>
+                SteamInput.GetGlyphSVGForActionOrigin(origin, flags);
+
             /// <summary>
             /// Returns the input type (device model) for the specified controller. This tells you if a given controller is a Steam controller, XBox 360 controller, PS4 controller, etc.
             /// </summary>
@@ -587,7 +631,7 @@ namespace Heathen.SteamworksIntegration.API
             /// <returns></returns>
             public static InputMotionData_t GetMotionData(InputHandle_t controllerHandle) => SteamInput.GetMotionData(controllerHandle);
             /// <summary>
-            /// Returns a localized string (from Steam's language setting) for the specified origin.
+            /// Returns a localised string (from Steam's language setting) for the specified origin.
             /// </summary>
             /// <param name="origin"></param>
             /// <returns></returns>
@@ -597,22 +641,22 @@ namespace Heathen.SteamworksIntegration.API
             /// </summary>
             public static bool Init(IEnumerable<(string name, InputActionType type)> actions = null)
             {
-                m_Initialized = SteamInput.Init(false);
+                _mInitialized = SteamInput.Init(false);
                 foreach(var action in actions)
                 {
-                    Client.actions.Add(action);
+                    _actions.Add(action);
                 }
-                return m_Initialized;
+                return _mInitialized;
             }
 
             /// <summary>
-            /// Synchronize API state with the latest Steam Controller inputs available. This is performed automatically by SteamAPI_RunCallbacks, but for the absolute lowest possible latency, you can call this directly before reading controller state.
+            /// Synchronise the API state with the latest Steam Controller inputs available. This is performed automatically by SteamAPI_RunCallbacks, but for the absolute lowest possible latency, you can call this directly before reading controller state.
             /// </summary>
             public static void RunFrame()
             {
                 SteamInput.RunFrame();
 
-                int count = SteamInput.GetConnectedControllers(controllerHandleBuffer);
+                int count = SteamInput.GetConnectedControllers(_controllerHandleBuffer);
 
                 int addedCount = 0;
                 int removedCount = 0;
@@ -620,24 +664,24 @@ namespace Heathen.SteamworksIntegration.API
                 // Detect newly connected controllers
                 for (int i = 0; i < count; i++)
                 {
-                    var handle = controllerHandleBuffer[i];
-                    if (!currentControllers.Contains(handle))
+                    var handle = _controllerHandleBuffer[i];
+                    if (!_currentControllers.Contains(handle))
                     {
-                        currentControllers.Add(handle);
-                        addedBuffer[addedCount++] = handle;
+                        _currentControllers.Add(handle);
+                        _addedBuffer[addedCount++] = handle;
                     }
                 }
 
                 // Detect disconnected controllers
-                int currentCount = currentControllers.Count;
-                currentControllers.CopyTo(currentArrayBuffer, 0);
+                int currentCount = _currentControllers.Count;
+                _currentControllers.CopyTo(_currentArrayBuffer, 0);
                 for (int i = 0; i < currentCount; i++)
                 {
-                    var handle = currentArrayBuffer[i];
+                    var handle = _currentArrayBuffer[i];
                     bool stillConnected = false;
                     for (int j = 0; j < count; j++)
                     {
-                        if (controllerHandleBuffer[j] == handle)
+                        if (_controllerHandleBuffer[j] == handle)
                         {
                             stillConnected = true;
                             break;
@@ -646,29 +690,29 @@ namespace Heathen.SteamworksIntegration.API
 
                     if (!stillConnected)
                     {
-                        currentControllers.Remove(handle);
-                        removedBuffer[removedCount++] = handle;
+                        _currentControllers.Remove(handle);
+                        _removedBuffer[removedCount++] = handle;
                     }
                 }
 
                 // Update the public Controllers list
-                connectedControllers.Clear();
-                connectedControllers.AddRange(currentControllers);
+                ConnectedControllers.Clear();
+                ConnectedControllers.AddRange(_currentControllers);
 
                 if(IsAutoRefreshControllerState)
                 {
-                    for(int i = 0; i < connectedControllers.Count; i++)
+                    for(int i = 0; i < ConnectedControllers.Count; i++)
                     {
-                        Update(connectedControllers[i]);
+                        Update(ConnectedControllers[i]);
                     }
                 }
 
                 // Raise events after list is up-to-date
                 for (int i = 0; i < addedCount; i++)
-                    onControllerConnected?.Invoke(addedBuffer[i]);
+                    SteamTools.Events.InvokeOnControllerConnected(_addedBuffer[i]);
 
                 for (int i = 0; i < removedCount; i++)
-                    onControllerLost?.Invoke(removedBuffer[i]);
+                    SteamTools.Events.InvokeOnControllerDisconnected(_removedBuffer[i]);
             }
 
             /// <summary>
@@ -676,18 +720,18 @@ namespace Heathen.SteamworksIntegration.API
             /// </summary>
             /// <param name="controllerHandle"></param>
             /// <param name="color"></param>
-            public static void SetLEDColor(InputHandle_t controllerHandle, Color32 color) => SteamInput.SetLEDColor(controllerHandle, color.r, color.g, color.b, 0);
+            public static void SetLedColor(InputHandle_t controllerHandle, Color32 color) => SteamInput.SetLEDColor(controllerHandle, color.r, color.g, color.b, 0);
             /// <summary>
             /// Resets the color fo the controllers LED to the users default
             /// </summary>
             /// <param name="controllerHandle"></param>
-            public static void ResetLEDColor(InputHandle_t controllerHandle) => SteamInput.SetLEDColor(controllerHandle, 0, 0, 0, 1);
+            public static void ResetLedColor(InputHandle_t controllerHandle) => SteamInput.SetLEDColor(controllerHandle, 0, 0, 0, 1);
             /// <summary>
             /// Must be called when ending use of the Input interface.
             /// </summary>
             public static bool Shutdown()
             {
-                m_Initialized = false;
+                _mInitialized = false;
                 return SteamInput.Shutdown();
             }
             /// <summary>
@@ -707,8 +751,8 @@ namespace Heathen.SteamworksIntegration.API
             /// <param name="actionName"></param>
             public static void StopAnalogActionMomentum(InputHandle_t controllerHandle, string actionName)
             {
-                if (m_inputAnalogActionHandles.ContainsKey(actionName))
-                    SteamInput.StopAnalogActionMomentum(controllerHandle, m_inputAnalogActionHandles[actionName]);
+                if (_mInputAnalogActionHandles.TryGetValue(actionName, out var handle))
+                    SteamInput.StopAnalogActionMomentum(controllerHandle, handle);
                 else
                 {
                     var action = GetAnalogActionHandle(actionName);

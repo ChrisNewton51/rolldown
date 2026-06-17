@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 
 namespace Heathen.SteamworksIntegration
 {
@@ -10,7 +10,7 @@ namespace Heathen.SteamworksIntegration
         Internet,
         Friends,
         Favorites,
-        LAN,
+        Lan,
         Spectator,
         History
     }

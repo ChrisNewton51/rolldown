@@ -1,34 +1,46 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
-using Steamworks;
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using System;
-using System.Linq;
 using UnityEngine;
 
 namespace Heathen.SteamworksIntegration
 {
     /// <summary>
-    /// Represents a Steam Achievement 
+    /// Defines the structure for a Steam Achievement, providing information such as
+    /// name, description, hidden status, achievement status, unlock time, global unlock percentage,
+    /// and various methods for manipulating and querying the achievement state.
     /// </summary>
     [Serializable]
     public struct AchievementData : IEquatable<AchievementData>, IEquatable<string>, IComparable<AchievementData>, IComparable<string>
     {
         /// <summary>
-        /// Returns the name of the achievement as seen by this user, this will depend on the user's language and the language configuration of the achievement
+        /// Represents the localised name of the achievement as it is displayed to the user.
+        /// The value is determined based on the user's language preferences and the achievement's configuration.
         /// </summary>
-        public readonly string Name => API.StatsAndAchievements.Client.GetAchievementDisplayAttribute(id, AchievementAttributes.name);
-        /// <summary>
-        /// Returns the description of the achievement as see by this user, this will depend on the user's language and the language configuration of the achievement
-        /// </summary>
-        public readonly string Description => API.StatsAndAchievements.Client.GetAchievementDisplayAttribute(id, AchievementAttributes.desc);
-        /// <summary>
-        /// Returns the Is Hidden value of this achievement as seen by this user
-        /// </summary>
-        public readonly bool Hidden => API.StatsAndAchievements.Client.GetAchievementDisplayAttribute(id, AchievementAttributes.hidden) == "1";
+        public readonly string Name =>
+            API.StatsAndAchievements.Client.GetAchievementDisplayAttribute(id, AchievementAttributes.Name);
 
         /// <summary>
-        /// The unique ID of the achievement, this is the API Name that has been set in the Steamworks portal.
+        /// Provides the localised description of the achievement as configured in the Steamworks system.
+        /// The description is determined based on the associated achievement's identifier and the user's language preferences.
+        /// </summary>
+        public readonly string Description =>
+            API.StatsAndAchievements.Client.GetAchievementDisplayAttribute(id, AchievementAttributes.Desc);
+
+        /// <summary>
+        /// Indicates whether the achievement is hidden from the user by default.
+        /// A hidden achievement is not displayed to the user until it is unlocked.
+        /// This property retrieves the value by checking the achievement's "Hidden" attribute
+        /// through the Steamworks API.
+        /// </summary>
+        public readonly bool Hidden =>
+            API.StatsAndAchievements.Client.GetAchievementDisplayAttribute(id, AchievementAttributes.Hidden) == "1";
+
+        /// <summary>
+        /// Represents the unique API name identifier associated with the achievement.
+        /// This value serves as the internal key used by the Steamworks API to reference the achievement.
         /// </summary>
         public readonly string ApiName => id;
+
         /// <summary>
         /// The API Name as it appears in the Steamworks portal.
         /// </summary>
@@ -36,7 +48,7 @@ namespace Heathen.SteamworksIntegration
         private string id;
 
         /// <summary>
-        /// Indicates that this achievement has been unlocked by this user.
+        /// Indicates that this user has unlocked this achievement.
         /// </summary>
         /// <remarks>
         /// Only available on client builds
@@ -58,8 +70,11 @@ namespace Heathen.SteamworksIntegration
                     API.StatsAndAchievements.Client.ClearAchievement(id);
             }
         }
+
         /// <summary>
-        /// Indicates the time the achievement was unlocked if at all
+        /// Represents the date and time when the achievement was unlocked.
+        /// Returns a nullable <see cref="DateTime"/> value, where a valid <see cref="DateTime"/>
+        /// indicates the unlocked time, and a null value means the achievement has not been unlocked.
         /// </summary>
         public readonly DateTime? UnlockTime
         {
@@ -73,7 +88,9 @@ namespace Heathen.SteamworksIntegration
         }
 
         /// <summary>
-        /// The percentage of users who have unlocked this achievement
+        /// Represents the percentage of global Steam users who have unlocked this achievement.
+        /// This value is retrieved from the Steam statistics for the achievement and reflects the
+        /// overall popularity or difficulty of achieving it across the platform.
         /// </summary>
         public readonly float GlobalPercent
         {
@@ -85,83 +102,85 @@ namespace Heathen.SteamworksIntegration
         }
 
         /// <summary>
-        /// <para>Unlocks the achievement.</para>
+        /// Unlocks the achievement, marking it as achieved.
         /// </summary>
         public readonly void Unlock() => IsAchieved = true;
 
         /// <summary>
-        /// <para>Resets the unlock status of an achievement.</para>
+        /// Resets the unlocked status of the achievement, marking it as not achieved.
         /// </summary>
         public readonly void Clear() => IsAchieved = false;
 
         /// <summary>
-        /// Unlock the achievement for the <paramref name="user"/>
+        /// Unlocks the achievement for the specified user.
         /// </summary>
-        /// <remarks>
-        /// Only available on server builds
-        /// </remarks>
-        /// <param name="user"></param>
+        /// <param name="user">The user who will have the achievement unlocked.</param>
         public readonly void Unlock(UserData user)
         {
             API.StatsAndAchievements.Server.SetUserAchievement(user, id);
         }
 
         /// <summary>
-        /// Clears the achievement for the <paramref name="user"/>
+        /// Clears the specified achievement for the provided user.
         /// </summary>
         /// <remarks>
-        /// Only available on server builds
+        /// This method is only available on server-side builds and does not function on client builds.
         /// </remarks>
-        /// <param name="user"></param>
+        /// <param name="user">The user whose achievement is to be cleared.</param>
         public readonly void Clear(UserData user)
         {
             API.StatsAndAchievements.Server.ClearUserAchievement(user, id);
         }
 
         /// <summary>
-        /// Gets the achievement status for the <paramref name="user"/>
+        /// Retrieves the achievement status for a specified user.
         /// </summary>
-        /// <param name="user"></param>
-        /// <returns></returns>
+        /// <param name="user">The user for whom the achievement status is being requested.</param>
+        /// <returns>A boolean value indicating whether the achievement has been unlocked.</returns>
         public readonly bool GetAchievementStatus(UserData user)
         {
-            bool achieved;
-            API.StatsAndAchievements.Client.GetAchievement(user, id, out achieved);
+            API.StatsAndAchievements.Client.GetAchievement(user, id, out var achieved);
             return achieved;
         }
 
         /// <summary>
-        /// Get the unlock state and time for this achievement for a specific user.
+        /// Retrieves the unlocked state and unlock time of the achievement for a specified user.
         /// </summary>
-        /// <param name="user">The user to check</param>
-        /// <returns>(<see cref="bool"/> unlocked, <see cref="DataTime"/> unlockTime) indicating the state and time of the achievement for the indicated user if known.</returns>
+        /// <param name="user">The user for whom the achievement's state and unlock time will be retrieved.</param>
+        /// <returns>A tuple containing a boolean indicating whether the achievement is unlocked and a DateTime representing the unlock time.</returns>
         public readonly (bool unlocked, DateTime unlockTime) GetAchievementAndUnlockTime(UserData user)
         {
             API.StatsAndAchievements.Client.GetAchievement(user, id, out bool unlocked, out DateTime time);
             return (unlocked, time);
         }
+
         /// <summary>
-        /// Gets the icon for this achievement as seen by the logged in user, this will return either the locked or unlocked icon depending on the state of the achievement for this user
+        /// Retrieves the icon for the current achievement based on the logged-in user's progress.
+        /// This method invokes the callback with the appropriate icon, returning either the locked or unlocked state.
         /// </summary>
-        /// <param name="callback">A delegate of the form (<see cref="Texture2D"/> result) that is invoked when the process completes</param>
-        public readonly void GetIcon(Action<Texture2D> callback) => API.StatsAndAchievements.Client.GetAchievementIcon(id, callback);
+        /// <param name="callback">A delegate to handle the result, receiving a <see cref="Texture2D"/> object representing the achievement icon.</param>
+        public readonly void GetIcon(Action<Texture2D> callback) =>
+            API.StatsAndAchievements.Client.GetAchievementIcon(id, callback);
+
         /// <summary>
-        /// Request Steam client store the current state of all stats and achievements
+        /// Requests the Steam client to store the current state of all statistics and achievements.
         /// </summary>
         public readonly void Store() => API.StatsAndAchievements.Client.StoreStats();
+
         /// <summary>
-        /// Get the achievement given the API name provided
+        /// Retrieves an achievement based on the provided API name.
         /// </summary>
-        /// <param name="apiName">The API name of the achievement as entered into Steam Developer Portal</param>
-        /// <returns>The AchievementData object represented by this name</returns>
+        /// <param name="apiName">The API name of the achievement as specified in the Steam Developer Portal.</param>
+        /// <returns>An <c>AchievementData</c> object corresponding to the provided API name.</returns>
         public static AchievementData Get(string apiName) => apiName;
 
         #region Boilerplate
+
         /// <summary>
-        /// Returns the API Name of the achievement
+        /// Returns a string representation of the achievement's API name.
         /// </summary>
-        /// <returns></returns>
-        public override readonly string ToString()
+        /// <returns>The API name of the achievement, or an empty string if the ID is null or empty.</returns>
+        public readonly override string ToString()
         {
             return string.IsNullOrEmpty(id) ? string.Empty : id;
         }
@@ -175,24 +194,24 @@ namespace Heathen.SteamworksIntegration
             return id.Equals(other.id);
         }
 
-        public override readonly bool Equals(object obj)
+        public readonly override bool Equals(object obj)
         {
             return id.Equals(obj);
         }
 
-        public override readonly int GetHashCode()
+        public readonly override int GetHashCode()
         {
             return id.GetHashCode();
         }
 
         public readonly int CompareTo(AchievementData other)
         {
-            return id.CompareTo(other.id);
+            return string.Compare(id, other.id, StringComparison.Ordinal);
         }
 
         public readonly int CompareTo(string other)
         {
-            return id.CompareTo(other);
+            return string.Compare(id, other, StringComparison.Ordinal);
         }
 
         public static bool operator ==(AchievementData l, AchievementData r) => l.id == r.id;

@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using UnityEngine;
@@ -6,93 +6,94 @@ using UnityEngine;
 namespace Heathen.SteamworksIntegration.API
 {
     /// <summary>
-    /// Provides functions for reading, writing, and accessing files which can be stored remotely in the Steam Cloud.
+    /// Provides static methods and properties for interacting with the Steam Remote Storage service,
+    /// enabling functionality for managing files stored in the Steam Cloud.
     /// </summary>
     public static class RemoteStorage
     {
+        /// <summary>
+        /// Provides methods and properties for interacting with the Steam Remote Storage service from the client's perspective.
+        /// Enables functionality for managing files stored in the Steam Cloud, including reading, writing, deleting,
+        /// and sharing files, as well as handling file changes and stream operations.
+        /// </summary>
         public static class Client
         {
             [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
             static void Init()
             {
-                m_OnRemoteStorageLocalFileChange = new();
-                m_RemoteStorageLocalFileChange_t = null;
-                m_RemoteStorageFileReadAsyncComplete_t = null;
-                m_RemoteStorageFileShareResult_t = null;
-                m_RemoteStorageFileWriteAsyncComplete_t = null;
-                m_RemoteStorageDownloadUGCResult_t = null;
+                _remoteStorageFileReadAsyncCompleteT = null;
+                _remoteStorageFileShareResultT = null;
+                _remoteStorageFileWriteAsyncCompleteT = null;
+                _remoteStorageDownloadUgcResultT = null;
             }
+
+            /// <summary>
+            /// Indicates whether Steam Cloud storage is enabled for the user's account.
+            /// Returns true if Steam Cloud is enabled for the account, otherwise false.
+            /// </summary>
             public static bool IsEnabledForAccount => SteamRemoteStorage.IsCloudEnabledForAccount();
+
+            /// <summary>
+            /// Indicates whether Steam Cloud storage is enabled for the application.
+            /// Returns true if Steam Cloud is enabled for the application, otherwise false.
+            /// Can also be set to enable or disable Steam Cloud for the application.
+            /// </summary>
             public static bool IsEnabledForApp
             {
                 get => SteamRemoteStorage.IsCloudEnabledForApp();
                 set => SteamRemoteStorage.SetCloudEnabledForApp(value);
             }
+
+            /// <summary>
+            /// Determines whether Steam Cloud storage is currently enabled for both the user's account
+            /// and the specific application. Returns true if both account-level and app-level
+            /// Steam Cloud settings are enabled, otherwise false.
+            /// </summary>
             public static bool IsEnabled => IsEnabledForAccount && IsEnabledForApp;
 
-            /// <summary>
-            /// If a Steam app is flagged for supporting dynamic Steam Cloud sync, and a sync occurs, this callback will be posted to the app if any local files changed.
-            /// </summary>
-            public static RemoteStorageLocalFileChangeEvent OnLocalFileChange
-            {
-                get
-                {
-                    if (m_RemoteStorageLocalFileChange_t == null)
-                        m_RemoteStorageLocalFileChange_t = Callback<RemoteStorageLocalFileChange_t>.Create(m_OnRemoteStorageLocalFileChange.Invoke);
-
-                    return m_OnRemoteStorageLocalFileChange;
-                }
-            }
-
-            private static RemoteStorageLocalFileChangeEvent m_OnRemoteStorageLocalFileChange = new();
-
-            private static Callback<RemoteStorageLocalFileChange_t> m_RemoteStorageLocalFileChange_t;
-
-            private static CallResult<RemoteStorageFileReadAsyncComplete_t> m_RemoteStorageFileReadAsyncComplete_t;
-            private static CallResult<RemoteStorageFileShareResult_t> m_RemoteStorageFileShareResult_t;
-            private static CallResult<RemoteStorageFileWriteAsyncComplete_t> m_RemoteStorageFileWriteAsyncComplete_t;
-            private static CallResult<RemoteStorageDownloadUGCResult_t> m_RemoteStorageDownloadUGCResult_t;
+            private static CallResult<RemoteStorageFileReadAsyncComplete_t> _remoteStorageFileReadAsyncCompleteT;
+            private static CallResult<RemoteStorageFileShareResult_t> _remoteStorageFileShareResultT;
+            private static CallResult<RemoteStorageFileWriteAsyncComplete_t> _remoteStorageFileWriteAsyncCompleteT;
+            private static CallResult<RemoteStorageDownloadUGCResult_t> _remoteStorageDownloadUgcResultT;
 
             /// <summary>
-            /// Deletes a file from the local disk, and propagates that delete to the cloud.
+            /// Deletes a file from the local disk and propagates that delete to the cloud.
             /// </summary>
             /// <remarks>
-            /// This is meant to be used when a user actively deletes a file. Use FileForget if you want to remove a file from the Steam Cloud but retain it on the users local disk.
+            /// This is meant to be used when a user actively deletes a file. Use FileForget if you want to remove a file from the Steam Cloud but retain it on the user's local disk.
             /// </remarks>
-            /// <param name="file"></param>
-            /// <returns></returns>
+            /// <param name="file">The name or path of the file to delete.</param>
+            /// <returns>Returns true if the file was successfully deleted; otherwise, false.</returns>
             public static bool FileDelete(string file) => SteamRemoteStorage.FileDelete(file);
+
             /// <summary>
-            /// Checks whether the specified file exists.
+            /// Checks if a specified file exists in the Steam Cloud storage.
             /// </summary>
-            /// <param name="file"></param>
-            /// <returns></returns>
+            /// <param name="file">The name or path of the file to check.</param>
+            /// <returns>Returns true if the file exists; otherwise, false.</returns>
             public static bool FileExists(string file) => SteamRemoteStorage.FileExists(file);
+
             /// <summary>
-            /// Deletes the file from remote storage, but leaves it on the local disk and remains accessible from the API.
+            /// Removes a file from remote storage while keeping it on the local disk for continued access.
+            /// The file will no longer be synchronised to the Cloud unless explicitly rewritten.
             /// </summary>
             /// <remarks>
-            /// <para>
-            /// When you are out of Cloud space, this can be used to allow calls to FileWrite to keep working without needing to make the user delete files.
-            /// </para>
-            /// <para>
-            /// How you decide which files to forget are up to you. It could be a simple Least Recently Used (LRU) queue or something more complicated.
-            /// </para>
-            /// <para>
-            /// Requiring the user to manage their Cloud-ized files for a game, while is possible to do, it is never recommended. For instance, "Which file would you like to delete so that you may store this new one?" removes a significant advantage of using the Cloud in the first place: its transparency.
-            /// </para>
-            /// <para>
-            /// Once a file has been deleted or forgotten, calling FileWrite will resynchronize it in the Cloud. Rewriting a forgotten file is the only way to make it persisted again.
-            /// </para>
+            /// This method is useful for freeing up Cloud storage space without requiring user intervention.
+            /// It enables continued use of FileWrite functionality even when Cloud storage is full.
+            /// Rewriting the file via FileWrite is necessary to persist it back to the Cloud after forgetting it.
             /// </remarks>
-            /// <param name="file"></param>
-            /// <returns></returns>
+            /// <param name="file">The name or path of the file to be forgotten from remote storage.</param>
+            /// <returns>Returns true if the file was successfully forgotten from remote storage; otherwise, false.</returns>
             public static bool FileForget(string file) => SteamRemoteStorage.FileForget(file);
+
             /// <summary>
-            /// Opens a binary file, reads the contents of the file into a byte array, and then closes the file.
+            /// Reads the contents of a binary file into a byte array and then closes the file.
             /// </summary>
-            /// <param name="file"></param>
-            /// <returns></returns>
+            /// <remarks>
+            /// This method is used for retrieving the binary data of a file stored in the Steam Cloud.
+            /// </remarks>
+            /// <param name="file">The name or path of the file to be read.</param>
+            /// <returns>Returns a byte array containing the contents of the file, or an empty array if the file could not be read.</returns>
             public static byte[] FileRead(string file)
             {
                 var size = SteamRemoteStorage.GetFileSize(file);
@@ -100,12 +101,13 @@ namespace Heathen.SteamworksIntegration.API
                 SteamRemoteStorage.FileRead(file, results, size);
                 return results;
             }
+
             /// <summary>
-            /// Reads the data from the file as text
+            /// Reads the contents of a file from the remote storage as a string using the specified text encoding.
             /// </summary>
-            /// <param name="fileName">The name of the file to load</param>
-            /// <param name="encoding">The text encoding of the file ... typically this will be System.TExt.Encoding.UTF8</param>
-            /// <returns></returns>
+            /// <param name="fileName">The name of the file to read.</param>
+            /// <param name="encoding">The text encoding to be used for decoding the file content (e.g. UTF8).</param>
+            /// <returns>Returns the content of the file as a string.</returns>
             public static string FileReadString(string fileName, System.Text.Encoding encoding)
             {
                 var size = SteamRemoteStorage.GetFileSize(fileName);
@@ -114,13 +116,14 @@ namespace Heathen.SteamworksIntegration.API
                 SteamRemoteStorage.FileRead(fileName, buffer, buffer.Length);
                 return encoding.GetString(buffer);
             }
+
             /// <summary>
-            /// Reads the data from the file as a JSON object
+            /// Reads the contents of a specified file and deserializes it into a JSON object of the specified type.
             /// </summary>
-            /// <typeparam name="T">The object type that should be deserialized from the file's JSON string</typeparam>
-            /// <param name="fileName">the name of the file to load</param>
-            /// <param name="encoding">the text encoding of the file ... typically this will be System.Text.Encoding.UTF8</param>
-            /// <returns></returns>
+            /// <typeparam name="T">The type into which the JSON data should be deserialized.</typeparam>
+            /// <param name="fileName">The name of the file to be read.</param>
+            /// <param name="encoding">The encoding used to interpret the file's contents, typically <see cref="System.Text.Encoding.UTF8"/>.</param>
+            /// <returns>Returns an object of type T if the file is read and deserialized successfully; otherwise, returns the default value of type T.</returns>
             public static T FileReadJson<T>(string fileName, System.Text.Encoding encoding)
             {
                 var size = SteamRemoteStorage.GetFileSize(fileName);
@@ -130,143 +133,202 @@ namespace Heathen.SteamworksIntegration.API
 
                 var buffer = new byte[size];
                 SteamRemoteStorage.FileRead(fileName, buffer, buffer.Length);
-                var JsonString = encoding.GetString(buffer);
+                var jsonString = encoding.GetString(buffer);
 
-                return JsonUtility.FromJson<T>(JsonString);
+                return JsonUtility.FromJson<T>(jsonString);
             }
+
             /// <summary>
-            /// Starts an asynchronous read from a file.
+            /// Initiates an asynchronous read operation for a specified file.
             /// </summary>
-            /// <param name="file"></param>
-            /// <param name="callback"></param>
+            /// <remarks>
+            /// This method reads the contents of the file asynchronously and processes the result through a user-provided callback.
+            /// It is useful for retrieving file data without blocking the main thread.
+            /// </remarks>
+            /// <param name="file">The name or path of the file to read.</param>
+            /// <param name="callback">A callback invoked with the file data and a status indicator once the read operation completes.</param>
             public static void FileReadAsync(string file, Action<byte[], bool> callback)
             {
                 if (callback == null)
                     return;
 
-                if (m_RemoteStorageFileReadAsyncComplete_t == null)
-                    m_RemoteStorageFileReadAsyncComplete_t = CallResult<RemoteStorageFileReadAsyncComplete_t>.Create();
+                _remoteStorageFileReadAsyncCompleteT ??= CallResult<RemoteStorageFileReadAsyncComplete_t>.Create();
 
                 var size = SteamRemoteStorage.GetFileSize(file);
                 var handle = SteamRemoteStorage.FileReadAsync(file, 0, (uint)size);
-                m_RemoteStorageFileReadAsyncComplete_t.Set(handle, (r, e) =>
+                _remoteStorageFileReadAsyncCompleteT.Set(handle, (r, e) =>
                 {
                     if (!e && r.m_eResult == EResult.k_EResultOK)
                     {
                         var results = new byte[size];
                         SteamRemoteStorage.FileReadAsyncComplete(r.m_hFileReadAsync, results, r.m_cubRead);
-                        callback.Invoke(results, e);
+                        callback.Invoke(results, false);
                     }
                     else
                     {
-                        callback.Invoke(new byte[0], e);
+                        callback.Invoke(Array.Empty<byte>(), e);
                     }
                 });
             }
+
+            /// <summary>
+            /// Shares a file from the local disk to the Steam Cloud and provides the share result through a callback.
+            /// </summary>
+            /// <remarks>
+            /// This function allows the user to share a file with the Steam Cloud. The result of the operation is supplied via the provided callback function.
+            /// </remarks>
+            /// <param name="file">The name or path of the file to be shared.</param>
+            /// <param name="callback">The callback to invoke when the file share operation completes. It provides the result of the operation and a success flag.</param>
             public static void FileShare(string file, Action<RemoteStorageFileShareResult_t, bool> callback)
             {
                 if (callback == null)
                     return;
 
-                if (m_RemoteStorageFileShareResult_t == null)
-                    m_RemoteStorageFileShareResult_t = CallResult<RemoteStorageFileShareResult_t>.Create();
+                _remoteStorageFileShareResultT ??= CallResult<RemoteStorageFileShareResult_t>.Create();
 
                 var handle = SteamRemoteStorage.FileShare(file);
-                m_RemoteStorageFileShareResult_t.Set(handle, callback.Invoke);
+                _remoteStorageFileShareResultT.Set(handle, callback.Invoke);
             }
+
             /// <summary>
-            /// Creates a new file, writes the bytes to the file, and then closes the file. If the target file already exists, it is overwritten.
+            /// Creates a new file, writes the specified bytes to the file, and then closes the file. If the target file already exists, it is overwritten.
             /// </summary>
             /// <param name="file">The name of the file to write to.</param>
-            /// <param name="data">The bytes to write to the file.</param>
-            /// <returns></returns>
-            public static bool FileWrite(string file, byte[] data) => SteamRemoteStorage.FileWrite(file, data, data.Length);
+            /// <param name="data">The bytes to be written to the file.</param>
+            /// <returns>Returns true if the file was successfully written; otherwise, false.</returns>
+            public static bool FileWrite(string file, byte[] data) =>
+                SteamRemoteStorage.FileWrite(file, data, data.Length);
+
             /// <summary>
-            /// Creates a new file, writes the bytes to the file, and then closes the file. If the target file already exists, it is overwritten.
+            /// Writes a file to the Steam Remote Storage, encoding the provided text using the specified encoding. If the target file already exists, it is overwritten.
             /// </summary>
             /// <remarks>
-            /// May return false under the following conditions:
-            /// The file you're trying to write is larger than 100MiB as defined by k_unMaxCloudFileChunkSize.
-            /// cubData is less than 0.
-            /// pvData is NULL.
-            /// You tried to write to an invalid path or filename.Because Steamworks Cloud is cross platform the files need to have valid names on all supported OSes and file systems. See Microsoft's documentation on Naming Files, Paths, and Namespaces.
-            /// The current user's Steamworks Cloud storage quota has been exceeded. They may have run out of space, or have too many files.
-            /// Steamworks could not write to the disk, the location might be read-only.
+            /// This method may return false if any of the following conditions are met:
+            /// - The file exceeds the maximum allowed size for Steam Remote Storage (e.g. 100 MiB).
+            /// - The data to write is null or empty.
+            /// - An invalid path or filename is specified. File names must be valid across all supported platforms and file systems.
+            /// - The user's Steamworks Cloud storage quota is exceeded (too many files or insufficient available space).
+            /// - The destination storage location is read-only or otherwise inaccessible.
             /// </remarks>
-            /// <param name="file"></param>
-            /// <param name="body">The text to encode and save to the Valve Remote Storage servers</param>
-            /// <param name="encoding">The text encoding to use ... usually System.Text.Encoding.UTF8</param>
-            /// <returns>true if the write was successful. Otherwise, false.
-            /// </returns>
+            /// <param name="file">The path or name of the file to write to Steam Remote Storage.</param>
+            /// <param name="body">The text content to encode and save to the file.</param>
+            /// <param name="encoding">The encoding to use for converting the text content to bytes, commonly <see cref="System.Text.Encoding.UTF8"/>.</param>
+            /// <returns>Returns true if the file was successfully written; otherwise, false.</returns>
             public static bool FileWrite(string file, string body, System.Text.Encoding encoding)
             {
                 var data = encoding.GetBytes(body);
                 return FileWrite(file, data);
             }
+
+            /// <summary>
+            /// Writes data to a specified file in the Steam Cloud.
+            /// </summary>
+            /// <remarks>
+            /// This method is used to save data to a file that is synchronised with the Steam Cloud storage,
+            /// allowing the data to be accessed across multiple devices or sessions.
+            /// </remarks>
+            /// <param name="file">The name or path of the file to write to.</param>
+            /// <param name="body">The byte array containing the data to be written to the file.</param>
+            /// <returns>Returns true if the file was successfully written; otherwise, false.</returns>
             public static bool FileWrite(string file, string body)
             {
                 var data = System.Text.Encoding.UTF8.GetBytes(body);
                 return FileWrite(file, data);
             }
+
             /// <summary>
-            /// Creates a new file, writes the bytes to the file, and then closes the file. If the target file already exists, it is overwritten.
+            /// Writes the specified object serialized as a JSON string to a file and saves it to the target location. If the file already exists, it is overwritten.
             /// </summary>
             /// <remarks>
-            /// May return false under the following conditions:
-            /// The file you're trying to write is larger than 100MiB as defined by k_unMaxCloudFileChunkSize.
-            /// cubData is less than 0.
-            /// pvData is NULL.
-            /// You tried to write to an invalid path or filename.Because Steamworks Cloud is cross platform the files need to have valid names on all supported OSes and file systems. See Microsoft's documentation on Naming Files, Paths, and Namespaces.
-            /// The current user's Steamworks Cloud storage quota has been exceeded. They may have run out of space, or have too many files.
-            /// Steamworks could not write to the disk, the location might be read-only.
+            /// The method may fail under certain conditions such as
+            /// - The file exceeds the maximum allowed size of 100MiB defined by k_unMaxCloudFileChunkSize.
+            /// - An invalid path or filename is provided. File names must be valid on all supported operating systems and file systems.
+            /// - The user's Steam Cloud storage quota is exceeded due to insufficient space or too many files.
+            /// - Steam is unable to write to the disk, possibly due to read-only restrictions on the target location.
             /// </remarks>
-            /// <param name="fileName"></param>
-            /// <param name="JsonObject">the object to be serialized to a JSON string and saved to the target file. Any type that the UnityEngine.JsonUtility can handle can be used.</param>
-            /// <param name="encoding">The text encoding to use ... usually System.Text.Encoding.UTF8</param>
-            /// <returns>true if the write was successful. Otherwise, false.
-            /// </returns>
-            public static bool FileWrite(string fileName, object JsonObject, System.Text.Encoding encoding)
+            /// <param name="fileName">The name or path of the file where the object will be written.</param>
+            /// <param name="jsonObject">The object to be serialized into JSON format and saved to the file. It must be a type supported by UnityEngine.JsonUtility.</param>
+            /// <param name="encoding">The text encoding to use, typically <see cref="System.Text.Encoding.UTF8"/>.</param>
+            /// <returns>Returns true if the write operation is successful; otherwise, false.</returns>
+            public static bool FileWrite(string fileName, object jsonObject, System.Text.Encoding encoding)
             {
-                return FileWrite(fileName, JsonUtility.ToJson(JsonObject), encoding);
+                return FileWrite(fileName, JsonUtility.ToJson(jsonObject), encoding);
             }
-            public static bool FileWrite(string fileName, object JsonObject)
-            {
-                return FileWrite(fileName, JsonUtility.ToJson(JsonObject), System.Text.Encoding.UTF8);
-            }
+
+
             /// <summary>
-            /// Creates a new file and asynchronously writes the raw byte data to the Steam Cloud, and then closes the file. If the target file already exists, it is overwritten.
+            /// Writes data to a file in the Steam Cloud or local storage.
             /// </summary>
-            /// <param name="file"></param>
-            /// <param name="data"></param>
-            /// <param name="callback"></param>
-            public static void FileWriteAsync(string file, byte[] data, Action<RemoteStorageFileWriteAsyncComplete_t, bool> callback)
+            /// <remarks>
+            /// This method allows you to save data to a specified file, managing Steam Cloud storage where applicable.
+            /// It can write both raw byte data and encoded text or JSON representations, depending on the overload used.
+            /// </remarks>
+            /// <param name="fileName">The name or path of the file to write to.</param>
+            /// <param name="jsonObject">The byte array containing the data to write.</param>
+            /// <returns>Returns true if the file was successfully written; otherwise, false.</returns>
+            public static bool FileWrite(string fileName, object jsonObject)
+            {
+                return FileWrite(fileName, JsonUtility.ToJson(jsonObject), System.Text.Encoding.UTF8);
+            }
+
+            /// <summary>
+            /// Creates or overwrites a file in the Steam Cloud and writes the provided raw byte data to it asynchronously.
+            /// </summary>
+            /// <param name="file">The name or path of the file to create or overwrite.</param>
+            /// <param name="data">The raw byte data to write to the file.</param>
+            /// <param name="callback">A callback function invoked when the asynchronous operation completes, providing operation results and a success flag.</param>
+            public static void FileWriteAsync(string file, byte[] data,
+                Action<RemoteStorageFileWriteAsyncComplete_t, bool> callback)
             {
                 if (callback == null)
                     return;
 
-                if (m_RemoteStorageFileWriteAsyncComplete_t == null)
-                    m_RemoteStorageFileWriteAsyncComplete_t = CallResult<RemoteStorageFileWriteAsyncComplete_t>.Create();
+                _remoteStorageFileWriteAsyncCompleteT ??= CallResult<RemoteStorageFileWriteAsyncComplete_t>.Create();
 
                 var handle = SteamRemoteStorage.FileWriteAsync(file, data, (uint)data.Length);
-                m_RemoteStorageFileWriteAsyncComplete_t.Set(handle, callback.Invoke);
+                _remoteStorageFileWriteAsyncCompleteT.Set(handle, callback.Invoke);
             }
+
+            /// <summary>
+            /// Writes the specified file to the Steam Cloud asynchronously with the provided content and encoding.
+            /// </summary>
+            /// <remarks>
+            /// This method asynchronously writes a file to the Steam Cloud storage. A callback is invoked upon the completion of the operation to indicate success or failure.
+            /// </remarks>
+            /// <param name="file">The name or path of the file to write.</param>
+            /// <param name="body">The content to write to the file.</param>
+            /// <param name="encoding">The encoding used to convert the content to bytes.</param>
+            /// <param name="callback">The callback that is invoked when the async operation completes, providing a status result and a success flag.</param>
             public static void FileWriteAsync(string file, string body, System.Text.Encoding encoding, Action<RemoteStorageFileWriteAsyncComplete_t, bool> callback)
             {
                 var data = encoding.GetBytes(body);
                 FileWriteAsync(file, data, callback);
             }
-            public static void FileWriteAsync(string fileName, object JsonObject, System.Text.Encoding encoding, Action<RemoteStorageFileWriteAsyncComplete_t, bool> callback)
+
+            /// <summary>
+            /// Asynchronously writes data to a file in Steam Cloud storage.
+            /// </summary>
+            /// <remarks>
+            /// This method is used to save data to a file in the Steam Cloud. It supports writing data
+            /// in JSON format and allows specifying the encoding. A callback is invoked upon completion
+            /// to notify whether the operation was successful.
+            /// </remarks>
+            /// <param name="fileName">The name or path of the file to write.</param>
+            /// <param name="jsonObject">The object to serialize into JSON and write to the file.</param>
+            /// <param name="encoding">The encoding format to use for the file content.</param>
+            /// <param name="callback">A callback that receives the result of the write operation and a success flag.</param>
+            public static void FileWriteAsync(string fileName, object jsonObject, System.Text.Encoding encoding, Action<RemoteStorageFileWriteAsyncComplete_t, bool> callback)
             {
-                FileWriteAsync(fileName, JsonUtility.ToJson(JsonObject), encoding, callback);
+                FileWriteAsync(fileName, JsonUtility.ToJson(jsonObject), encoding, callback);
             }
             /// <summary>
-            /// Cancels a file write stream that was started by FileWriteStreamOpen.
+            /// Cancels a file write stream started by FileWriteStreamOpen.
             /// </summary>
             /// <param name="handle"></param>
             /// <returns></returns>
             public static bool FileWriteStreamCancel(UGCFileWriteStreamHandle_t handle) => SteamRemoteStorage.FileWriteStreamCancel(handle);
             /// <summary>
-            /// Closes a file write stream that was started by FileWriteStreamOpen.
+            /// Closes a file write stream started by FileWriteStreamOpen.
             /// </summary>
             /// <param name="handle"></param>
             /// <returns></returns>
@@ -275,7 +337,7 @@ namespace Heathen.SteamworksIntegration.API
             /// Creates a new file output stream allowing you to stream out data to the Steam Cloud file in chunks. If the target file already exists, it is not overwritten until FileWriteStreamClose has been called.
             /// </summary>
             /// <remarks>
-            /// To write data out to this stream you can use FileWriteStreamWriteChunk, and then to close or cancel you use FileWriteStreamClose and FileWriteStreamCancel respectively.
+            /// To write data out to this stream, you can use FileWriteStreamWriteChunk, and then to close or cancel you use FileWriteStreamClose and FileWriteStreamCancel respectively.
             /// </remarks>
             /// <param name="file"></param>
             /// <returns></returns>
@@ -287,9 +349,33 @@ namespace Heathen.SteamworksIntegration.API
             /// <param name="data"></param>
             /// <returns></returns>
             public static bool FileWriteStreamWriteChunk(UGCFileWriteStreamHandle_t handle, byte[] data) => SteamRemoteStorage.FileWriteStreamWriteChunk(handle, data, data.Length);
-            public static int GetCachedUGCCount() => SteamRemoteStorage.GetCachedUGCCount();
-            public static UGCHandle_t GetCachedUGCHandle(int index) => SteamRemoteStorage.GetCachedUGCHandle(index);
-            public static UGCHandle_t[] GetCashedUGCHandles()
+
+            /// <summary>
+            /// Retrieves the number of cached UGC (User Generated Content) items available for the current user.
+            /// </summary>
+            /// <returns>Returns the total count of cached UGC items as an integer.</returns>
+            public static int GetCachedUgcCount() => SteamRemoteStorage.GetCachedUGCCount();
+
+            /// <summary>
+            /// Retrieves the cached UGC (User-Generated Content) handle stored at the specified index.
+            /// </summary>
+            /// <remarks>
+            /// This method is used to access a cached UGC handle previously stored by the Steam Remote Storage system.
+            /// It allows retrieval of specific UGC content when indexed caching is used.
+            /// </remarks>
+            /// <param name="index">The index of the cached UGC content to retrieve.</param>
+            /// <returns>Returns a <see cref="UGCHandle_t"/> representing the handle to the cached UGC content.</returns>
+            public static UGCHandle_t GetCachedUgcHandle(int index) => SteamRemoteStorage.GetCachedUGCHandle(index);
+
+            /// <summary>
+            /// Retrieves all cached UGC (User Generated Content) handles stored locally.
+            /// </summary>
+            /// <remarks>
+            /// This method queries the number of cached UGC items available and retrieves their handles.
+            /// These handles can be used for further processing or operations on the cached UGC items.
+            /// </remarks>
+            /// <returns>An array of UGCHandle_t representing the cached UGC handles.</returns>
+            public static UGCHandle_t[] GetCashedUgcHandles()
             {
                 var count = SteamRemoteStorage.GetCachedUGCCount();
                 var results = new UGCHandle_t[count];
@@ -301,12 +387,12 @@ namespace Heathen.SteamworksIntegration.API
                 return results;
             }
             /// <summary>
-            /// Gets the total number of local files synchronized by Steam Cloud.
+            /// Gets the total number of local files synchronised by Steam Cloud.
             /// </summary>
             /// <returns></returns>
             public static int GetFileCount() => SteamRemoteStorage.GetFileCount();
             /// <summary>
-            /// Gets a collection containing information about all of the files stored on the Steam Cloud system
+            /// Gets a collection containing information about all the files stored on the Steam Cloud system
             /// </summary>
             /// <returns></returns>
             public static RemoteStorageFile[] GetFiles()
@@ -322,7 +408,7 @@ namespace Heathen.SteamworksIntegration.API
                     {
                         name = name,
                         size = size,
-                        timestamp = time
+                        Timestamp = time
                     };
                 }
                 return results;
@@ -349,7 +435,7 @@ namespace Heathen.SteamworksIntegration.API
                         {
                             name = name,
                             size = size,
-                            timestamp = time
+                            Timestamp = time
                         };
 
                         found++;
@@ -374,17 +460,17 @@ namespace Heathen.SteamworksIntegration.API
             /// </summary>
             /// <remarks>
             /// <para>
-            /// After calling GetLocalFileChangeCount, use this method to iterate over the changes. The changes described have already been made to local files. Your application should take appropriate action to reload state from disk, and possibly notify the user.
+            /// After calling GetLocalFileChangeCount, use this method to iterate over the changes. The changes described have already been made to local files. Your application should take appropriate action to reload state from the disk and possibly notify the user.
             /// </para>
             /// <para>
-            /// For example: The local system had been suspended, during which time the user played elsewhere and uploaded changes to the Steam Cloud. On resume, Steam downloads those changes to the local system before resuming the application. The application receives an RemoteStorageLocalFileChange_t, and uses GetLocalFileChangeCount and GetLocalFileChange to iterate those changes. Depending on the application structure and the nature of the changes, the application could:
+            /// For example, The local system had been suspended, during which time the user played elsewhere and uploaded changes to the Steam Cloud. On resume, Steam downloads those changes to the local system before resuming the application. The application receives a RemoteStorageLocalFileChange_t and uses GetLocalFileChangeCount and GetLocalFileChange to iterate those changes. Depending on the application structure and the nature of the changes, the application could:
             /// </para>
             /// <list type="bullet">
             /// <item>
             /// Re-load game progress to resume at exactly the point where the user was when they exited the game on the other device
             /// </item>
             /// <item>
-            /// Notify the user of any synchronized changes that don't require reloading
+            /// Notify the user of any synchronised changes that don't require reloading
             /// </item>
             /// <item>
             /// etc
@@ -397,39 +483,118 @@ namespace Heathen.SteamworksIntegration.API
             /// <returns></returns>
             public static string GetLocalFileChange(int index, out ERemoteStorageLocalFileChange changeType, out ERemoteStorageFilePathType pathType) => SteamRemoteStorage.GetLocalFileChange(index, out changeType, out pathType);
             /// <summary>
-            /// Gets the number of bytes available, and used on the users Steam Cloud storage.
+            /// Gets the number of bytes available and used on the users' Steam Cloud storage.
             /// </summary>
             /// <param name="totalBytes"></param>
             /// <param name="remainingBytes"></param>
             /// <returns></returns>
             public static bool GetQuota(out ulong totalBytes, out ulong remainingBytes) => SteamRemoteStorage.GetQuota(out totalBytes, out remainingBytes);
+
+            /// <summary>
+            /// Retrieves the synchronisation platforms for a specific file in the Steam Cloud.
+            /// </summary>
+            /// <remarks>
+            /// This method is useful to determine which platforms are set to synchronise a particular file.
+            /// The synchronisation platforms could include Windows, OSX, Linux, and others supported by the Steam Cloud.
+            /// </remarks>
+            /// <param name="file">The name or path of the file for which to retrieve the synchronisation platforms.</param>
+            /// <returns>Returns an <see cref="ERemoteStoragePlatform"/> enum value indicating the platforms where the file is synchronised.</returns>
             public static ERemoteStoragePlatform GetSyncPlatforms(string file) => SteamRemoteStorage.GetSyncPlatforms(file);
-            public static bool GetUGCDetails(UGCHandle_t handle, out AppId_t appId, out string name, out int size, out CSteamID owner) => SteamRemoteStorage.GetUGCDetails(handle, out appId, out name, out size, out owner);
-            public static bool GetUGCDownloadProgress(UGCHandle_t handle, out int downloaded, out int expected) => SteamRemoteStorage.GetUGCDownloadProgress(handle, out downloaded, out expected);
+
+            /// <summary>
+            /// Retrieves details about a specific User Generated Content (UGC) item.
+            /// </summary>
+            /// <remarks>
+            /// This method fetches metadata about a UGC item, such as its associated App ID, name, file size, and owner.
+            /// </remarks>
+            /// <param name="handle">The handle identifying the UGC item.</param>
+            /// <param name="appId">The App ID associated with the UGC item.</param>
+            /// <param name="name">The name of the UGC item.</param>
+            /// <param name="size">The size of the UGC item in bytes.</param>
+            /// <param name="owner">The Steam ID of the owner of the UGC item.</param>
+            /// <returns>Returns true if the details were successfully retrieved; otherwise, false.</returns>
+            public static bool GetUgcDetails(UGCHandle_t handle, out AppId_t appId, out string name, out int size, out CSteamID owner) => SteamRemoteStorage.GetUGCDetails(handle, out appId, out name, out size, out owner);
+
+            /// <summary>
+            /// Retrieves the download progress of a specific UGC (User-Generated Content) file.
+            /// </summary>
+            /// <remarks>
+            /// This method provides information about the current download progress of a UGC file, including the number of bytes downloaded and the total expected bytes.
+            /// </remarks>
+            /// <param name="handle">The handle representing the UGC file.</param>
+            /// <param name="downloaded">Outputs the number of bytes downloaded so far.</param>
+            /// <param name="expected">Outputs the total number of bytes expected for the file.</param>
+            /// <returns>Returns true if the download progress was successfully retrieved; otherwise, false.</returns>
+            public static bool GetUgcDownloadProgress(UGCHandle_t handle, out int downloaded, out int expected) => SteamRemoteStorage.GetUGCDownloadProgress(handle, out downloaded, out expected);
+
+            /// <summary>
+            /// Sets the platform synchronisation options for a specified file.
+            /// </summary>
+            /// <remarks>
+            /// This method allows the user to specify which platforms the file will synchronise with the Steam Cloud.
+            /// </remarks>
+            /// <param name="file">The name or path of the file whose synchronisation settings are being modified.</param>
+            /// <param name="platform">The platform or combination of platforms to set for synchronisation, represented as <c>ERemoteStoragePlatform</c> flags.</param>
+            /// <returns>Returns true if the synchronisation platforms were successfully set; otherwise, false.</returns>
             public static bool SetSyncPlatforms(string file, ERemoteStoragePlatform platform) => SteamRemoteStorage.SetSyncPlatforms(file, platform);
-            public static void UGCDownload(UGCHandle_t handle, uint priority, Action<RemoteStorageDownloadUGCResult_t, bool> callback)
+
+            /// <summary>
+            /// Downloads a UGC (User Generated Content) item from the Steam Cloud.
+            /// </summary>
+            /// <remarks>
+            /// This method initiates a download of the specified UGC item and invokes the provided callback upon completion.
+            /// </remarks>
+            /// <param name="handle">The unique handle identifying the UGC item to download.</param>
+            /// <param name="priority">The priority level of the download. A lower value indicates a higher priority.</param>
+            /// <param name="callback">
+            /// A callback function to handle the result of the download operation. The callback receives the result as a
+            /// <see cref="RemoteStorageDownloadUGCResult_t"/> and a boolean indicating success or failure.
+            /// </param>
+            public static void UgcDownload(UGCHandle_t handle, uint priority, Action<RemoteStorageDownloadUGCResult_t, bool> callback)
             {
                 if (callback == null)
                     return;
 
-                if (m_RemoteStorageDownloadUGCResult_t == null)
-                    m_RemoteStorageDownloadUGCResult_t = CallResult<RemoteStorageDownloadUGCResult_t>.Create();
+                if (_remoteStorageDownloadUgcResultT != null)
+                {
+                }
+                else
+                    _remoteStorageDownloadUgcResultT = CallResult<RemoteStorageDownloadUGCResult_t>.Create();
 
                 var callbackHandle = SteamRemoteStorage.UGCDownload(handle, priority);
-                m_RemoteStorageDownloadUGCResult_t.Set(callbackHandle, callback.Invoke);
+                _remoteStorageDownloadUgcResultT.Set(callbackHandle, callback.Invoke);
             }
-            public static void UGCDownloadToLocation(UGCHandle_t handle, string location, uint priority, Action<RemoteStorageDownloadUGCResult_t, bool> callback)
+
+            /// <summary>
+            /// Downloads a Steam Workshop item to a specified local storage location.
+            /// </summary>
+            /// <remarks>
+            /// This method is used to retrieve a subscribed Workshop item and save it to a specific location on the local disk. It allows you to prioritise the download operation and specify a callback to handle the result.
+            /// </remarks>
+            /// <param name="handle">The handle to the Workshop item (UGC) to download.</param>
+            /// <param name="location">The file path where the Workshop item will be saved.</param>
+            /// <param name="priority">The priority of the download operation. Higher values indicate higher priority.</param>
+            /// <param name="callback">Callback to execute upon completion of the download, providing the result and success status.</param>
+            public static void UgcDownloadToLocation(UGCHandle_t handle, string location, uint priority, Action<RemoteStorageDownloadUGCResult_t, bool> callback)
             {
                 if (callback == null)
                     return;
 
-                if (m_RemoteStorageDownloadUGCResult_t == null)
-                    m_RemoteStorageDownloadUGCResult_t = CallResult<RemoteStorageDownloadUGCResult_t>.Create();
+                _remoteStorageDownloadUgcResultT ??= CallResult<RemoteStorageDownloadUGCResult_t>.Create();
 
                 var callbackHandle = SteamRemoteStorage.UGCDownloadToLocation(handle, location, priority);
-                m_RemoteStorageDownloadUGCResult_t.Set(callbackHandle, callback.Invoke);
+                _remoteStorageDownloadUgcResultT.Set(callbackHandle, callback.Invoke);
             }
-            public static byte[] UGCRead(UGCHandle_t handle)
+
+            /// <summary>
+            /// Reads data from the given UGC (User Generated Content) handle.
+            /// </summary>
+            /// <remarks>
+            /// The method retrieves the details of the specified UGC handle and reads its contents into a byte array.
+            /// </remarks>
+            /// <param name="handle">The handle of the UGC to read.</param>
+            /// <returns>Returns a byte array containing the data read from the UGC handle.</returns>
+            public static byte[] UgcRead(UGCHandle_t handle)
             {
                 SteamRemoteStorage.GetUGCDetails(handle, out _, out _, out int size, out _);
                 var results = new byte[size];

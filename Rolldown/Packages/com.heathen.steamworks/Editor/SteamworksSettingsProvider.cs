@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using System.Collections.Generic;
@@ -12,23 +12,19 @@ namespace Heathen.SteamworksIntegration.Editors
 {
     public class SteamworksSettingsProvider : SettingsProvider
     {
-        private SteamToolsSettings settings;
-        private bool needRefresh = false;
-        private Dictionary<string, bool> toggles = new();
-        private string newSettingName = string.Empty;
+        private SteamToolsSettings _settings;
+        private readonly Dictionary<string, bool> _toggles = new();
+        private string _newSettingName = string.Empty;
 
         private bool GetToggle(string name)
         {
-            if(toggles.TryGetValue(name, out var value))
-                return value;
-            else
-                return false;
+            return _toggles.GetValueOrDefault(name, false);
         }
 
         private void SetToggle(string name, bool value)
         {
-            if(!toggles.TryAdd(name, value))
-                toggles[name] = value;
+            if(!_toggles.TryAdd(name, value))
+                _toggles[name] = value;
         }
 
         private bool this[string name]
@@ -48,17 +44,17 @@ namespace Heathen.SteamworksIntegration.Editors
 
         public override void OnActivate(string searchContext, VisualElement rootElement)
         {
-            settings = SteamToolsSettings.GetOrCreate();
+            _settings = SteamToolsSettings.GetOrCreate();
         }
 
         public void UpdateAppDefine()
         {
-            if (!settings.ActiveApp.HasValue)
+            if (!_settings.ActiveApp.HasValue)
                 return;
 
-            string activeDefine = $"APP{settings.ActiveApp.Value}";
+            string activeDefine = $"APP{_settings.ActiveApp.Value}";
 
-            var targets = new NamedBuildTarget[]
+            var targets = new[]
             {
                 NamedBuildTarget.Standalone,
                 NamedBuildTarget.Server,
@@ -67,7 +63,7 @@ namespace Heathen.SteamworksIntegration.Editors
             foreach (var buildTarget in targets)
             {
                 string defines = PlayerSettings.GetScriptingDefineSymbols(buildTarget);
-                var defineList = new HashSet<string>(defines.Split(';', System.StringSplitOptions.RemoveEmptyEntries));
+                var defineList = new HashSet<string>(defines.Split(';', StringSplitOptions.RemoveEmptyEntries));
 
                 // Remove all APP#### defines except active
                 var toRemove = new List<string>();
@@ -105,39 +101,39 @@ namespace Heathen.SteamworksIntegration.Editors
 
         public override void OnGUI(string searchContext)
         {
-            if(!settings.ActiveApp.HasValue)
+            if(!_settings.ActiveApp.HasValue)
             {
-                settings.activeAppIndex = -1;
-                settings.mainAppSettings ??= SteamToolsSettings.AppSettings.CreateDefault();
+                _settings.activeAppIndex = -1;
+                _settings.mainAppSettings ??= SteamToolsSettings.AppSettings.CreateDefault();
             }
 
             var options = new List<string>();
             var indices = new List<int>();
 
             // Always add main
-            options.Add($"Main ({settings.mainAppSettings.applicationId})");
+            options.Add($"Main ({_settings.mainAppSettings.applicationId})");
             indices.Add(-1);
 
             // Optional demo
-            if (settings.demoAppSettings != null)
+            if (_settings.demoAppSettings != null)
             {
-                options.Add($"Demo ({settings.demoAppSettings.applicationId})");
+                options.Add($"Demo ({_settings.demoAppSettings.applicationId})");
                 indices.Add(-2);
             }
 
-            // Optional playtests
-            if (settings.playtestSettings != null)
+            // Optionally playtests
+            if (_settings.playtestSettings != null)
             {
-                for (int i = 0; i < settings.playtestSettings.Count; i++)
+                for (int i = 0; i < _settings.playtestSettings.Count; i++)
                 {
-                    var app = settings.playtestSettings[i];
+                    var app = _settings.playtestSettings[i];
                     options.Add($"{app.editorName} ({app.applicationId})");
                     indices.Add(i);
                 }
             }
 
-            // Find current dropdown index
-            int currentIndex = indices.IndexOf(settings.activeAppIndex);
+            // Find the current dropdown index
+            int currentIndex = indices.IndexOf(_settings.activeAppIndex);
             if (currentIndex < 0) currentIndex = 0;
 
             EditorGUI.indentLevel++;
@@ -148,10 +144,10 @@ namespace Heathen.SteamworksIntegration.Editors
             // Update activeAppIndex
             int nIndex = indices[newIndex];
             bool needRestart = false;
-            if (nIndex != settings.activeAppIndex)
+            if (nIndex != _settings.activeAppIndex)
             {
-                EditorUtility.SetDirty(this.settings);
-                settings.activeAppIndex = nIndex;
+                EditorUtility.SetDirty(this._settings);
+                _settings.activeAppIndex = nIndex;
                 needRestart = true;
             }
             
@@ -196,11 +192,11 @@ namespace Heathen.SteamworksIntegration.Editors
             EditorGUILayout.EndHorizontal();
             if (GUILayout.Button("Generate Wrapper", GUILayout.Height(24)))
             {
-                settings.CreateOrUpdateWrapper();
+                _settings.CreateOrUpdateWrapper();
             }
             EditorGUILayout.Space(6);
             EditorGUI.indentLevel++;
-            DrawDLCList();
+            DrawDlcList();
             DrawInventoryArea();
             DrawServerSettings();
             EditorGUI.indentLevel--;
@@ -208,10 +204,10 @@ namespace Heathen.SteamworksIntegration.Editors
             EditorGUILayout.LabelField(" Main", nStyle);
             if (EditorGUILayout.LinkButton("Steamworks Portal"))
             {
-                Application.OpenURL("https://partner.steamgames.com/apps/landing/" + settings.mainAppSettings.applicationId.ToString());
+                Application.OpenURL("https://partner.steamgames.com/apps/landing/" + _settings.mainAppSettings.applicationId.ToString());
             }
                         
-            DrawCommonSettings(settings.mainAppSettings);
+            DrawCommonSettings(_settings.mainAppSettings);
             DemoArea();
             PlaytestArea();
         }
@@ -220,7 +216,7 @@ namespace Heathen.SteamworksIntegration.Editors
         [SettingsProvider]
         public static SettingsProvider CreateSteamworksSettingsProvider()
         {
-            var provider = new SteamworksSettingsProvider("Project/Player/Steamworks", SettingsScope.Project)
+            var provider = new SteamworksSettingsProvider("Project/Player/Steamworks")
             {
                 // Automatically extract all keywords from the Styles.
                 keywords = GetSearchKeywordsFromGUIContentProperties<Styles>()
@@ -232,18 +228,20 @@ namespace Heathen.SteamworksIntegration.Editors
         {
             EditorGUILayout.Space();
             EditorGUILayout.Space();
-            GUIStyle nStyle = new GUIStyle(EditorStyles.boldLabel);
-            nStyle.fontSize = 18;
+            var nStyle = new GUIStyle(EditorStyles.boldLabel)
+            {
+                fontSize = 18
+            };
             EditorGUILayout.LabelField(" Demo", nStyle);
             EditorGUILayout.Space();
-            if (settings.demoAppSettings != null)
+            if (_settings.demoAppSettings != null)
             {
                 if (EditorGUILayout.LinkButton("Steamworks Portal"))
                 {
-                    Application.OpenURL("https://partner.steamgames.com/apps/landing/" + settings.demoAppSettings.applicationId.ToString());
+                    Application.OpenURL("https://partner.steamgames.com/apps/landing/" + _settings.demoAppSettings.applicationId.ToString());
                 }
                 
-                DrawCommonSettings(settings.demoAppSettings);
+                DrawCommonSettings(_settings.demoAppSettings);
             }
             else
             {
@@ -251,7 +249,7 @@ namespace Heathen.SteamworksIntegration.Editors
                 {
                     GUI.FocusControl(null);
 
-                    settings.demoAppSettings = new() { editorName = "Demo" };
+                    _settings.demoAppSettings = new() { editorName = "Demo" };
                 }
             }
         }
@@ -268,26 +266,26 @@ namespace Heathen.SteamworksIntegration.Editors
 
             EditorGUI.indentLevel++;
             EditorGUILayout.BeginHorizontal();
-            newSettingName = EditorGUILayout.TextField("Playtest Name", newSettingName);
-            if (GUILayout.Button("Create Playtest Settings") && !string.IsNullOrEmpty(newSettingName))
+            _newSettingName = EditorGUILayout.TextField("Playtest Name", _newSettingName);
+            if (GUILayout.Button("Create Playtest Settings") && !string.IsNullOrEmpty(_newSettingName))
             {
                 GUI.FocusControl(null);
 
-                settings.playtestSettings.Add(new()
+                _settings.playtestSettings.Add(new()
                 {
-                    editorName = newSettingName,
+                    editorName = _newSettingName,
                     applicationId = 0
                 });
 
-                this.settings.isDirty = true;
-                EditorUtility.SetDirty(this.settings);
+                this._settings.isDirty = true;
+                EditorUtility.SetDirty(this._settings);
 
-                newSettingName = string.Empty;
+                _newSettingName = string.Empty;
             }
             EditorGUILayout.EndHorizontal();
             EditorGUI.indentLevel--;
             SteamToolsSettings.AppSettings settingsToRemove = null;
-            foreach (var playtest in settings.playtestSettings)
+            foreach (var playtest in _settings.playtestSettings)
             {
                 if (!PlaytestArea(playtest))
                 {
@@ -297,14 +295,16 @@ namespace Heathen.SteamworksIntegration.Editors
             }
 
             if(settingsToRemove != null)
-                settings.playtestSettings.Remove(settingsToRemove);
+                _settings.playtestSettings.Remove(settingsToRemove);
         }
 
         private bool PlaytestArea(SteamToolsSettings.AppSettings settings)
         {
             EditorGUILayout.Space();
-            GUIStyle nStyle = new GUIStyle(EditorStyles.boldLabel);
-            nStyle.fontSize = 16;
+            var nStyle = new GUIStyle(EditorStyles.boldLabel)
+            {
+                fontSize = 16
+            };
             EditorGUILayout.LabelField(" " + settings.editorName, nStyle);
             EditorGUILayout.BeginHorizontal();
             if (EditorGUILayout.LinkButton("Steamworks Portal"))
@@ -336,30 +336,28 @@ namespace Heathen.SteamworksIntegration.Editors
                 GUI.FocusControl(null);
 
                 settings.Clear();
-                this.settings.isDirty = true;
-                EditorUtility.SetDirty(this.settings);
+                this._settings.isDirty = true;
+                EditorUtility.SetDirty(this._settings);
             }
 
             if (GUILayout.Button("Set Test Values"))
             {
                 GUI.FocusControl(null);
-                needRefresh = true;
                 settings.SetDefault();
-                this.settings.isDirty = true;
-                EditorUtility.SetDirty(this.settings);
+                this._settings.isDirty = true;
+                EditorUtility.SetDirty(this._settings);
             }
             EditorGUILayout.EndHorizontal();
             EditorGUI.indentLevel++;
             var id = EditorGUILayout.TextField("Application Id", settings.applicationId.ToString());
-            uint buffer = 0;
-            if (uint.TryParse(id, out buffer))
+            if (uint.TryParse(id, out var buffer))
             {
                 if (buffer != settings.applicationId)
                 {
-                    Undo.RecordObject(this.settings, "editor");
+                    Undo.RecordObject(this._settings, "editor");
                     settings.applicationId = buffer;
-                    this.settings.isDirty = true;
-                    EditorUtility.SetDirty(this.settings);
+                    this._settings.isDirty = true;
+                    EditorUtility.SetDirty(this._settings);
                 }
             }
             
@@ -389,11 +387,11 @@ namespace Heathen.SteamworksIntegration.Editors
                 EditorGUILayout.BeginHorizontal();
                 if (EditorGUILayout.LinkButton("Default"))
                 {
-                    settings.defaultServerSettings = SteamGameServerConfiguration.Default;
+                    _settings.defaultServerSettings = SteamGameServerConfiguration.Default;
                 }
                 if (EditorGUILayout.LinkButton("Clear"))
                 {
-                    settings.defaultServerSettings = new();
+                    _settings.defaultServerSettings = new();
                 }
                 EditorGUILayout.EndHorizontal();
                 EditorGUILayout.Space();
@@ -411,112 +409,111 @@ namespace Heathen.SteamworksIntegration.Editors
             EditorGUILayout.LabelField("General", EditorStyles.whiteLabel, GUILayout.Width(250));
             EditorGUILayout.EndHorizontal();
 
-            if (!settings.defaultServerSettings.anonymousServerLogin)
+            if (!_settings.defaultServerSettings.anonymousServerLogin)
             {
                 EditorGUILayout.HelpBox("If anonymous server login is not enabled then you must provide a game server token.", MessageType.Info);
 
-                var token = EditorGUILayout.TextField("Token", settings.defaultServerSettings.gameServerToken);
+                var token = EditorGUILayout.TextField("Token", _settings.defaultServerSettings.gameServerToken);
 
-                if (token != settings.defaultServerSettings.gameServerToken)
+                if (token != _settings.defaultServerSettings.gameServerToken)
                 {
-                    Undo.RecordObject(settings, "editor");
-                    settings.defaultServerSettings.gameServerToken = token;
-                    settings.isDirty = true;
-                    EditorUtility.SetDirty(settings);
+                    Undo.RecordObject(_settings, "editor");
+                    _settings.defaultServerSettings.gameServerToken = token;
+                    _settings.isDirty = true;
+                    EditorUtility.SetDirty(_settings);
                 }
             }
 
-            var serverName = EditorGUILayout.TextField("Server Name", settings.defaultServerSettings.serverName);
+            var serverName = EditorGUILayout.TextField("Server Name", _settings.defaultServerSettings.serverName);
 
-            if (serverName != settings.defaultServerSettings.serverName)
+            if (serverName != _settings.defaultServerSettings.serverName)
             {
-                Undo.RecordObject(settings, "editor");
-                settings.defaultServerSettings.serverName = serverName;
-                settings.isDirty = true;
-                EditorUtility.SetDirty(settings);
+                Undo.RecordObject(_settings, "editor");
+                _settings.defaultServerSettings.serverName = serverName;
+                _settings.isDirty = true;
+                EditorUtility.SetDirty(_settings);
             }
 
-            var serverVersion = EditorGUILayout.TextField("Server Version", settings.defaultServerSettings.serverVersion);
+            var serverVersion = EditorGUILayout.TextField("Server Version", _settings.defaultServerSettings.serverVersion);
 
-            if (serverVersion != settings.defaultServerSettings.serverVersion)
+            if (serverVersion != _settings.defaultServerSettings.serverVersion)
             {
-                Undo.RecordObject(settings, "editor");
-                settings.defaultServerSettings.serverVersion = serverVersion;
-                settings.isDirty = true;
-                EditorUtility.SetDirty(settings);
+                Undo.RecordObject(_settings, "editor");
+                _settings.defaultServerSettings.serverVersion = serverVersion;
+                _settings.isDirty = true;
+                EditorUtility.SetDirty(_settings);
             }
 
-            if (settings.defaultServerSettings.supportSpectators)
+            if (_settings.defaultServerSettings.supportSpectators)
             {
-                serverName = EditorGUILayout.TextField("Spectator Name", settings.defaultServerSettings.spectatorServerName);
+                serverName = EditorGUILayout.TextField("Spectator Name", _settings.defaultServerSettings.spectatorServerName);
 
-                if (serverName != settings.defaultServerSettings.spectatorServerName)
+                if (serverName != _settings.defaultServerSettings.spectatorServerName)
                 {
-                    Undo.RecordObject(settings, "editor");
-                    settings.defaultServerSettings.spectatorServerName = serverName;
-                    settings.isDirty = true;
-                    EditorUtility.SetDirty(settings);
+                    Undo.RecordObject(_settings, "editor");
+                    _settings.defaultServerSettings.spectatorServerName = serverName;
+                    _settings.isDirty = true;
+                    EditorUtility.SetDirty(_settings);
                 }
             }
 
-            serverName = EditorGUILayout.TextField("Description", settings.defaultServerSettings.gameDescription);
+            serverName = EditorGUILayout.TextField("Description", _settings.defaultServerSettings.gameDescription);
 
-            if (serverName != settings.defaultServerSettings.gameDescription)
+            if (serverName != _settings.defaultServerSettings.gameDescription)
             {
-                Undo.RecordObject(settings, "editor");
-                settings.defaultServerSettings.gameDescription = serverName;
-                settings.isDirty = true;
-                EditorUtility.SetDirty(settings);
+                Undo.RecordObject(_settings, "editor");
+                _settings.defaultServerSettings.gameDescription = serverName;
+                _settings.isDirty = true;
+                EditorUtility.SetDirty(_settings);
             }
 
-            serverName = EditorGUILayout.TextField("Directory", settings.defaultServerSettings.gameDirectory);
+            serverName = EditorGUILayout.TextField("Directory", _settings.defaultServerSettings.gameDirectory);
 
-            if (serverName != settings.defaultServerSettings.gameDirectory)
+            if (serverName != _settings.defaultServerSettings.gameDirectory)
             {
-                Undo.RecordObject(settings, "editor");
-                settings.defaultServerSettings.gameDirectory = serverName;
-                settings.isDirty = true;
-                EditorUtility.SetDirty(settings);
+                Undo.RecordObject(_settings, "editor");
+                _settings.defaultServerSettings.gameDirectory = serverName;
+                _settings.isDirty = true;
+                EditorUtility.SetDirty(_settings);
             }
 
-            serverName = EditorGUILayout.TextField("Map Name", settings.defaultServerSettings.mapName);
+            serverName = EditorGUILayout.TextField("Map Name", _settings.defaultServerSettings.mapName);
 
-            if (serverName != settings.defaultServerSettings.mapName)
+            if (serverName != _settings.defaultServerSettings.mapName)
             {
-                Undo.RecordObject(settings, "editor");
-                settings.defaultServerSettings.mapName = serverName;
-                settings.isDirty = true;
-                EditorUtility.SetDirty(settings);
+                Undo.RecordObject(_settings, "editor");
+                _settings.defaultServerSettings.mapName = serverName;
+                _settings.isDirty = true;
+                EditorUtility.SetDirty(_settings);
             }
 
-            serverName = EditorGUILayout.TextField("Game Metadata", settings.defaultServerSettings.gameData);
+            serverName = EditorGUILayout.TextField("Game Metadata", _settings.defaultServerSettings.gameData);
 
-            if (serverName != settings.defaultServerSettings.gameData)
+            if (serverName != _settings.defaultServerSettings.gameData)
             {
-                Undo.RecordObject(settings, "editor");
-                settings.defaultServerSettings.gameData = serverName;
-                settings.isDirty = true;
-                EditorUtility.SetDirty(settings);
+                Undo.RecordObject(_settings, "editor");
+                _settings.defaultServerSettings.gameData = serverName;
+                _settings.isDirty = true;
+                EditorUtility.SetDirty(_settings);
             }
 
-            var count = EditorGUILayout.TextField("Max Player Count", settings.defaultServerSettings.maxPlayerCount.ToString());
-            int buffer;
-            if (int.TryParse(count, out buffer) && buffer != settings.defaultServerSettings.maxPlayerCount)
+            var count = EditorGUILayout.TextField("Max Player Count", _settings.defaultServerSettings.maxPlayerCount.ToString());
+            if (int.TryParse(count, out var buffer) && buffer != _settings.defaultServerSettings.maxPlayerCount)
             {
-                Undo.RecordObject(settings, "editor");
-                settings.defaultServerSettings.maxPlayerCount = buffer;
-                settings.isDirty = true;
-                EditorUtility.SetDirty(settings);
+                Undo.RecordObject(_settings, "editor");
+                _settings.defaultServerSettings.maxPlayerCount = buffer;
+                _settings.isDirty = true;
+                EditorUtility.SetDirty(_settings);
             }
 
-            count = EditorGUILayout.TextField("Bot Player Count", settings.defaultServerSettings.botPlayerCount.ToString());
+            count = EditorGUILayout.TextField("Bot Player Count", _settings.defaultServerSettings.botPlayerCount.ToString());
 
-            if (int.TryParse(count, out buffer) && buffer != settings.defaultServerSettings.botPlayerCount)
+            if (int.TryParse(count, out buffer) && buffer != _settings.defaultServerSettings.botPlayerCount)
             {
-                Undo.RecordObject(settings, "editor");
-                settings.defaultServerSettings.botPlayerCount = buffer;
-                settings.isDirty = true;
-                EditorUtility.SetDirty(settings);
+                Undo.RecordObject(_settings, "editor");
+                _settings.defaultServerSettings.botPlayerCount = buffer;
+                _settings.isDirty = true;
+                EditorUtility.SetDirty(_settings);
             }
         }
 
@@ -526,7 +523,7 @@ namespace Heathen.SteamworksIntegration.Editors
             EditorGUILayout.LabelField("Connection", EditorStyles.whiteLabel, GUILayout.Width(250));
             EditorGUILayout.EndHorizontal();
 
-            var address = API.Utilities.IPUintToString(settings.defaultServerSettings.ip);
+            var address = API.Utilities.IPUintToString(_settings.defaultServerSettings.ip);
             var nAddress = EditorGUILayout.TextField("IP Address", address);
 
             if (address != nAddress)
@@ -534,50 +531,53 @@ namespace Heathen.SteamworksIntegration.Editors
                 try
                 {
                     var nip = API.Utilities.IPStringToUint(nAddress);
-                    if (nip != settings.defaultServerSettings.ip)
+                    if (nip != _settings.defaultServerSettings.ip)
                     {
-                        Undo.RecordObject(settings, "editor");
-                        settings.defaultServerSettings.ip = nip;
-                        settings.isDirty = true;
-                        EditorUtility.SetDirty(settings);
+                        Undo.RecordObject(_settings, "editor");
+                        _settings.defaultServerSettings.ip = nip;
+                        _settings.isDirty = true;
+                        EditorUtility.SetDirty(_settings);
                     }
                 }
-                catch { }
+                catch
+                {
+                    // ignored
+                }
             }
 
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar, GUILayout.ExpandWidth(true));
             EditorGUILayout.LabelField("Ports ");
             EditorGUILayout.EndHorizontal();
 
-            var port = EditorGUILayout.TextField(new GUIContent("Game", "The port that clients will connect to for gameplay.  You will usually open up your own socket bound to this port."), settings.defaultServerSettings.gamePort.ToString());
+            var port = EditorGUILayout.TextField(new GUIContent("Game", "The port that clients will connect to for gameplay.  You will usually open up your own socket bound to this port."), _settings.defaultServerSettings.gamePort.ToString());
             ushort nPort;
 
-            if (ushort.TryParse(port, out nPort) && nPort != settings.defaultServerSettings.gamePort)
+            if (ushort.TryParse(port, out nPort) && nPort != _settings.defaultServerSettings.gamePort)
             {
-                Undo.RecordObject(settings, "editor");
-                settings.defaultServerSettings.gamePort = nPort;
-                settings.isDirty = true;
-                EditorUtility.SetDirty(settings);
+                Undo.RecordObject(_settings, "editor");
+                _settings.defaultServerSettings.gamePort = nPort;
+                _settings.isDirty = true;
+                EditorUtility.SetDirty(_settings);
             }
 
-            port = EditorGUILayout.TextField(new GUIContent("Query", "The port that will manage server browser related duties and info pings from clients.\nIf you pass MASTERSERVERUPDATERPORT_USEGAMESOCKETSHARE (65535) for QueryPort, then it will use 'GameSocketShare' mode, which means that the game is responsible for sending and receiving UDP packets for the master server updater. See references to GameSocketShare in isteamgameserver.h"), settings.defaultServerSettings.queryPort.ToString());
+            port = EditorGUILayout.TextField(new GUIContent("Query", "The port that will manage server browser related duties and info pings from clients.\nIf you pass MASTERSERVERUPDATERPORT_USEGAMESOCKETSHARE (65535) for QueryPort, then it will use 'GameSocketShare' mode, which means that the game is responsible for sending and receiving UDP packets for the master server updater. See references to GameSocketShare in isteamgameserver.h"), _settings.defaultServerSettings.queryPort.ToString());
 
-            if (ushort.TryParse(port, out nPort) && nPort != settings.defaultServerSettings.queryPort)
+            if (ushort.TryParse(port, out nPort) && nPort != _settings.defaultServerSettings.queryPort)
             {
-                Undo.RecordObject(settings, "editor");
-                settings.defaultServerSettings.queryPort = nPort;
-                settings.isDirty = true;
-                EditorUtility.SetDirty(settings);
+                Undo.RecordObject(_settings, "editor");
+                _settings.defaultServerSettings.queryPort = nPort;
+                _settings.isDirty = true;
+                EditorUtility.SetDirty(_settings);
             }
 
-            port = EditorGUILayout.TextField("Spectator", settings.defaultServerSettings.spectatorPort.ToString());
+            port = EditorGUILayout.TextField("Spectator", _settings.defaultServerSettings.spectatorPort.ToString());
 
-            if (ushort.TryParse(port, out nPort) && nPort != settings.defaultServerSettings.spectatorPort)
+            if (ushort.TryParse(port, out nPort) && nPort != _settings.defaultServerSettings.spectatorPort)
             {
-                Undo.RecordObject(settings, "editor");
-                settings.defaultServerSettings.spectatorPort = nPort;
-                settings.isDirty = true;
-                EditorUtility.SetDirty(settings);
+                Undo.RecordObject(_settings, "editor");
+                _settings.defaultServerSettings.spectatorPort = nPort;
+                _settings.isDirty = true;
+                EditorUtility.SetDirty(_settings);
             }
         }
 
@@ -588,84 +588,84 @@ namespace Heathen.SteamworksIntegration.Editors
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.BeginHorizontal();
-            var autoInt = GUILayout.Toggle(settings.defaultServerSettings.autoInitialize, (settings.defaultServerSettings.autoInitialize ? "Disable" : "Enable") + " Auto-Initialize", EditorStyles.toolbarButton);
-            var autoLog = GUILayout.Toggle(settings.defaultServerSettings.autoLogon, (settings.defaultServerSettings.autoLogon ? "Disable" : "Enable") + " Auto-Logon", EditorStyles.toolbarButton);
+            var autoInt = GUILayout.Toggle(_settings.defaultServerSettings.autoInitialise, (_settings.defaultServerSettings.autoInitialise ? "Disable" : "Enable") + " Auto-Initialise", EditorStyles.toolbarButton);
+            var autoLog = GUILayout.Toggle(_settings.defaultServerSettings.autoLogon, (_settings.defaultServerSettings.autoLogon ? "Disable" : "Enable") + " Auto-Logon", EditorStyles.toolbarButton);
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.BeginHorizontal();
-            var heart = GUILayout.Toggle(settings.defaultServerSettings.enableHeartbeats, (settings.defaultServerSettings.enableHeartbeats ? "Disable" : "Enable") + " Server Heartbeat", EditorStyles.toolbarButton);
-            var anon = GUILayout.Toggle(settings.defaultServerSettings.anonymousServerLogin, (settings.defaultServerSettings.anonymousServerLogin ? "Disable" : "Enable") + " Anonymous Server Login", EditorStyles.toolbarButton);
+            var heart = GUILayout.Toggle(_settings.defaultServerSettings.enableHeartbeats, (_settings.defaultServerSettings.enableHeartbeats ? "Disable" : "Enable") + " Server Heartbeat", EditorStyles.toolbarButton);
+            var anon = GUILayout.Toggle(_settings.defaultServerSettings.anonymousServerLogin, (_settings.defaultServerSettings.anonymousServerLogin ? "Disable" : "Enable") + " Anonymous Server Login", EditorStyles.toolbarButton);
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.BeginHorizontal();
-            var gsAuth = GUILayout.Toggle(settings.defaultServerSettings.usingGameServerAuthApi, (settings.defaultServerSettings.usingGameServerAuthApi ? "Disable" : "Enable") + " Game Server Auth API", EditorStyles.toolbarButton);
-            var pass = GUILayout.Toggle(settings.defaultServerSettings.isPasswordProtected, (settings.defaultServerSettings.isPasswordProtected ? "Disable" : "Enable") + " Password Protected", EditorStyles.toolbarButton);
+            var gsAuth = GUILayout.Toggle(_settings.defaultServerSettings.usingGameServerAuthApi, (_settings.defaultServerSettings.usingGameServerAuthApi ? "Disable" : "Enable") + " Game Server Auth API", EditorStyles.toolbarButton);
+            var pass = GUILayout.Toggle(_settings.defaultServerSettings.isPasswordProtected, (_settings.defaultServerSettings.isPasswordProtected ? "Disable" : "Enable") + " Password Protected", EditorStyles.toolbarButton);
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.BeginHorizontal();
-            var dedicated = GUILayout.Toggle(settings.defaultServerSettings.isDedicated, (settings.defaultServerSettings.isDedicated ? "Disable" : "Enable") + " Dedicated Server", EditorStyles.toolbarButton);
-            var spec = GUILayout.Toggle(settings.defaultServerSettings.supportSpectators, (settings.defaultServerSettings.supportSpectators ? "Disable" : "Enable") + " Spectator Support", EditorStyles.toolbarButton);
+            var dedicated = GUILayout.Toggle(_settings.defaultServerSettings.isDedicated, (_settings.defaultServerSettings.isDedicated ? "Disable" : "Enable") + " Dedicated Server", EditorStyles.toolbarButton);
+            var spec = GUILayout.Toggle(_settings.defaultServerSettings.supportSpectators, (_settings.defaultServerSettings.supportSpectators ? "Disable" : "Enable") + " Spectator Support", EditorStyles.toolbarButton);
             EditorGUILayout.EndHorizontal();
             
-            if (autoInt != settings.defaultServerSettings.autoInitialize)
+            if (autoInt != _settings.defaultServerSettings.autoInitialise)
             {
-                Undo.RecordObject(settings, "editor");
-                settings.defaultServerSettings.autoInitialize = autoInt;
-                settings.isDirty = true;
-                EditorUtility.SetDirty(settings);
+                Undo.RecordObject(_settings, "editor");
+                _settings.defaultServerSettings.autoInitialise = autoInt;
+                _settings.isDirty = true;
+                EditorUtility.SetDirty(_settings);
             }
 
-            if (heart != settings.defaultServerSettings.enableHeartbeats)
+            if (heart != _settings.defaultServerSettings.enableHeartbeats)
             {
-                Undo.RecordObject(settings, "editor");
-                settings.defaultServerSettings.enableHeartbeats = heart;
-                settings.isDirty = true;
-                EditorUtility.SetDirty(settings);
+                Undo.RecordObject(_settings, "editor");
+                _settings.defaultServerSettings.enableHeartbeats = heart;
+                _settings.isDirty = true;
+                EditorUtility.SetDirty(_settings);
             }
 
-            if (spec != settings.defaultServerSettings.supportSpectators)
+            if (spec != _settings.defaultServerSettings.supportSpectators)
             {
-                Undo.RecordObject(settings, "editor");
-                settings.defaultServerSettings.supportSpectators = spec;
-                settings.isDirty = true;
-                EditorUtility.SetDirty(settings);
+                Undo.RecordObject(_settings, "editor");
+                _settings.defaultServerSettings.supportSpectators = spec;
+                _settings.isDirty = true;
+                EditorUtility.SetDirty(_settings);
             }
 
-            if (anon != settings.defaultServerSettings.anonymousServerLogin)
+            if (anon != _settings.defaultServerSettings.anonymousServerLogin)
             {
-                Undo.RecordObject(settings, "editor");
-                settings.defaultServerSettings.anonymousServerLogin = anon;
-                settings.isDirty = true;
-                EditorUtility.SetDirty(settings);
+                Undo.RecordObject(_settings, "editor");
+                _settings.defaultServerSettings.anonymousServerLogin = anon;
+                _settings.isDirty = true;
+                EditorUtility.SetDirty(_settings);
             }
 
-            if (gsAuth != settings.defaultServerSettings.usingGameServerAuthApi)
+            if (gsAuth != _settings.defaultServerSettings.usingGameServerAuthApi)
             {
-                Undo.RecordObject(settings, "editor");
-                settings.defaultServerSettings.usingGameServerAuthApi = gsAuth;
-                settings.isDirty = true;
-                EditorUtility.SetDirty(settings);
+                Undo.RecordObject(_settings, "editor");
+                _settings.defaultServerSettings.usingGameServerAuthApi = gsAuth;
+                _settings.isDirty = true;
+                EditorUtility.SetDirty(_settings);
             }
 
-            if (pass != settings.defaultServerSettings.isPasswordProtected)
+            if (pass != _settings.defaultServerSettings.isPasswordProtected)
             {
-                Undo.RecordObject(settings, "editor");
-                settings.defaultServerSettings.isPasswordProtected = pass;
-                settings.isDirty = true;
-                EditorUtility.SetDirty(settings);
+                Undo.RecordObject(_settings, "editor");
+                _settings.defaultServerSettings.isPasswordProtected = pass;
+                _settings.isDirty = true;
+                EditorUtility.SetDirty(_settings);
             }
 
-            if (dedicated != settings.defaultServerSettings.isDedicated)
+            if (dedicated != _settings.defaultServerSettings.isDedicated)
             {
-                Undo.RecordObject(settings, "editor");
-                settings.defaultServerSettings.isDedicated = dedicated;
-                settings.isDirty = true;
-                EditorUtility.SetDirty(settings);
+                Undo.RecordObject(_settings, "editor");
+                _settings.defaultServerSettings.isDedicated = dedicated;
+                _settings.isDirty = true;
+                EditorUtility.SetDirty(_settings);
             }
 
-            if (autoLog != settings.defaultServerSettings.autoLogon)
+            if (autoLog != _settings.defaultServerSettings.autoLogon)
             {
-                Undo.RecordObject(settings, "editor");
-                settings.defaultServerSettings.autoLogon = autoLog;
-                settings.isDirty = true;
-                EditorUtility.SetDirty(settings);
+                Undo.RecordObject(_settings, "editor");
+                _settings.defaultServerSettings.autoLogon = autoLog;
+                _settings.isDirty = true;
+                EditorUtility.SetDirty(_settings);
             }
         }
 
@@ -687,8 +687,8 @@ namespace Heathen.SteamworksIntegration.Editors
 
                     StatData nStat = "New_Int_Stat";
                     settings.stats.Add(nStat);
-                    this.settings.isDirty = true;
-                    EditorUtility.SetDirty(this.settings);
+                    this._settings.isDirty = true;
+                    EditorUtility.SetDirty(this._settings);
                 }
                 if (GUILayout.Button("+ Float", EditorStyles.toolbarButton, GUILayout.Width(50)))
                 {
@@ -696,8 +696,8 @@ namespace Heathen.SteamworksIntegration.Editors
 
                     StatData nStat = "New_Float_Stat";
                     settings.stats.Add(nStat);
-                    this.settings.isDirty = true;
-                    EditorUtility.SetDirty(this.settings);
+                    this._settings.isDirty = true;
+                    EditorUtility.SetDirty(this._settings);
                 }
                 if (GUILayout.Button("+ Avg Rate", EditorStyles.toolbarButton, GUILayout.Width(75)))
                 {
@@ -705,8 +705,8 @@ namespace Heathen.SteamworksIntegration.Editors
 
                     StatData nStat = "New_AvgRat_Stat";
                     settings.stats.Add(nStat);
-                    this.settings.isDirty = true;
-                    EditorUtility.SetDirty(this.settings);
+                    this._settings.isDirty = true;
+                    EditorUtility.SetDirty(this._settings);
                 }
                 GUI.contentColor = color;
                 EditorGUILayout.EndHorizontal();
@@ -718,17 +718,17 @@ namespace Heathen.SteamworksIntegration.Editors
                 {
                     var target = settings.stats[i];
 
-                    UnityEngine.Color sC = GUI.backgroundColor;
+                    var sC = GUI.backgroundColor;
 
                     GUI.backgroundColor = sC;
                     EditorGUILayout.BeginHorizontal(EditorStyles.toolbar, GUILayout.ExpandWidth(true));
                     var newName = EditorGUILayout.TextField(target);
                     if (!string.IsNullOrEmpty(newName) && newName != target)
                     {
-                        Undo.RecordObject(this.settings, "name change");
+                        Undo.RecordObject(this._settings, "name change");
                         settings.stats[i] = newName;
-                        this.settings.isDirty = true;
-                        EditorUtility.SetDirty(this.settings);
+                        this._settings.isDirty = true;
+                        EditorUtility.SetDirty(this._settings);
                     }
 
                     var terminate = false;
@@ -737,7 +737,7 @@ namespace Heathen.SteamworksIntegration.Editors
                     {
                         settings.stats.RemoveAt(i);
                         terminate = true;
-                        EditorUtility.SetDirty(this.settings);
+                        EditorUtility.SetDirty(this._settings);
                     }
                     GUI.contentColor = color;
                     EditorGUILayout.EndHorizontal();
@@ -764,13 +764,13 @@ namespace Heathen.SteamworksIntegration.Editors
                 GUI.contentColor = color;
                 if (GUILayout.Button("Import", EditorStyles.toolbarButton, GUILayout.Width(50)))
                 {
-                    if (!API.App.Initialized)
+                    if (!API.App.Initialised)
                     {
                         Debug.Log("You cannot import data before initializing Steam API.");
                         return;
                     }
 
-                    if (!Steamworks.SteamUser.BLoggedOn())
+                    if (!SteamUser.BLoggedOn())
                     {
                         Debug.Log("You cannot import data when the Steam client is in offline mode.");
                         return;
@@ -784,7 +784,7 @@ namespace Heathen.SteamworksIntegration.Editors
                         settings.achievements.Clear();
                         foreach (var name in names)
                             settings.achievements.Add(name);
-                        EditorUtility.SetDirty(this.settings);
+                        EditorUtility.SetDirty(this._settings);
                     }
                     catch
                     {
@@ -801,13 +801,13 @@ namespace Heathen.SteamworksIntegration.Editors
                 {
                     var target = settings.achievements[i];
 
-                    UnityEngine.Color sC = GUI.backgroundColor;
+                    var sC = GUI.backgroundColor;
 
                     GUI.backgroundColor = sC;
                     EditorGUILayout.BeginHorizontal(EditorStyles.toolbar, GUILayout.ExpandWidth(true));
 
                     EditorGUILayout.LabelField(target.ApiName);
-                    if (UnityEngine.Application.isPlaying && API.App.Initialized)
+                    if (Application.isPlaying && API.App.Initialised)
                         EditorGUILayout.LabelField(target.IsAchieved ? "Unlocked" : "Locked");
 
                     EditorGUILayout.EndHorizontal();
@@ -828,7 +828,7 @@ namespace Heathen.SteamworksIntegration.Editors
                 if (GUILayout.Button("+ New", EditorStyles.toolbarButton, GUILayout.Width(50)))
                 {
                     GUI.FocusControl(null);
-                    Undo.RecordObject(this.settings, "editor");
+                    Undo.RecordObject(this._settings, "editor");
                     LeaderboardData.GetAllRequest nStat = new()
                     {
                         name = "New Leaderboard",
@@ -838,8 +838,8 @@ namespace Heathen.SteamworksIntegration.Editors
                     };
 
                     settings.leaderboards.Add(nStat);
-                    this.settings.isDirty = true;
-                    EditorUtility.SetDirty(this.settings);
+                    this._settings.isDirty = true;
+                    EditorUtility.SetDirty(this._settings);
                 }
                 GUI.contentColor = color;
                 EditorGUILayout.EndHorizontal();
@@ -858,7 +858,7 @@ namespace Heathen.SteamworksIntegration.Editors
                         item.create = !item.create;
                         settings.leaderboards[i] = item;
                         
-                        EditorUtility.SetDirty(this.settings);
+                        EditorUtility.SetDirty(this._settings);
                     }
 
                     var nVal = EditorGUILayout.TextField(item.name);
@@ -869,17 +869,17 @@ namespace Heathen.SteamworksIntegration.Editors
                         var boards = settings.leaderboards.ToArray();
                         settings.leaderboards.Clear();
                         settings.leaderboards.AddRange(boards);
-                        EditorUtility.SetDirty(this.settings);
+                        EditorUtility.SetDirty(this._settings);
                     }
 
                     GUI.contentColor = SteamTools.Colors.ErrorRed;
                     if (GUILayout.Button(new GUIContent("X", "Remove the object"), EditorStyles.toolbarButton, GUILayout.Width(25)))
                     {
                         GUI.FocusControl(null);
-                        Undo.RecordObject(this.settings, "editor");
+                        Undo.RecordObject(this._settings, "editor");
                         settings.leaderboards.RemoveAt(i);
-                        this.settings.isDirty = true;
-                        EditorUtility.SetDirty(this.settings);
+                        this._settings.isDirty = true;
+                        EditorUtility.SetDirty(this._settings);
                         return;
                     }
                     GUI.contentColor = color;
@@ -890,9 +890,9 @@ namespace Heathen.SteamworksIntegration.Editors
             }
         }
 
-        private void DrawDLCList()
+        private void DrawDlcList()
         {
-            this["dlcFoldout"] = EditorGUILayout.Foldout(this["dlcFoldout"], "Downloadable Content: " + settings.dlc.Count);
+            this["dlcFoldout"] = EditorGUILayout.Foldout(this["dlcFoldout"], "Downloadable Content: " + _settings.dlc.Count);
 
             if (this["dlcFoldout"])
             {
@@ -901,13 +901,13 @@ namespace Heathen.SteamworksIntegration.Editors
 
                 if (GUILayout.Button("Import", EditorStyles.toolbarButton, GUILayout.Width(50)))
                 {
-                    if (!API.App.Initialized)
+                    if (!API.App.Initialised)
                     {
                         Debug.Log("You cannot import data before initializing Steam API.");
                         return;
                     }
 
-                    if (!Steamworks.SteamUser.BLoggedOn())
+                    if (!SteamUser.BLoggedOn())
                     {
                         Debug.Log("You cannot import data when the Steam client is in offline mode.");
                         return;
@@ -917,17 +917,17 @@ namespace Heathen.SteamworksIntegration.Editors
                     try
                     {
                         var dlc = API.App.Client.Dlc;
-                        settings.dlcNames.Clear();
-                        settings.dlc.Clear();
+                        _settings.dlcNames.Clear();
+                        _settings.dlc.Clear();
 
                         foreach(var data in dlc)
                         {
-                            settings.dlc.Add(data);
-                            settings.dlcNames.Add(data.Name);
+                            _settings.dlc.Add(data);
+                            _settings.dlcNames.Add(data.Name);
                         }
 
-                        this.settings.isDirty = true;
-                        EditorUtility.SetDirty(this.settings);
+                        this._settings.isDirty = true;
+                        EditorUtility.SetDirty(this._settings);
                     }
                     catch
                     {
@@ -939,9 +939,9 @@ namespace Heathen.SteamworksIntegration.Editors
 
                 var bgColor = GUI.backgroundColor;
 
-                for (int i = 0; i < settings.dlcNames.Count; i++)
+                for (int i = 0; i < _settings.dlcNames.Count; i++)
                 {
-                    var item = settings.dlcNames[i];
+                    var item = _settings.dlcNames[i];
 
                     EditorGUILayout.LabelField(item);
                 }
@@ -952,9 +952,9 @@ namespace Heathen.SteamworksIntegration.Editors
 
         private void DrawInventoryArea()
         {
-            settings.inventorySettings.items.RemoveAll(p => p == null);
+            _settings.inventorySettings.items.RemoveAll(p => p == null);
 
-            this["inventoryFoldout"] = EditorGUILayout.Foldout(this["inventoryFoldout"], "Inventory: " + settings.inventorySettings.items.Count);
+            this["inventoryFoldout"] = EditorGUILayout.Foldout(this["inventoryFoldout"], "Inventory: " + _settings.inventorySettings.items.Count);
 
             if (this["inventoryFoldout"])
             {
@@ -963,13 +963,13 @@ namespace Heathen.SteamworksIntegration.Editors
                 var color = GUI.contentColor;
                 if (GUILayout.Button("Import", EditorStyles.toolbarButton, GUILayout.Width(50)))
                 {
-                    if (!API.App.Initialized)
+                    if (!API.App.Initialised)
                     {
                         Debug.Log("You cannot import data before initializing Steam API.");
                         return;
                     }
 
-                    if (!Steamworks.SteamUser.BLoggedOn())
+                    if (!SteamUser.BLoggedOn())
                     {
                         Debug.Log("You cannot import data when the Steam client is in offline mode.");
                         return;
@@ -979,13 +979,13 @@ namespace Heathen.SteamworksIntegration.Editors
 
                     try
                     {
-                        Debug.Log("Processing inventory item definition cashe!");
-                        settings.inventorySettings.items.Clear();
-                        settings.inventorySettings.UpdateItemDefinitions(true);
+                        Debug.Log("Processing inventory item definition cache!");
+                        _settings.inventorySettings.items.Clear();
+                        _settings.inventorySettings.UpdateItemDefinitions(true);
                         Debug.Log("Requesting Refresh of Steam Inventory Item Definitions");
 
-                        API.Inventory.Client.OnSteamInventoryDefinitionUpdate.RemoveListener(settings.inventorySettings.HandleSettingsInventoryDefinitionUpdate);
-                        API.Inventory.Client.OnSteamInventoryDefinitionUpdate.AddListener(settings.inventorySettings.HandleSettingsInventoryDefinitionUpdate);
+                        SteamTools.Events.OnInventoryDefinitionUpdate -= _settings.inventorySettings.HandleSettingsInventoryDefinitionUpdate;
+                        SteamTools.Events.OnInventoryDefinitionUpdate += _settings.inventorySettings.HandleSettingsInventoryDefinitionUpdate;
                         API.Inventory.Client.LoadItemDefinitions();
                     }
                     catch
@@ -993,8 +993,8 @@ namespace Heathen.SteamworksIntegration.Editors
                         Debug.LogWarning("Failed to import data from Steam, make sure you have simulated/ran at least once in order to engage the Steam API.");
                     }
 
-                    this.settings.isDirty = true;
-                    EditorUtility.SetDirty(this.settings);
+                    this._settings.isDirty = true;
+                    EditorUtility.SetDirty(this._settings);
                     GUI.FocusControl(null);
                 }
                 GUI.contentColor = color;
@@ -1002,95 +1002,95 @@ namespace Heathen.SteamworksIntegration.Editors
 
                 EditorGUILayout.EndHorizontal();
 
-                this["itemsFoldout"] = EditorGUILayout.Foldout(this["itemsFoldout"], "Items: " + settings.inventorySettings.items.Where(p => p.Type == InventoryItemType.item).Count());
+                this["itemsFoldout"] = EditorGUILayout.Foldout(this["itemsFoldout"], "Items: " + _settings.inventorySettings.items.Where(p => p.Type == InventoryItemType.Item).Count());
 
                 if (this["itemsFoldout"])
                 {
-                    settings.inventorySettings.items.Sort((a, b) => a.Id.m_SteamItemDef.CompareTo(b.Id.m_SteamItemDef));
+                    _settings.inventorySettings.items.Sort((a, b) => a.Id.m_SteamItemDef.CompareTo(b.Id.m_SteamItemDef));
 
-                    for (int i = 0; i < settings.inventorySettings.items.Count; i++)
+                    for (int i = 0; i < _settings.inventorySettings.items.Count; i++)
                     {
-                        var item = settings.inventorySettings.items[i];
+                        var item = _settings.inventorySettings.items[i];
 
-                        if (item.Type == InventoryItemType.item)
+                        if (item.Type == InventoryItemType.Item)
                         {
-                            if (DrawItem(settings, item))
+                            if (DrawItem(item))
                                 break;
                         }
                     }
                 }
 
-                this["bundlesFoldout"] = EditorGUILayout.Foldout(this["bundlesFoldout"], "Bundles: " + settings.inventorySettings.items.Where(p => p.Type == InventoryItemType.bundle).Count());
+                this["bundlesFoldout"] = EditorGUILayout.Foldout(this["bundlesFoldout"], "Bundles: " + _settings.inventorySettings.items.Where(p => p.Type == InventoryItemType.Bundle).Count());
 
                 if (this["bundlesFoldout"])
                 {
-                    settings.inventorySettings.items.RemoveAll(p => p == null);
-                    settings.inventorySettings.items.Sort((a, b) => a.Id.m_SteamItemDef.CompareTo(b.Id.m_SteamItemDef));
+                    _settings.inventorySettings.items.RemoveAll(p => p == null);
+                    _settings.inventorySettings.items.Sort((a, b) => a.Id.m_SteamItemDef.CompareTo(b.Id.m_SteamItemDef));
 
-                    for (int i = 0; i < settings.inventorySettings.items.Count; i++)
+                    for (int i = 0; i < _settings.inventorySettings.items.Count; i++)
                     {
-                        var item = settings.inventorySettings.items[i];
+                        var item = _settings.inventorySettings.items[i];
 
-                        if (item.Type == InventoryItemType.bundle)
+                        if (item.Type == InventoryItemType.Bundle)
                         {
-                            if (DrawItem(settings, item))
+                            if (DrawItem(item))
                                 break;
                         }
                     }
                 }
 
-                this["generatorFoldout"] = EditorGUILayout.Foldout(this["generatorFoldout"], "Generators: " + settings.inventorySettings.items.Where(p => p.Type == InventoryItemType.generator).Count());
+                this["generatorFoldout"] = EditorGUILayout.Foldout(this["generatorFoldout"], "Generators: " + _settings.inventorySettings.items.Where(p => p.Type == InventoryItemType.Generator).Count());
 
                 if (this["generatorFoldout"])
                 {
-                    settings.inventorySettings.items.RemoveAll(p => p == null);
-                    settings.inventorySettings.items.Sort((a, b) => a.Id.m_SteamItemDef.CompareTo(b.Id.m_SteamItemDef));
+                    _settings.inventorySettings.items.RemoveAll(p => p == null);
+                    _settings.inventorySettings.items.Sort((a, b) => a.Id.m_SteamItemDef.CompareTo(b.Id.m_SteamItemDef));
 
-                    for (int i = 0; i < settings.inventorySettings.items.Count; i++)
+                    for (int i = 0; i < _settings.inventorySettings.items.Count; i++)
                     {
-                        var item = settings.inventorySettings.items[i];
+                        var item = _settings.inventorySettings.items[i];
 
-                        if (item.Type == InventoryItemType.generator)
+                        if (item.Type == InventoryItemType.Generator)
                         {
-                            if (DrawItem(settings, item))
+                            if (DrawItem(item))
                                 break;
                         }
                     }
                 }
 
-                this["playtimegeneratorFoldout"] = EditorGUILayout.Foldout(this["playtimegeneratorFoldout"], "Playtime Generators: " + settings.inventorySettings.items.Where(p => p.Type == InventoryItemType.playtimegenerator).Count());
+                this["playtimegeneratorFoldout"] = EditorGUILayout.Foldout(this["playtimegeneratorFoldout"], "Playtime Generators: " + _settings.inventorySettings.items.Where(p => p.Type == InventoryItemType.Playtimegenerator).Count());
 
                 if (this["playtimegeneratorFoldout"])
                 {
-                    settings.inventorySettings.items.RemoveAll(p => p == null);
-                    settings.inventorySettings.items.Sort((a, b) => a.Id.m_SteamItemDef.CompareTo(b.Id.m_SteamItemDef));
+                    _settings.inventorySettings.items.RemoveAll(p => p == null);
+                    _settings.inventorySettings.items.Sort((a, b) => a.Id.m_SteamItemDef.CompareTo(b.Id.m_SteamItemDef));
 
-                    for (int i = 0; i < settings.inventorySettings.items.Count; i++)
+                    for (int i = 0; i < _settings.inventorySettings.items.Count; i++)
                     {
-                        var item = settings.inventorySettings.items[i];
+                        var item = _settings.inventorySettings.items[i];
 
-                        if (item.Type == InventoryItemType.playtimegenerator)
+                        if (item.Type == InventoryItemType.Playtimegenerator)
                         {
-                            if (DrawItem(settings, item))
+                            if (DrawItem(item))
                                 break;
                         }
                     }
                 }
 
-                this["taggeneratorFoldout"] = EditorGUILayout.Foldout(this["taggeneratorFoldout"], "Tag Generators: " + settings.inventorySettings.items.Where(p => p.Type == InventoryItemType.tag_generator).Count());
+                this["taggeneratorFoldout"] = EditorGUILayout.Foldout(this["taggeneratorFoldout"], "Tag Generators: " + _settings.inventorySettings.items.Where(p => p.Type == InventoryItemType.TagGenerator).Count());
 
                 if (this["taggeneratorFoldout"])
                 {
-                    settings.inventorySettings.items.RemoveAll(p => p == null);
-                    settings.inventorySettings.items.Sort((a, b) => a.Id.m_SteamItemDef.CompareTo(b.Id.m_SteamItemDef));
+                    _settings.inventorySettings.items.RemoveAll(p => p == null);
+                    _settings.inventorySettings.items.Sort((a, b) => a.Id.m_SteamItemDef.CompareTo(b.Id.m_SteamItemDef));
 
-                    for (int i = 0; i < settings.inventorySettings.items.Count; i++)
+                    for (int i = 0; i < _settings.inventorySettings.items.Count; i++)
                     {
-                        var item = settings.inventorySettings.items[i];
+                        var item = _settings.inventorySettings.items[i];
 
-                        if (item.Type == InventoryItemType.tag_generator)
+                        if (item.Type == InventoryItemType.TagGenerator)
                         {
-                            if (DrawItem(settings, item))
+                            if (DrawItem(item))
                                 break;
                         }
                     }
@@ -1124,8 +1124,8 @@ namespace Heathen.SteamworksIntegration.Editors
                         var nItem = "action_set";
 
                         settings.actionSets.Add(nItem);
-                        this.settings.isDirty = true;
-                        EditorUtility.SetDirty(this.settings);
+                        this._settings.isDirty = true;
+                        EditorUtility.SetDirty(this._settings);
 
                         GUI.FocusControl(null);
                     }
@@ -1153,8 +1153,8 @@ namespace Heathen.SteamworksIntegration.Editors
                         string nItem = "action_set_layer";
 
                         settings.actionSetLayers.Add(nItem);
-                        this.settings.isDirty = true;
-                        EditorUtility.SetDirty(this.settings);
+                        this._settings.isDirty = true;
+                        EditorUtility.SetDirty(this._settings);
 
                         GUI.FocusControl(null);
                     }
@@ -1182,8 +1182,8 @@ namespace Heathen.SteamworksIntegration.Editors
                         InputActionData nItem = new("action", InputActionType.Digital);
 
                         settings.actions.Add(nItem);
-                        this.settings.isDirty = true;
-                        EditorUtility.SetDirty(this.settings);
+                        this._settings.isDirty = true;
+                        EditorUtility.SetDirty(this._settings);
 
                         GUI.FocusControl(null);
                     }
@@ -1201,7 +1201,7 @@ namespace Heathen.SteamworksIntegration.Editors
             }
         }
 
-        private bool DrawItem(SteamToolsSettings settings, ItemDefinitionSettings item)
+        private static bool DrawItem(ItemDefinitionSettings item)
         {
             var color = GUI.contentColor;
 
@@ -1224,8 +1224,8 @@ namespace Heathen.SteamworksIntegration.Editors
             if (result != settings.actionSets[setIndex])
             {
                 settings.actionSets[setIndex] = result;
-                this.settings.isDirty = true;
-                EditorUtility.SetDirty(this.settings);
+                this._settings.isDirty = true;
+                EditorUtility.SetDirty(this._settings);
             }
 
             GUI.contentColor = SteamTools.Colors.ErrorRed;
@@ -1233,8 +1233,8 @@ namespace Heathen.SteamworksIntegration.Editors
             {
                 GUI.FocusControl(null);
                 settings.actionSets.RemoveAt(setIndex);
-                this.settings.isDirty = true;
-                EditorUtility.SetDirty(this.settings);
+                this._settings.isDirty = true;
+                EditorUtility.SetDirty(this._settings);
                 return true;
             }
             GUI.contentColor = color;
@@ -1251,8 +1251,8 @@ namespace Heathen.SteamworksIntegration.Editors
             if (result != settings.actionSetLayers[index])
             {
                 settings.actionSetLayers[index] = result;
-                this.settings.isDirty = true;
-                EditorUtility.SetDirty(this.settings);
+                this._settings.isDirty = true;
+                EditorUtility.SetDirty(this._settings);
             }
 
             GUI.contentColor = SteamTools.Colors.ErrorRed;
@@ -1260,8 +1260,8 @@ namespace Heathen.SteamworksIntegration.Editors
             {
                 GUI.FocusControl(null);
                 settings.actionSetLayers.RemoveAt(index);
-                this.settings.isDirty = true;
-                EditorUtility.SetDirty(this.settings);
+                this._settings.isDirty = true;
+                EditorUtility.SetDirty(this._settings);
                 return true;
             }
             GUI.contentColor = color;
@@ -1281,8 +1281,8 @@ namespace Heathen.SteamworksIntegration.Editors
                     item = new(item.Name, InputActionType.Analog);
                     settings.actions[index] = item;
                     GUI.FocusControl(null);
-                    this.settings.isDirty = true;
-                    EditorUtility.SetDirty(this.settings);
+                    this._settings.isDirty = true;
+                    EditorUtility.SetDirty(this._settings);
                 }
             }
             else
@@ -1292,8 +1292,8 @@ namespace Heathen.SteamworksIntegration.Editors
                     item = new(item.Name, InputActionType.Digital);
                     settings.actions[index] = item;
                     GUI.FocusControl(null);
-                    this.settings.isDirty = true;
-                    EditorUtility.SetDirty(this.settings);
+                    this._settings.isDirty = true;
+                    EditorUtility.SetDirty(this._settings);
                 }
             }
 
@@ -1304,8 +1304,8 @@ namespace Heathen.SteamworksIntegration.Editors
                 item = new(result, item.Type);
                 settings.actions[index] = item;
                 GUI.FocusControl(null);
-                this.settings.isDirty = true;
-                EditorUtility.SetDirty(this.settings);
+                this._settings.isDirty = true;
+                EditorUtility.SetDirty(this._settings);
             }
 
             GUI.contentColor = SteamTools.Colors.ErrorRed;
@@ -1313,8 +1313,8 @@ namespace Heathen.SteamworksIntegration.Editors
             {
                 GUI.FocusControl(null);
                 settings.actions.RemoveAt(index);
-                this.settings.isDirty = true;
-                EditorUtility.SetDirty(this.settings);
+                this._settings.isDirty = true;
+                EditorUtility.SetDirty(this._settings);
                 return true;
             }
             GUI.contentColor = color;

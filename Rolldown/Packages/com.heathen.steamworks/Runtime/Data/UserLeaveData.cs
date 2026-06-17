@@ -1,10 +1,11 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using System;
+using Heathen.SteamworksIntegration.API;
 
 namespace Heathen.SteamworksIntegration
 {
     /// <summary>
-    /// Used in the <see cref="API.Clans.Client.m_OnGameConnectedChatLeave"/> event to carry leave data for a specific user
+    /// Used in the <see cref="Clans.Client._mOnGameConnectedChatLeave"/> event to carry leave data for a specific user
     /// </summary>
     [Serializable]
     public struct UserLeaveData

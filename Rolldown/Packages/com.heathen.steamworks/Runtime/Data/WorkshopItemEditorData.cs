@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using System.IO;
@@ -15,7 +15,7 @@ namespace Heathen.SteamworksIntegration
         /// <summary>
         /// The published file ID to be updated. This can be null and would be in the case of a create, if you are however updating an item this should be populated with the ID of the file to be updated
         /// </summary>
-        public PublishedFileId_t? publishedFileId;
+        public PublishedFileId_t? PublishedFileId;
         /// <summary>
         /// The consume and creating app ID of the item
         /// </summary>
@@ -31,11 +31,11 @@ namespace Heathen.SteamworksIntegration
         /// <summary>
         /// The local folder where the item's content is located
         /// </summary>
-        public DirectoryInfo content;
+        public DirectoryInfo Content;
         /// <summary>
         /// The local file that is the item's main preview image, this must be smaller than the max size allowed in the app's Cloud Storage
         /// </summary>
-        public FileInfo preview;
+        public FileInfo Preview;
         /// <summary>
         /// Any metadata associated with the item, this is optional
         /// </summary>
@@ -56,8 +56,8 @@ namespace Heathen.SteamworksIntegration
         /// <item><see cref="title"/> must be populated with a value whose length is less than <see cref="Constants.k_cchPublishedDocumentTitleMax"/></item>
         /// <item><see cref="description"/> must be populated with a value whose length is less than <see cref="Constants.k_cchPublishedDocumentDescriptionMax"/></item>
         /// <item><see cref="metadata"/> is option and can be an empty string, if populated its length must be less than <see cref="Constants.k_cchDeveloperMetadataMax"/></item>
-        /// <item><see cref="content"/> must be the full path of a valid directory (aka folder path)</item>
-        /// <item><see cref="preview"/> must be the full path of a valid JPG, PNG or GIF file whose total size is less than 1mb</item>
+        /// <item><see cref="Content"/> must be the full path of a valid directory (aka folder path)</item>
+        /// <item><see cref="Preview"/> must be the full path of a valid JPG, PNG or GIF file whose total size is less than 1mb</item>
         /// <item><see cref="imageFiles"/> is optional and can be null, if populated each path must be a valid JPG, PNG or GIF and each image must have a size less than 1mb</item>
         /// <item><see cref="youTubeVideoIds"/> is optional and can be null, if populated each must be a valid YouTube video ID</item>
         /// <item><see cref="tags"/> is optional and can be null, if populated each tag must have a length less than 255</item>
@@ -80,10 +80,10 @@ namespace Heathen.SteamworksIntegration
                     && !string.IsNullOrEmpty(description)
                     && description.Length < Constants.k_cchPublishedDocumentDescriptionMax
                     && (string.IsNullOrEmpty(metadata) || metadata.Length < Constants.k_cchDeveloperMetadataMax)
-                    && preview != null
-                    && content != null
-                    && preview.Exists
-                    && content.Exists
+                    && Preview != null
+                    && Content != null
+                    && Preview.Exists
+                    && Content.Exists
                     && (tags == null || tags.Length == 0 || !tags.Any(p => p.Length > 255));
             }
         }

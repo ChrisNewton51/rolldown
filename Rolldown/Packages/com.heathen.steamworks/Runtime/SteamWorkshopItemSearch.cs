@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS && STEAM_INSTALLED
 using Steamworks;
 using System.Collections.Generic;
 using UnityEngine;
@@ -16,21 +16,21 @@ namespace Heathen.SteamworksIntegration
         public SteamWorkshopItemDetailData template;
         public Transform content;
 
-        public UgcQuery activeQuery;
+        public UgcQuery ActiveQuery;
         public int CurrentFrom
         {
             get
             {
-                if (activeQuery != null)
+                if (ActiveQuery != null)
                 {
-                    var maxItemIndex = (int)(activeQuery.Page * 50);
-                    if (maxItemIndex < activeQuery.matchedRecordCount)
+                    var maxItemIndex = (int)(ActiveQuery.Page * 50);
+                    if (maxItemIndex < ActiveQuery.MatchedRecordCount)
                     {
                         return maxItemIndex - 49;
                     }
                     else
                     {
-                        var remainder = (int)(activeQuery.matchedRecordCount % 50);
+                        var remainder = (int)(ActiveQuery.MatchedRecordCount % 50);
                         maxItemIndex = maxItemIndex - 50 + remainder;
                         return maxItemIndex - remainder + 1;
                     }
@@ -45,16 +45,16 @@ namespace Heathen.SteamworksIntegration
         {
             get
             {
-                if (activeQuery != null)
+                if (ActiveQuery != null)
                 {
-                    var maxItemIndex = (int)(activeQuery.Page * 50);
-                    if (maxItemIndex < activeQuery.matchedRecordCount)
+                    var maxItemIndex = (int)(ActiveQuery.Page * 50);
+                    if (maxItemIndex < ActiveQuery.MatchedRecordCount)
                     {
                         return maxItemIndex;
                     }
                     else
                     {
-                        var remainder = (int)(activeQuery.matchedRecordCount % 50);
+                        var remainder = (int)(ActiveQuery.MatchedRecordCount % 50);
                         maxItemIndex = maxItemIndex - 50 + remainder;
                         return maxItemIndex;
                     }
@@ -65,15 +65,15 @@ namespace Heathen.SteamworksIntegration
                 }
             }
         }
-        public int TotalCount => activeQuery != null ? (int)activeQuery.matchedRecordCount : 0;
-        public int CurrentPage => activeQuery != null ? (int)activeQuery.Page : 0;
+        public int TotalCount => ActiveQuery != null ? (int)ActiveQuery.MatchedRecordCount : 0;
+        public int CurrentPage => ActiveQuery != null ? (int)ActiveQuery.Page : 0;
 
         [Header("Events")]
         public UnityEvent<UgcQuery> onResultsReady;
         public UnityEvent<UgcQuery> onQueryUpdated;
 
-        private readonly List<SteamWorkshopItemDetailData> currentRecords = new();
-        private string lastSearchString = "";
+        private readonly List<SteamWorkshopItemDetailData> _currentRecords = new();
+        private string _lastSearchString = "";
 
         private string GetSearchString()
         {
@@ -86,15 +86,15 @@ namespace Heathen.SteamworksIntegration
         public void SearchMyPublished()
         {
             var filter = GetSearchString();
-            lastSearchString = filter;
-            activeQuery = UgcQuery.GetMyPublished();            
+            _lastSearchString = filter;
+            ActiveQuery = UgcQuery.GetMyPublished();            
             if (!string.IsNullOrEmpty(filter))
             {
-                API.UserGeneratedContent.Client.SetSearchText(activeQuery.handle, filter);
+                API.UserGeneratedContent.Client.SetSearchText(ActiveQuery.Handle, filter);
             }
 
-            if (activeQuery.handle != UGCQueryHandle_t.Invalid)
-                activeQuery.Execute(HandleResults);
+            if (ActiveQuery.Handle != UGCQueryHandle_t.Invalid)
+                ActiveQuery.Execute(HandleResults);
             else
                 Debug.LogError("Steam was unable to create a query handle for this argument. Check your App ID and the App ID in the query manager.");
         }
@@ -102,15 +102,15 @@ namespace Heathen.SteamworksIntegration
         public void SearchAll()
         {
             var filter = GetSearchString();
-            lastSearchString = filter;
-            activeQuery = UgcQuery.Get(EUGCQuery.k_EUGCQuery_RankedByTrend, EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items_ReadyToUse, new(0), AppData.Me);
+            _lastSearchString = filter;
+            ActiveQuery = UgcQuery.Get(EUGCQuery.k_EUGCQuery_RankedByTrend, EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items_ReadyToUse, new(0), AppData.Me);
             if (!string.IsNullOrEmpty(filter))
             {
-                API.UserGeneratedContent.Client.SetSearchText(activeQuery.handle, filter);
+                API.UserGeneratedContent.Client.SetSearchText(ActiveQuery.Handle, filter);
             }
 
-            if (activeQuery.handle != UGCQueryHandle_t.Invalid)
-                activeQuery.Execute(HandleResults);
+            if (ActiveQuery.Handle != UGCQueryHandle_t.Invalid)
+                ActiveQuery.Execute(HandleResults);
             else
                 Debug.LogError("Steam was unable to create a query handle for this argument. Check your App ID and the App ID in the query manager.");
         }
@@ -118,15 +118,15 @@ namespace Heathen.SteamworksIntegration
         public void SearchSubscribed()
         {
             var filter = GetSearchString();
-            lastSearchString = filter;
-            activeQuery = UgcQuery.GetSubscribed();
+            _lastSearchString = filter;
+            ActiveQuery = UgcQuery.GetSubscribed();
             if (!string.IsNullOrEmpty(filter))
             {
-                API.UserGeneratedContent.Client.SetSearchText(activeQuery.handle, filter);
+                API.UserGeneratedContent.Client.SetSearchText(ActiveQuery.Handle, filter);
             }
 
-            if (activeQuery.handle != UGCQueryHandle_t.Invalid)
-                activeQuery.Execute(HandleResults);
+            if (ActiveQuery.Handle != UGCQueryHandle_t.Invalid)
+                ActiveQuery.Execute(HandleResults);
             else
                 Debug.LogError("Steam was unable to create a query handle for this argument. Check your App ID and the App ID in the query manager.");
         }
@@ -134,15 +134,15 @@ namespace Heathen.SteamworksIntegration
         public void PrepareSearchAll()
         {
             var filter = GetSearchString();
-            lastSearchString = filter;
-            activeQuery = UgcQuery.Get(EUGCQuery.k_EUGCQuery_RankedByTrend, EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items_ReadyToUse, new(0), AppData.Me);
+            _lastSearchString = filter;
+            ActiveQuery = UgcQuery.Get(EUGCQuery.k_EUGCQuery_RankedByTrend, EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items_ReadyToUse, new(0), AppData.Me);
             if (!string.IsNullOrEmpty(filter))
             {
-                API.UserGeneratedContent.Client.SetSearchText(activeQuery.handle, filter);
+                API.UserGeneratedContent.Client.SetSearchText(ActiveQuery.Handle, filter);
             }
 
-            if (activeQuery.handle != UGCQueryHandle_t.Invalid)
-                onQueryUpdated.Invoke(activeQuery);
+            if (ActiveQuery.Handle != UGCQueryHandle_t.Invalid)
+                onQueryUpdated.Invoke(ActiveQuery);
             else
                 Debug.LogError("Steam was unable to create a query handle for this argument. Check your App ID and the App ID in the query manager.");
         }
@@ -150,15 +150,15 @@ namespace Heathen.SteamworksIntegration
         public void SearchFavorites()
         {
             var filter = GetSearchString();
-            lastSearchString = filter;
-            activeQuery = UgcQuery.Get(SteamUser.GetSteamID().GetAccountID(), EUserUGCList.k_EUserUGCList_Favorited, EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items_ReadyToUse, EUserUGCListSortOrder.k_EUserUGCListSortOrder_TitleAsc, new(0), AppData.Me);
+            _lastSearchString = filter;
+            ActiveQuery = UgcQuery.Get(SteamUser.GetSteamID().GetAccountID(), EUserUGCList.k_EUserUGCList_Favorited, EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items_ReadyToUse, EUserUGCListSortOrder.k_EUserUGCListSortOrder_TitleAsc, new(0), AppData.Me);
             if (!string.IsNullOrEmpty(filter))
             {
-                API.UserGeneratedContent.Client.SetSearchText(activeQuery.handle, filter);
+                API.UserGeneratedContent.Client.SetSearchText(ActiveQuery.Handle, filter);
             }
 
-            if (activeQuery.handle != UGCQueryHandle_t.Invalid)
-                activeQuery.Execute(HandleResults);
+            if (ActiveQuery.Handle != UGCQueryHandle_t.Invalid)
+                ActiveQuery.Execute(HandleResults);
             else
                 Debug.LogError("Steam was unable to create a query handle for this argument. Check your App ID and the App ID in the query manager.");
         }
@@ -166,15 +166,15 @@ namespace Heathen.SteamworksIntegration
         public void PrepareSearchFavorites()
         {
             var filter = GetSearchString();
-            lastSearchString = filter;
-            activeQuery = UgcQuery.Get(SteamUser.GetSteamID().GetAccountID(), EUserUGCList.k_EUserUGCList_Favorited, EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items_ReadyToUse, EUserUGCListSortOrder.k_EUserUGCListSortOrder_TitleAsc, new(0), AppData.Me);
+            _lastSearchString = filter;
+            ActiveQuery = UgcQuery.Get(SteamUser.GetSteamID().GetAccountID(), EUserUGCList.k_EUserUGCList_Favorited, EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items_ReadyToUse, EUserUGCListSortOrder.k_EUserUGCListSortOrder_TitleAsc, new(0), AppData.Me);
             if (!string.IsNullOrEmpty(filter))
             {
-                API.UserGeneratedContent.Client.SetSearchText(activeQuery.handle, filter);
+                API.UserGeneratedContent.Client.SetSearchText(ActiveQuery.Handle, filter);
             }
 
-            if (activeQuery.handle != UGCQueryHandle_t.Invalid)
-                onQueryUpdated.Invoke(activeQuery);
+            if (ActiveQuery.Handle != UGCQueryHandle_t.Invalid)
+                onQueryUpdated.Invoke(ActiveQuery);
             else
                 Debug.LogError("Steam was unable to create a query handle for this argument. Check your App ID and the App ID in the query manager.");
         }
@@ -182,15 +182,15 @@ namespace Heathen.SteamworksIntegration
         public void SearchFollowed()
         {
             var filter = GetSearchString();
-            lastSearchString = filter;
-            activeQuery = UgcQuery.Get(SteamUser.GetSteamID().GetAccountID(), EUserUGCList.k_EUserUGCList_Followed, EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items_ReadyToUse, EUserUGCListSortOrder.k_EUserUGCListSortOrder_TitleAsc, new(0), AppData.Me);
+            _lastSearchString = filter;
+            ActiveQuery = UgcQuery.Get(SteamUser.GetSteamID().GetAccountID(), EUserUGCList.k_EUserUGCList_Followed, EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items_ReadyToUse, EUserUGCListSortOrder.k_EUserUGCListSortOrder_TitleAsc, new(0), AppData.Me);
             if (!string.IsNullOrEmpty(filter))
             {
-                API.UserGeneratedContent.Client.SetSearchText(activeQuery.handle, filter);
+                API.UserGeneratedContent.Client.SetSearchText(ActiveQuery.Handle, filter);
             }
 
-            if (activeQuery.handle != UGCQueryHandle_t.Invalid)
-                activeQuery.Execute(HandleResults);
+            if (ActiveQuery.Handle != UGCQueryHandle_t.Invalid)
+                ActiveQuery.Execute(HandleResults);
             else
                 Debug.LogError("Steam was unable to create a query handle for this argument. Check your App ID and the App ID in the query manager.");
         }
@@ -198,33 +198,33 @@ namespace Heathen.SteamworksIntegration
         public void PrepareSearchFollowed()
         {
             var filter = GetSearchString();
-            lastSearchString = filter;
-            activeQuery = UgcQuery.Get(SteamUser.GetSteamID().GetAccountID(), EUserUGCList.k_EUserUGCList_Followed, EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items_ReadyToUse, EUserUGCListSortOrder.k_EUserUGCListSortOrder_TitleAsc, new(0), AppData.Me);
+            _lastSearchString = filter;
+            ActiveQuery = UgcQuery.Get(SteamUser.GetSteamID().GetAccountID(), EUserUGCList.k_EUserUGCList_Followed, EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items_ReadyToUse, EUserUGCListSortOrder.k_EUserUGCListSortOrder_TitleAsc, new(0), AppData.Me);
             if (!string.IsNullOrEmpty(filter))
             {
-                API.UserGeneratedContent.Client.SetSearchText(activeQuery.handle, filter);
+                API.UserGeneratedContent.Client.SetSearchText(ActiveQuery.Handle, filter);
             }
-            onQueryUpdated.Invoke(activeQuery);
+            onQueryUpdated.Invoke(ActiveQuery);
         }
 
         public void ExecuteSearch()
         {
-            if (activeQuery != null && activeQuery.handle != UGCQueryHandle_t.Invalid)
-                activeQuery.Execute(HandleResults);
+            if (ActiveQuery != null && ActiveQuery.Handle != UGCQueryHandle_t.Invalid)
+                ActiveQuery.Execute(HandleResults);
             else
                 Debug.LogError("Attempted to execute a query with an invalid query handle.");
         }
 
         public void SetNextSearchPage()
         {
-            if (activeQuery != null)
+            if (ActiveQuery != null)
             {
-                activeQuery.SetNextPage();
+                ActiveQuery.SetNextPage();
 
-                if (!string.IsNullOrEmpty(lastSearchString))
-                    API.UserGeneratedContent.Client.SetSearchText(activeQuery.handle, lastSearchString);
+                if (!string.IsNullOrEmpty(_lastSearchString))
+                    API.UserGeneratedContent.Client.SetSearchText(ActiveQuery.Handle, _lastSearchString);
 
-                activeQuery.Execute(HandleResults);
+                ActiveQuery.Execute(HandleResults);
             }
             else
             {
@@ -234,14 +234,14 @@ namespace Heathen.SteamworksIntegration
 
         public void SetPreviousSearchPage()
         {
-            if (activeQuery != null)
+            if (ActiveQuery != null)
             {
-                activeQuery.SetPreviousPage();
+                ActiveQuery.SetPreviousPage();
 
-                if (!string.IsNullOrEmpty(lastSearchString))
-                    API.UserGeneratedContent.Client.SetSearchText(activeQuery.handle, lastSearchString);
+                if (!string.IsNullOrEmpty(_lastSearchString))
+                    API.UserGeneratedContent.Client.SetSearchText(ActiveQuery.Handle, _lastSearchString);
 
-                activeQuery.Execute(HandleResults);
+                ActiveQuery.Execute(HandleResults);
             }
             else
             {
@@ -251,14 +251,14 @@ namespace Heathen.SteamworksIntegration
 
         public void SetSearchPage(uint page)
         {
-            if(activeQuery != null)
+            if(ActiveQuery != null)
             {
-                activeQuery.SetPage(page);
+                ActiveQuery.SetPage(page);
 
-                if (!string.IsNullOrEmpty(lastSearchString))
-                    API.UserGeneratedContent.Client.SetSearchText(activeQuery.handle, lastSearchString);
+                if (!string.IsNullOrEmpty(_lastSearchString))
+                    API.UserGeneratedContent.Client.SetSearchText(ActiveQuery.Handle, _lastSearchString);
 
-                activeQuery.Execute(HandleResults);
+                ActiveQuery.Execute(HandleResults);
             }
             else
             {
@@ -269,28 +269,28 @@ namespace Heathen.SteamworksIntegration
         private void HandleResults(UgcQuery query)
         {
             if(currentPageLabel != null)
-            currentPageLabel.text = activeQuery.Page.ToString();
+            currentPageLabel.text = ActiveQuery.Page.ToString();
             if(pageCountLabel != null)
-            pageCountLabel.text = activeQuery.pageCount.ToString();
+            pageCountLabel.text = ActiveQuery.PageCount.ToString();
 
             if (template != null
                 && content != null)
             {
-                foreach (var comp in currentRecords)
+                foreach (var comp in _currentRecords)
                     Destroy(comp.gameObject);
 
-                currentRecords.Clear();
+                _currentRecords.Clear();
 
                 foreach (var result in query.ResultsList)
                 {
                     var comp = Instantiate(template, content);
-                    currentRecords.Add(comp);
+                    _currentRecords.Add(comp);
 
                     comp.Data = result;
                     comp.LoadPreview();
                 }
             }
-            onResultsReady?.Invoke(activeQuery);
+            onResultsReady?.Invoke(ActiveQuery);
         }
     }
 #if UNITY_EDITOR

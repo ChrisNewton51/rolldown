@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using UnityEngine;
@@ -58,22 +58,22 @@ namespace Heathen.SteamworksIntegration
         [EventField]
         public UnityEvent<byte[]> onPreviewImageLoaded = new();
 
-        private SteamWorkshopItemDetailData m_Inspector;
+        private SteamWorkshopItemDetailData _mInspector;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamWorkshopItemDetailData>();
+            _mInspector = GetComponent<SteamWorkshopItemDetailData>();
             onChange.AddListener(HandleOnChange);
         }
 
         private void HandleOnChange()
         {
-            if (m_Inspector.Data != null)
+            if (_mInspector.Data != null)
             {
-                onSetIsSubscribed?.Invoke(m_Inspector.Data.IsSubscribed);
-                onSetIsNotSubscribed?.Invoke(!m_Inspector.Data.IsSubscribed);
-                onSetIsInstalled?.Invoke(m_Inspector.Data.IsInstalled);
-                onSetIsNotInstalled?.Invoke(!m_Inspector.Data.IsInstalled);
+                onSetIsSubscribed?.Invoke(_mInspector.Data.IsSubscribed);
+                onSetIsNotSubscribed?.Invoke(!_mInspector.Data.IsSubscribed);
+                onSetIsInstalled?.Invoke(_mInspector.Data.IsInstalled);
+                onSetIsNotInstalled?.Invoke(!_mInspector.Data.IsInstalled);
             }
         }
     }

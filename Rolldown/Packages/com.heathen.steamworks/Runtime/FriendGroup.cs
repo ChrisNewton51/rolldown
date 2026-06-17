@@ -1,4 +1,5 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
+using System;
 using Steamworks;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,8 +10,9 @@ using Friends = Heathen.SteamworksIntegration.API.Friends;
 namespace Heathen.SteamworksIntegration.UI
 {
     /// <summary>
-    /// Represents a group of friends such as those that are online, offline, etc.
-    /// This is used by the <see cref="FriendGroupsDisplay"/>
+    /// Represents a group of friends categorized by their current status, such as online, offline,
+    /// in-game, or other custom categories.
+    /// Used in conjunction with the <see cref="FriendGroupsDisplay"/> to manage and display friend groups.
     /// </summary>
     [HelpURL("https://kb.heathen.group/assets/steamworks/unity-engine/ui-components/friend-group")]
     public class FriendGroup : MonoBehaviour
@@ -33,25 +35,24 @@ namespace Heathen.SteamworksIntegration.UI
             InGame,
             OtherGame,
         }
-        private readonly Dictionary<UserData, GameObject> records = new();
-        private GroupType type = GroupType.None;
+        private readonly Dictionary<UserData, GameObject> _records = new();
+        private GroupType _type = GroupType.None;
 
         private void OnEnable()
         {
-            Friends.Client.OnPersonaStateChange.AddListener(HandleStateChange);
+            SteamTools.Events.OnPersonaStateChange += HandleStateChange;
         }
 
         private void OnDisable()
         {
-            Friends.Client.OnPersonaStateChange.RemoveListener(HandleStateChange);
+            SteamTools.Events.OnPersonaStateChange -= HandleStateChange;
         }
 
-        private void HandleStateChange(PersonaStateChange arg0)
+        private void HandleStateChange(UserData user, EPersonaChange change)
         {
-            UserData user = arg0.SubjectId;
             if (!user.IsMe)
             {
-                switch (type)
+                switch (_type)
                 {
                     case GroupType.Online:
                         if (user.State == EPersonaState.k_EPersonaStateOffline
@@ -79,35 +80,32 @@ namespace Heathen.SteamworksIntegration.UI
                         else
                             Remove(user);
                         break;
-                    default:
-                        //We dont do anything with type == none
-                        break;
                 }
             }
         }
 
         private void Remove(UserData user)
         {
-            if (records.ContainsKey(user))
+            if (_records.ContainsKey(user))
             {
-                var target = records[user];
-                records.Remove(user);
+                var target = _records[user];
+                _records.Remove(user);
                 Destroy(target);
-                counter.text = "(" + records.Count.ToString() + ")";
+                counter.text = "(" + _records.Count.ToString() + ")";
             }
         }
 
         private void Add(UserData user)
         {
             //Add the user and then resort the display
-            if (!records.ContainsKey(user))
+            if (!_records.ContainsKey(user))
             {
                 AddNewRecord(user);
                 SortRecords();
-                counter.text = "(" + records.Count.ToString() + ")";
+                counter.text = "(" + _records.Count.ToString() + ")";
             }
             else
-                records[user].GetComponent<ISteamUserData>().Data = user;
+                _records[user].GetComponent<ISteamUserData>().Data = user;
         }
 
         private void AddNewRecord(UserData user)
@@ -115,108 +113,114 @@ namespace Heathen.SteamworksIntegration.UI
             var go = Instantiate(recordTemplate, content);
             var comp = go.GetComponent<ISteamUserData>();
             comp.Data = user;
-            records.Add(user, go);
+            _records.Add(user, go);
         }
 
         private void SortRecords()
         {
-            var keys = records.Keys.ToList();
-            keys.Sort((a, b) => { return a.Nickname.CompareTo(b.Nickname); });
+            var keys = _records.Keys.ToList();
+            keys.Sort((a, b) => string.Compare(a.Nickname, b.Nickname, StringComparison.Ordinal));
 
             foreach (var key in keys)
             {
-                records[key].transform.SetAsLastSibling();
+                _records[key].transform.SetAsLastSibling();
             }
 
-            counter.text = "(" + records.Count.ToString() + ")";
+            counter.text = "(" + _records.Count.ToString() + ")";
         }
 
         /// <summary>
-        /// Initializes the group display with a given collection of users
+        /// Initializes the custom group with a specified name, collection of users, and expansion state.
         /// </summary>
-        /// <param name="name">The name of the group</param>
-        /// <param name="users">The list of users to display</param>
-        /// <param name="expanded">Should the group start expanded</param>
+        /// <param name="name">The name of the group to be displayed.</param>
+        /// <param name="users">The collection of users to populate within the group.</param>
+        /// <param name="expanded">Determines whether the group should start in an expanded state.</param>
         public void InitializeCustom(string name, List<UserData> users, bool expanded)
         {
             label.text = name;
             toggle.isOn = expanded;
-            type = GroupType.None;
+            _type = GroupType.None;
 
             foreach (var user in users)
-                if (!records.ContainsKey(user))
+                if (!_records.ContainsKey(user))
                     AddNewRecord(user);
 
             SortRecords();
         }
+
         /// <summary>
-        /// Initializes the group display for online members
+        /// Initialises the group display specifically for online members.
         /// </summary>
-        /// <param name="name">The name of the group</param>
-        /// <param name="users">The list of users to display</param>
-        /// <param name="expanded">Should the group start expanded</param>
+        /// <param name="name">The name of the online group to be displayed.</param>
+        /// <param name="users">The list of online users to populate within the group.</param>
+        /// <param name="expanded">Determines whether the group should start in an expanded state.</param>
         public void InitializeOnline(string name, List<UserData> users, bool expanded)
         {
             label.text = name;
             toggle.isOn = expanded;
-            type = GroupType.Online;
+            _type = GroupType.Online;
 
             foreach (var user in users)
-                if (!records.ContainsKey(user))
+                if (!_records.ContainsKey(user))
                     AddNewRecord(user);
 
             SortRecords();
         }
+
         /// <summary>
-        /// Initializes the group display
+        /// Initialises the offline group with the specified name, list of users, and expansion state.
         /// </summary>
-        /// <param name="name">The name of the group</param>
-        /// <param name="users">The list of users to display</param>
-        /// <param name="expanded">Should the group start expanded</param>
+        /// <param name="name">The name of the offline group to be displayed.</param>
+        /// <param name="users">The collection of users to populate in the group.</param>
+        /// <param name="expanded">Determines whether the group should start in an expanded state.</param>
         public void InitializeOffline(string name, List<UserData> users, bool expanded)
         {
             label.text = name;
             toggle.isOn = expanded;
-            type = GroupType.Offline;
+            _type = GroupType.Offline;
 
             foreach (var user in users)
-                if (!records.ContainsKey(user))
+                if (!_records.ContainsKey(user))
                     AddNewRecord(user);
 
             SortRecords();
         }
+
         /// <summary>
-        /// Initializes the group display
+        /// Configures and initialises the group to represent friends currently in-game, setting its display name, user list, and expansion state.
         /// </summary>
-        /// <param name="name">The name of the group</param>
-        /// <param name="users">The list of users to display</param>
-        /// <param name="expanded">Should the group start expanded</param>
+        /// <param name="name">The title of the group to be displayed in the UI.</param>
+        /// <param name="users">The collection of users currently in-game that will be shown in the group.</param>
+        /// <param name="expanded">Indicates whether the group should be expanded when initialized.</param>
         public void InitializeInGame(string name, List<UserData> users, bool expanded)
         {
             label.text = name;
             toggle.isOn = expanded;
-            type = GroupType.InGame;
+            _type = GroupType.InGame;
 
             foreach (var user in users)
-                if (!records.ContainsKey(user))
+                if (!_records.ContainsKey(user))
                     AddNewRecord(user);
 
             SortRecords();
         }
+
+
         /// <summary>
-        /// Initializes the group display
+        /// Initialises the group with the specified name, a collection of users, and expansion state,
+        /// and categorises it as "Other Game".
         /// </summary>
-        /// <param name="name">The name of the group</param>
-        /// <param name="users">The list of users to display</param>
-        /// <param name="expanded">Should the group start expanded</param>
-        public void InitializeInOther(string name, List<UserData> users, bool expanded)
+        /// <param name="groupName">The name of the group to be displayed.</param>
+        /// <param name="users">The collection of users to populate within the group.</param>
+        /// <param name="expanded">Determines whether the group should start in an expanded state.</param>
+        public void InitializeInOther(string groupName, List<UserData> users, bool expanded)
         {
-            label.text = name;
+            label.text = groupName;
             toggle.isOn = expanded;
-            type = GroupType.OtherGame;
+            _type = GroupType.OtherGame;
 
             foreach (var user in users)
-                if (!records.ContainsKey(user))
+                if (!_records.ContainsKey(user))
                     AddNewRecord(user);
 
             SortRecords();

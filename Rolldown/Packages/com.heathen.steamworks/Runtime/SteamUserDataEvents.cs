@@ -1,6 +1,8 @@
-﻿#if !DISABLESTEAMWORKS && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS && STEAM_INSTALLED
 using Heathen.SteamworksIntegration.UI;
+using Steamworks;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.EventSystems;
 
 namespace Heathen.SteamworksIntegration
@@ -11,25 +13,25 @@ namespace Heathen.SteamworksIntegration
     public class SteamUserDataEvents : MonoBehaviour, IPointerClickHandler
     {
         [EventField]
-        public PersonaStateChangeEvent onChange;
+        public UnityEvent<UserData, EPersonaChange> onChange;
         /// <summary>
         /// A <see cref="UnityEngine.Events.UnityEvent"/> that will be invoked when the user clicks the UI element
         /// </summary>
         [EventField]
         public UnityUserAndPointerDataEvent onClick;
 
-        private SteamUserData m_Inspector;
+        private SteamUserData _mInspector;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamUserData>();
-            m_Inspector.onChanged?.AddListener(onChange.Invoke);
+            _mInspector = GetComponent<SteamUserData>();
+            _mInspector.onChanged?.AddListener(onChange.Invoke);
         }
 
         private void OnDestroy()
         {
-            if(m_Inspector != null)
-                m_Inspector.onChanged?.RemoveListener(onChange.Invoke);
+            if(_mInspector != null)
+                _mInspector.onChanged?.RemoveListener(onChange.Invoke);
         }
 
         /// <summary>
@@ -38,7 +40,7 @@ namespace Heathen.SteamworksIntegration
         /// <param name="eventData"></param>
         public void OnPointerClick(PointerEventData eventData)
         {
-            onClick.Invoke(new UserAndPointerData(m_Inspector.Data, eventData));
+            onClick.Invoke(new UserAndPointerData(_mInspector.Data, eventData));
         }
     }
 }

@@ -1,8 +1,9 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Heathen.SteamworksIntegration
 {
@@ -48,11 +49,12 @@ namespace Heathen.SteamworksIntegration
         public SteamLobbyData template;
         public Transform content;
 
+        [FormerlySerializedAs("OnLobbiesFound")]
         [Header("Events")]
         [Tooltip("Invoked when the lobby search completes. Returns an array of LobbyData.")]
-        public LobbyDataListEvent OnLobbiesFound;
+        public LobbyDataListEvent onLobbiesFound;
 
-        private readonly List<SteamLobbyData> lobbies = new();
+        private readonly List<SteamLobbyData> _lobbies = new();
 
         /// <summary>
         /// Searches for lobbies that match the <see cref="searchArguments"/>
@@ -99,25 +101,25 @@ namespace Heathen.SteamworksIntegration
             {
                 if (!e)
                 {
-                    foreach(var lobby in lobbies)
+                    foreach(var lobby in _lobbies)
                     {
                         Destroy(lobby.gameObject);
                     }
 
-                    lobbies.Clear();
+                    _lobbies.Clear();
 
                     foreach(var lobby in r)
                     {
                         var comp = Instantiate(template, content); 
                         comp.Data = lobby;
-                        lobbies.Add(comp);
+                        _lobbies.Add(comp);
                     }
 
-                    OnLobbiesFound?.Invoke(r);
+                    onLobbiesFound?.Invoke(r);
                 }
                 else
                 {
-                    OnLobbiesFound?.Invoke(new LobbyData[0]);
+                    onLobbiesFound?.Invoke(new LobbyData[0]);
                 }
             });
         }

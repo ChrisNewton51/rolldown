@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using UnityEngine;
 
 namespace Heathen.SteamworksIntegration
@@ -10,30 +10,30 @@ namespace Heathen.SteamworksIntegration
     {
         public TMPro.TextMeshProUGUI label;
 
-        private SteamLeaderboardData m_Inspector;
-        private SteamLeaderboardDataEvents m_Events;
+        private SteamLeaderboardData _mInspector;
+        private SteamLeaderboardDataEvents _mEvents;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamLeaderboardData>();
-            m_Events = GetComponent<SteamLeaderboardDataEvents>();
-            if(m_Events != null)
-                m_Events.onChange?.AddListener(HandleOnChanged);
+            _mInspector = GetComponent<SteamLeaderboardData>();
+            _mEvents = GetComponent<SteamLeaderboardDataEvents>();
+            if(_mEvents != null)
+                _mEvents.onChange?.AddListener(HandleOnChanged);
 
-            if (m_Inspector.Data.IsValid)
-                label.text = m_Inspector.Data.DisplayName;
+            if (_mInspector.Data.IsValid)
+                label.text = _mInspector.Data.DisplayName;
         }
 
         private void OnDestroy()
         {
-            if (m_Events != null)
-                m_Events.onChange?.RemoveListener(HandleOnChanged);
+            if (_mEvents != null)
+                _mEvents.onChange?.RemoveListener(HandleOnChanged);
         }
 
         private void HandleOnChanged()
         {
-            if (m_Inspector.Data.IsValid)
-                label.text = m_Inspector.Data.DisplayName;
+            if (_mInspector.Data.IsValid)
+                label.text = _mInspector.Data.DisplayName;
             else
                 label.text = string.Empty;
         }

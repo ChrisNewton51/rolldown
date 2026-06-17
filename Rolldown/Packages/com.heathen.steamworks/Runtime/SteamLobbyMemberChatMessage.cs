@@ -1,8 +1,7 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using UnityEngine;
 using Steamworks;
 using System;
-using Heathen.SteamworksIntegration.UI;
 
 namespace Heathen.SteamworksIntegration
 {
@@ -12,12 +11,12 @@ namespace Heathen.SteamworksIntegration
     [AddComponentMenu("")]
     [ModularComponent(typeof(SteamLobbyMemberData), "Chat Message", "")]
     [RequireComponent(typeof(SteamLobbyMemberData))]
-    [HelpURL("https://kb.heathen.group/steam/features/lobby/unity-lobby/steam-lobby-member-chat-message")]
+    [HelpURL("https://heathen.group/kb/lobby/#chat")]
     public class SteamLobbyMemberChatMessage : MonoBehaviour
     {
         [ElementField("Chat Message")]
         public GameObject expansionPanel;
-        [SettingsField(header = "Chat Display")]
+        [SettingsField(0,false, "Chat Display")]
         [SerializeField]
         private string dateTimeFormat = "HH:mm:ss";
         [ElementField("Chat Message")]
@@ -27,7 +26,7 @@ namespace Heathen.SteamworksIntegration
         [SerializeField]
         private TMPro.TextMeshProUGUI message;
 
-        public UserData User => m_Data.Data.user;
+        public UserData User => _mData.Data.user;
         public byte[] Data { get; private set; }
         public string Message { get; private set; }
         public DateTime ReceivedAt { get; private set; }
@@ -48,26 +47,26 @@ namespace Heathen.SteamworksIntegration
             }
         }
 
-        private SteamLobbyMemberData m_Data;
+        private SteamLobbyMemberData _mData;
 
         private void Awake()
         {
-            m_Data = GetComponent<SteamLobbyMemberData>();
+            _mData = GetComponent<SteamLobbyMemberData>();
         }
 
         /// <summary>
-        /// Initialize the message given a source <see cref="LobbyChatMsg" />
+        /// Initialise the message given a source <see cref="LobbyChatMsg" />
         /// </summary>
-        /// <param name="message">The message to initialize</param>
-        public void Initialize(LobbyChatMsg message)
+        /// <param name="chatMessage">The message to initialise</param>
+        public void Initialise(LobbyChatMsg chatMessage)
         {
-            m_Data.Data = new() { lobby = message.lobby, user = message.sender };
-            Type = message.type;
-            Message = message.Message;
-            Data = message.data;
+            _mData.Data = new() { lobby = chatMessage.lobby, user = chatMessage.sender };
+            Type = chatMessage.type;
+            Message = chatMessage.Message;
+            Data = chatMessage.data;
             ReceivedAt = DateTime.Now;
 
-            this.message.text = Message;
+            message.text = Message;
 
             if (datetime != null)
                 datetime.text = ReceivedAt.ToString(dateTimeFormat);

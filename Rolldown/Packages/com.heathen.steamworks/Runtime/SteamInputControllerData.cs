@@ -1,17 +1,24 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
 namespace Heathen.SteamworksIntegration
 {
+    /// <summary>
+    /// Represents the data for a Steam Input controller and provides methods to manage its state and events.
+    /// </summary>
     [AddComponentMenu("Steamworks/Controller")]
     public class SteamInputControllerData : MonoBehaviour, ISteamInputControllerData
     {
+        /// <summary>
+        /// An enumeration of managed events that can be handled by the controller data.
+        /// </summary>
         public enum ManagedEvents
         {
             Change,
@@ -21,25 +28,36 @@ namespace Heathen.SteamworksIntegration
         [Tooltip("If set to true then we will attempt to force Steam to use input for this app on start.\nThis is generally only needed in editor testing.")]
         [SerializeField]
         private bool forceInput = true;
+        /// <summary>
+        /// If true, the first controller connected will be set as the controller handle.
+        /// </summary>
         [Tooltip("If true then the first controller connected will be set as the controller handle")]
         public bool getFirst = true;
 
+        [FormerlySerializedAs("_delegates")]
+        [FormerlySerializedAs("m_Delegates")] 
         [SerializeField]
-        private List<ManagedEvents> m_Delegates;
+        private List<ManagedEvents> delegates;
 
+        /// <summary>
+        /// Gets or sets the input handle for the controller.
+        /// </summary>
         public InputHandle_t? Data
         {
-            get => m_Data;
+            get => _data;
             set
             {
-                m_Data = value;
+                _data = value;
                 onChanged?.Invoke();
             }
         }
 
+        /// <summary>
+        /// Unity event that is invoked when the controller data changes.
+        /// </summary>
         public UnityEvent onChanged;
 
-        private InputHandle_t? m_Data = null;
+        private InputHandle_t? _data;
 
         private void Awake()
         {
@@ -55,18 +73,25 @@ namespace Heathen.SteamworksIntegration
                 Application.OpenURL("steam://forceinputappid/0");
         }
 
+        /// <summary>
+        /// Sets the first found connected controller as the active controller.
+        /// </summary>
         [ContextMenu("Set First Controller")]
         public void SetFirstFound()
         {
-            if (API.Input.Client.connectedControllers.Count > 0)
-                Data = API.Input.Client.connectedControllers[0];
+            if (API.Input.Client.ConnectedControllers.Count > 0)
+                Data = API.Input.Client.ConnectedControllers[0];
             else
                 Data = null;
         }
 
+        /// <summary>
+        /// Gets the motion data for the current controller.
+        /// </summary>
+        /// <returns>The motion data of the controller.</returns>
         public InputMotionData_t GetMotion()
         {
-            return API.Input.Client.GetMotionData(m_Data.Value);
+            return _data != null ? API.Input.Client.GetMotionData(_data.Value) : default;
         }
 
         private void HandleLateInit()
@@ -85,14 +110,17 @@ namespace Heathen.SteamworksIntegration
     }
 
 #if UNITY_EDITOR
-    [UnityEditor.CustomEditor(typeof(SteamInputControllerData), true)]
+    /// <summary>
+    /// A custom editor for the SteamInputControllerData component to provide a better user interface in the Unity Editor.
+    /// </summary>
+    [CustomEditor(typeof(SteamInputControllerData), true)]
     public class SteamInputControllerDataEditor : Editor
     {
-        private SerializedProperty forceInputProp;
-        private SerializedProperty getFirstProp;
-        private SteamToolsSettings settings;
+        private SerializedProperty _forceInputProp;
+        private SerializedProperty _getFirstProp;
+        private SteamToolsSettings _settings;
 
-        private static readonly string[] _settingsOptions =
+        private static readonly string[] SettingsOptions =
         {
             "Vibrate",
             "General Events"
@@ -102,11 +130,14 @@ namespace Heathen.SteamworksIntegration
 
         private void OnEnable()
         {
-            settings = SteamToolsSettings.GetOrCreate();
-            forceInputProp = serializedObject.FindProperty("forceInput");
-            getFirstProp = serializedObject.FindProperty("getFirst");
+            _settings = SteamToolsSettings.GetOrCreate();
+            _forceInputProp = serializedObject.FindProperty("forceInput");
+            _getFirstProp = serializedObject.FindProperty("getFirst");
         }
 
+        /// <summary>
+        /// Customises the inspector GUI for the SteamInputControllerData component.
+        /// </summary>
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
@@ -115,15 +146,17 @@ namespace Heathen.SteamworksIntegration
             if (EditorGUILayout.LinkButton("Settings"))
                 SettingsService.OpenProjectSettings("Project/Player/Steamworks");
             if (EditorGUILayout.LinkButton("Portal"))
-                Application.OpenURL("https://partner.steamgames.com/apps/landing/" + settings.Get(settings.ActiveApp.Value).applicationId.ToString());
+                if (_settings.ActiveApp != null)
+                    Application.OpenURL("https://partner.steamgames.com/apps/landing/" +
+                                        _settings.Get(_settings.ActiveApp.Value).applicationId.ToString());
             if (EditorGUILayout.LinkButton("Guide"))
                 Application.OpenURL("https://kb.heathen.group/steam/features/friends");
             if (EditorGUILayout.LinkButton("Support"))
                 Application.OpenURL("https://discord.gg/heathen-group-463483739612381204");
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.Space();
-            EditorGUILayout.PropertyField(forceInputProp);
-            EditorGUILayout.PropertyField(getFirstProp);
+            EditorGUILayout.PropertyField(_forceInputProp);
+            EditorGUILayout.PropertyField(_getFirstProp);
             EditorGUILayout.Space();
 
             DrawFunctionSettings();
@@ -132,6 +165,7 @@ namespace Heathen.SteamworksIntegration
         }
 
         // --- SETTINGS (single-instance) ---
+        // ReSharper disable Unity.PerformanceAnalysis
         private void DrawFunctionSettings()
         {
             var data = (SteamInputControllerData)target;
@@ -139,10 +173,10 @@ namespace Heathen.SteamworksIntegration
 
             // Refresh mask
             _settingsMask = SettingsMask.None;
-            for (int i = 0; i < _settingsOptions.Length; i++)
+            for (int i = 0; i < SettingsOptions.Length; i++)
             {
-                var type = GetTypeForFeature(_settingsOptions[i]);
-                if (type != null && go.GetComponent(type) != null)
+                var type = GetTypeForFeature(SettingsOptions[i]);
+                if (type != null && go.GetComponent(type))
                     _settingsMask |= (SettingsMask)(1 << i);
             }
 
@@ -150,12 +184,12 @@ namespace Heathen.SteamworksIntegration
             _settingsMask = (SettingsMask)EditorGUILayout.EnumFlagsField("Configuration", _settingsMask);
             if (EditorGUI.EndChangeCheck())
             {
-                for (int i = 0; i < _settingsOptions.Length; i++)
+                for (int i = 0; i < SettingsOptions.Length; i++)
                 {
-                    var type = GetTypeForFeature(_settingsOptions[i]);
+                    var type = GetTypeForFeature(SettingsOptions[i]);
                     if (type == null) continue;
 
-                    bool hasComp = go.GetComponent(type) != null;
+                    bool hasComp = go.GetComponent(type);
                     bool shouldHave = (_settingsMask & (SettingsMask)(1 << i)) != 0;
 
                     if (shouldHave && !hasComp)
@@ -166,16 +200,17 @@ namespace Heathen.SteamworksIntegration
             }
             EditorGUI.indentLevel++;
             // Draw configuration for active settings
-            foreach (var featureName in _settingsOptions)
+            foreach (var featureName in SettingsOptions)
             {
                 var type = GetTypeForFeature(featureName);
                 var comp = go.GetComponent(type);
-                if (comp == null) continue;
+                if (!comp) continue;
 
                 var so = new SerializedObject(comp);
                 so.Update();
 
                 EditorGUILayout.BeginVertical("box");
+                // ReSharper disable once UnusedVariable
                 foreach (var (prop, header) in GetPropertiesWithAttribute<SettingsFieldAttribute>(so))
                     EditorGUILayout.PropertyField(prop, new GUIContent(ObjectNames.NicifyVariableName(prop.name)));
                 EditorGUILayout.EndVertical();
@@ -197,21 +232,20 @@ namespace Heathen.SteamworksIntegration
 
             var dataEvents = data.GetComponent<SteamInputControllerDataEvents>();
 
-            if (dataEvents == null)
+            if (!dataEvents)
                 return;
 
-            if (dataEvents != null)
+            if (dataEvents)
                 dataEvents.hideFlags = HideFlags.HideInInspector;
 
-            SerializedObject soEvents = dataEvents ? new SerializedObject(dataEvents) : null;
+            var soEvents = dataEvents ? new SerializedObject(dataEvents) : null;
 
             EditorGUILayout.LabelField("Events", EditorStyles.boldLabel);
             EditorGUI.indentLevel++;
 
-            int removeIndex = -1;
-            Vector2 removeButtonSize = GUIStyle.none.CalcSize(EditorGUIUtility.IconContent("Toolbar Minus"));
+            var removeIndex = -1;
 
-            for (int i = 0; i < delegatesProp.arraySize; i++)
+            for (var i = 0; i < delegatesProp.arraySize; i++)
             {
                 var delegateProp = delegatesProp.GetArrayElementAtIndex(i);
                 var evt = (SteamInputControllerData.ManagedEvents)delegateProp.enumValueIndex;
@@ -306,12 +340,12 @@ namespace Heathen.SteamworksIntegration
                 var field = so.targetObject.GetType().GetField(prop.name,
                     System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
                 if (field == null) continue;
-                var attr = System.Attribute.GetCustomAttribute(field, typeof(T)) as SettingsFieldAttribute;
-                if (attr != null)
-                    yield return (so.FindProperty(prop.name), attr.header);
+                if (System.Attribute.GetCustomAttribute(field, typeof(T)) is SettingsFieldAttribute attr)
+                    yield return (so.FindProperty(prop.name), attr.Header);
             }
         }
 
+        // ReSharper disable UnusedMember.Local
         [System.Flags]
         private enum SettingsMask
         {
@@ -319,6 +353,7 @@ namespace Heathen.SteamworksIntegration
             Vibrate = 1 << 0,
             GeneralEvents = 1 << 1
         }
+        // ReSharper restore UnusedMember.Local
     }
 #endif
 }

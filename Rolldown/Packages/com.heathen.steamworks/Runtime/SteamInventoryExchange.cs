@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -10,21 +10,39 @@ using System.Collections.Generic;
 
 namespace Heathen.SteamworksIntegration
 {
+    /// <summary>
+    /// Component used to manage the exchange of Steam Inventory items based on a defined recipe.
+    /// </summary>
     [ModularComponent(typeof(SteamInventoryItemData), "Exchange", "")]
     [RequireComponent(typeof(SteamInventoryItemData))]
     [AddComponentMenu("")]
     public class SteamInventoryExchange : MonoBehaviour
     {
+        /// <summary>
+        /// Represents an entry in an exchange recipe.
+        /// </summary>
         [Serializable]
         public struct RecipeEntry
         {
+            /// <summary>
+            /// The ID of the item required for the exchange.
+            /// </summary>
             public int id;
+            /// <summary>
+            /// The number of items required for the exchange.
+            /// </summary>
             public uint count;
         }
 
+        /// <summary>
+        /// The list of items required to perform the exchange.
+        /// </summary>
         [SettingsField]
         public List<RecipeEntry> recipe = new();
 
+        /// <summary>
+        /// Gets a value indicating whether the exchange can currently be performed based on the user's inventory.
+        /// </summary>
         public bool IsCanExchange
         {
             get
@@ -49,22 +67,22 @@ namespace Heathen.SteamworksIntegration
             }
         }
 
-        private SteamInventoryItemData m_Inspector;
-        private SteamInventoryItemDataEvents m_Events;
+        private SteamInventoryItemData _mInspector;
+        private SteamInventoryItemDataEvents _mEvents;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamInventoryItemData>();
-            m_Events = GetComponent<SteamInventoryItemDataEvents>();
+            _mInspector = GetComponent<SteamInventoryItemData>();
+            _mEvents = GetComponent<SteamInventoryItemDataEvents>();
 
-            API.Inventory.Client.OnSteamInventoryResultReady.AddListener(HandleInventoryUpdated);
+            SteamTools.Events.OnInventoryResultReady += HandleInventoryUpdated;
 
             SteamTools.Interface.WhenReady(RefreshCanExchange);
         }
 
         private void OnDestroy()
         {
-            API.Inventory.Client.OnSteamInventoryResultReady.RemoveListener(HandleInventoryUpdated);
+            SteamTools.Events.OnInventoryResultReady -= HandleInventoryUpdated;
         }
 
         private void HandleInventoryUpdated(InventoryResult _)
@@ -72,12 +90,18 @@ namespace Heathen.SteamworksIntegration
             RefreshCanExchange();
         }
 
+        /// <summary>
+        /// Refreshes the state of whether an exchange can be performed and invokes the associated event.
+        /// </summary>
         public void RefreshCanExchange()
         {
-            if (m_Events != null)
-                m_Events.onCanExchangeChange?.Invoke(IsCanExchange);
+            if (_mEvents != null)
+                _mEvents.onCanExchangeChange?.Invoke(IsCanExchange);
         }
 
+        /// <summary>
+        /// Attempts to perform the exchange using the items in the recipe.
+        /// </summary>
         public void Exchange()
         {
             List<ExchangeEntry> exchangeReagents = new();
@@ -97,29 +121,32 @@ namespace Heathen.SteamworksIntegration
             }
 
             if (allPass)
-                m_Inspector.Data.Exchange(exchangeReagents, result =>
+                _mInspector.Data.Exchange(exchangeReagents, result =>
                 {
                     if (result.result == EResult.k_EResultOK)
                     {
-                        if (m_Events != null)
-                            m_Events.onExchangeComplete?.Invoke(result.items);
+                        if (_mEvents != null)
+                            _mEvents.onExchangeComplete?.Invoke(result.items);
                     }
-                    else if (m_Events != null)
-                        m_Events.onExchangeFailed?.Invoke(result.result);
+                    else if (_mEvents != null)
+                        _mEvents.onExchangeFailed?.Invoke(result.result);
                 });
-            else if (m_Events != null)
-                m_Events.onExchangeRejected?.Invoke();
+            else if (_mEvents != null)
+                _mEvents.onExchangeRejected?.Invoke();
         }
     }
 
 #if UNITY_EDITOR
+    /// <summary>
+    /// Custom property drawer for <see cref="SteamInventoryExchange.RecipeEntry"/>.
+    /// </summary>
     [CustomPropertyDrawer(typeof(SteamInventoryExchange.RecipeEntry))]
     public class RecipeEntryDrawer : PropertyDrawer
     {
         private string[] _options;
         private int[] _ids;
         private int _selectedIndex;
-        private SteamToolsSettings settings;
+        private SteamToolsSettings _settings;
         private bool _initialized;
 
         private void Init(SerializedProperty property)
@@ -127,9 +154,9 @@ namespace Heathen.SteamworksIntegration
             if (_initialized) return;
             _initialized = true;
 
-            settings = SteamToolsSettings.GetOrCreate();
-            var list = settings != null && settings.items != null
-                ? settings.items
+            _settings = SteamToolsSettings.GetOrCreate();
+            var list = _settings && _settings.items != null
+                ? _settings.items
                 : new List<SteamToolsSettings.NameAndID>();
 
             if (list.Count > 0)
@@ -145,7 +172,7 @@ namespace Heathen.SteamworksIntegration
 
                 var idProp = property.FindPropertyRelative("id");
                 int current = idProp.intValue;
-                _selectedIndex = Mathf.Max(0, System.Array.IndexOf(_ids, current));
+                _selectedIndex = Mathf.Max(0, Array.IndexOf(_ids, current));
                 if (_selectedIndex < 0)
                     _selectedIndex = 0;
             }

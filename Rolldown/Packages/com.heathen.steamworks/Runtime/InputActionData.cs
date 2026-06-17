@@ -1,5 +1,6 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using System;
+using Steamworks;
 using UnityEngine;
 
 namespace Heathen.SteamworksIntegration
@@ -23,13 +24,21 @@ namespace Heathen.SteamworksIntegration
         [SerializeField]
         private string name;
 
-        public readonly Steamworks.InputAnalogActionHandle_t AnalogHandle => API.Input.Client.GetAnalogActionHandle(name);
-        public readonly Steamworks.InputDigitalActionHandle_t DigitalHandle => API.Input.Client.GetDigitalActionHandle(name);
-        
-        public readonly InputActionStateData GetActionData(Steamworks.InputHandle_t controller) => API.Input.Client.GetActionData(controller, name);
+        public readonly Steamworks.InputAnalogActionHandle_t AnalogHandle =>
+            API.Input.Client.GetAnalogActionHandle(name);
+
+        public readonly Steamworks.InputDigitalActionHandle_t DigitalHandle =>
+            API.Input.Client.GetDigitalActionHandle(name);
+
+        public readonly InputActionStateData GetActionData(Steamworks.InputHandle_t controller) =>
+            API.Input.Client.GetActionData(controller, name);
         public readonly InputActionStateData GetActionData() => API.Input.Client.GetActionData(name);
-        public readonly Texture2D[] GetInputGlyphs(Steamworks.InputHandle_t controller, InputActionSetData set) => GetInputGlyphs(controller, set);
-        public readonly Texture2D[] GetInputGlyphs(Steamworks.InputHandle_t controller, InputActionSetLayerData set) => GetInputGlyphs(controller, set.Data);
+
+        public readonly Texture2D[] GetInputGlyphs(Steamworks.InputHandle_t controller, InputActionSetData set) =>
+            GetInputGlyphs(controller, new Steamworks.InputActionSetHandle_t(set.Handle));
+
+        public readonly Texture2D[] GetInputGlyphs(Steamworks.InputHandle_t controller, InputActionSetLayerData set) =>
+            GetInputGlyphs(controller, new Steamworks.InputActionSetHandle_t(set.Data.Handle));
         public readonly Texture2D[] GetInputGlyphs(Steamworks.InputHandle_t controller, Steamworks.InputActionSetHandle_t set)
         {
             if (type == InputActionType.Analog)
@@ -58,8 +67,11 @@ namespace Heathen.SteamworksIntegration
             }
         }
 
-        public readonly string[] GetInputNames(Steamworks.InputHandle_t controller, InputActionSetData set) => GetInputNames(controller, set);
-        public readonly string[] GetInputNames(Steamworks.InputHandle_t controller, InputActionSetLayerData set) => GetInputNames(controller, set.Data);
+        public readonly string[] GetInputNames(Steamworks.InputHandle_t controller, InputActionSetData set) =>
+            GetInputNames(controller, new Steamworks.InputActionSetHandle_t(set.Handle));
+
+        public readonly string[] GetInputNames(Steamworks.InputHandle_t controller, InputActionSetLayerData set) =>
+            GetInputNames(controller, new InputActionSetHandle_t(set.Data.Handle));
         public readonly string[] GetInputNames(Steamworks.InputHandle_t controller, Steamworks.InputActionSetHandle_t set)
         {
             if (type == InputActionType.Analog)

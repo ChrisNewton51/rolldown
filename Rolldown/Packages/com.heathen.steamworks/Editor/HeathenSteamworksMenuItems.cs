@@ -11,7 +11,7 @@ namespace Heathen.SteamworksIntegration.Editors
 {
     public class HeathenSteamworksMenuItems
     {
-        public const string CurrentSteamworksNetVersion = "https://github.com/rlabrecque/Steamworks.NET.git?path=/com.rlabrecque.steamworks.net#2025.162.1";
+        public const string CurrentSteamworksNetVersion = "https://github.com/rlabrecque/Steamworks.NET.git?path=/com.rlabrecque.steamworks.net#2025.163.0";
 
         [InitializeOnLoadMethod]
         public static void CheckForSteamworksInstall()
@@ -49,7 +49,7 @@ namespace Heathen.SteamworksIntegration.Editors
                         yield return null;
                 }
             }
-#if !(STEAM_LEGACY || STEAM_161 || STEAM_162)
+#if !STEAM_INSTALLED
             if (EditorUtility.DisplayDialog("Heathen Installer", "Supported Steam API version not found, Steamworks.NET must be installed via the Unity Package Manager for this asset to work correctly. Would you like to install it now?", "Install Steamworks.NET", "Cancel"))
             {
                 yield return null;
@@ -116,7 +116,15 @@ namespace Heathen.SteamworksIntegration.Editors
                 StartCoroutine(InstallSteamworks_162());
             }
         }
-        [MenuItem("Help/Heathen/Steamworks/Install Steamworks.NET (Latest - Not Tested)", priority = 4)]
+        [MenuItem("Help/Heathen/Steamworks/Install Steamworks.NET v1.63.0", priority = 4)]
+        public static void InstallSteamworks163()
+        {
+            if (!SessionState.GetBool("SteamInstall", false))
+            {
+                StartCoroutine(InstallSteamworks_163());
+            }
+        }
+        [MenuItem("Help/Heathen/Steamworks/Install Steamworks.NET (Latest - Not Tested)", priority = 5)]
         public static void InstallSteamworksLatest()
         {
             if (!SessionState.GetBool("SteamInstall", false))
@@ -124,13 +132,13 @@ namespace Heathen.SteamworksIntegration.Editors
                 StartCoroutine(InstallSteamworks_Latest());
             }
         }
-        [MenuItem("Help/Heathen/Steamworks/Documentation", priority = 5)]
+        [MenuItem("Help/Heathen/Steamworks/Documentation", priority = 6)]
         public static void Documentation()
         {
             Application.OpenURL("https://kb.heathen.group/steam");
         }
 
-        [MenuItem("Help/Heathen/Steamworks/Support", priority = 6)]
+        [MenuItem("Help/Heathen/Steamworks/Support", priority = 7)]
         public static void Support()
         {
             Application.OpenURL("https://discord.gg/RMGtDXV");
@@ -203,29 +211,30 @@ namespace Heathen.SteamworksIntegration.Editors
         private static IEnumerator InstallSteamworks_Legacy() => InstallSteamworks("https://github.com/rlabrecque/Steamworks.NET.git?path=/com.rlabrecque.steamworks.net#2024.8.0");
         private static IEnumerator InstallSteamworks_Latest() => InstallSteamworks("https://github.com/rlabrecque/Steamworks.NET.git?path=/com.rlabrecque.steamworks.net");
         private static IEnumerator InstallSteamworks_161() => InstallSteamworks("https://github.com/rlabrecque/Steamworks.NET.git?path=/com.rlabrecque.steamworks.net#2025.161.0");
-        private static IEnumerator InstallSteamworks_162() => InstallSteamworks("https://github.com/rlabrecque/Steamworks.NET.git?path=/com.rlabrecque.steamworks.net#2025.162.1");        
+        private static IEnumerator InstallSteamworks_162() => InstallSteamworks("https://github.com/rlabrecque/Steamworks.NET.git?path=/com.rlabrecque.steamworks.net#2025.162.1");
+        private static IEnumerator InstallSteamworks_163() => InstallSteamworks("https://github.com/rlabrecque/Steamworks.NET.git?path=/com.rlabrecque.steamworks.net#2025.163.0");
 
-        private static List<IEnumerator> coroutines;
+        private static List<IEnumerator> _coroutines;
 
         private static void StartCoroutine(IEnumerator handle)
         {
-            if (coroutines == null)
+            if (_coroutines == null)
             {
                 EditorApplication.update -= EditorUpdate;
                 EditorApplication.update += EditorUpdate;
-                coroutines = new List<IEnumerator>();
+                _coroutines = new List<IEnumerator>();
             }
 
-            coroutines.Add(handle);
+            _coroutines.Add(handle);
         }
 
         private static void EditorUpdate()
         {
             List<IEnumerator> done = new List<IEnumerator>();
 
-            if (coroutines != null)
+            if (_coroutines != null)
             {
-                foreach (var e in coroutines)
+                foreach (var e in _coroutines)
                 {
                     if (!e.MoveNext())
                         done.Add(e);
@@ -238,7 +247,7 @@ namespace Heathen.SteamworksIntegration.Editors
             }
 
             foreach (var d in done)
-                coroutines.Remove(d);
+                _coroutines.Remove(d);
         }
     }
 }

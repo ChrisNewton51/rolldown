@@ -25,7 +25,7 @@
         {
             "name": "com.rlabrecque.steamworks.net",
             "expression": "",
-            "define": "STEAMWORKSNET"
+            "define": "STEAM_INSTALLED"
         }
     ],
     "noEngineReferences": false

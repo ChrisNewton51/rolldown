@@ -1,10 +1,11 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 using System;
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.Serialization;
 
 namespace Heathen.SteamworksIntegration
 {
@@ -35,23 +36,23 @@ namespace Heathen.SteamworksIntegration
 
         public WorkshopItemEditorData Data
         {
-            get => m_Data;
+            get => _mData;
             set
             {
-                m_Data = value;
-                if (m_Events != null)
-                    m_Events.onChange?.Invoke();
+                _mData = value;
+                if (_mEvents != null)
+                    _mEvents.onChange?.Invoke();
             }
         }
 
-        private WorkshopItemEditorData m_Data;
-        private SteamWorkshopItemEditorDataEvents m_Events;
-        [SerializeField]
-        private List<string> m_Delegates = new();
+        private WorkshopItemEditorData _mData;
+        private SteamWorkshopItemEditorDataEvents _mEvents;
+        [FormerlySerializedAs("m_Delegates")] [SerializeField]
+        private List<string> mDelegates = new();
 
         private void Awake()
         {
-            m_Events = GetComponent<SteamWorkshopItemEditorDataEvents>();
+            _mEvents = GetComponent<SteamWorkshopItemEditorDataEvents>();
 
             if (title != null)
                 title.onValueChanged.AddListener(HandleTitleUpdate);
@@ -68,33 +69,33 @@ namespace Heathen.SteamworksIntegration
 
         private void HandleTitleUpdate(string arg0)
         {
-            m_Data.title = arg0;
+            _mData.title = arg0;
         }
 
         private void HandleDescriptionUpdate(string arg0)
         {
-            m_Data.description = arg0;
+            _mData.description = arg0;
         }
 
         private void HandleContentFolderUpdate(string arg0)
         {
-            m_Data.content = new(arg0);
+            _mData.Content = new(arg0);
         }
 
         private void HandlePreviewFileUpdate(string arg0)
         {
-            m_Data.preview = new(arg0);
+            _mData.Preview = new(arg0);
         }
     }
 #if UNITY_EDITOR
     [CustomEditor(typeof(SteamWorkshopItemEditorData), true)]
     public class SteamWorkshopItemEditorDataEditor : ModularEditor
     {
-        private SteamToolsSettings settings;
-        private SerializedProperty title;
-        private SerializedProperty description;
-        private SerializedProperty contentFolderPath;
-        private SerializedProperty previewFilePath;
+        private SteamToolsSettings _settings;
+        private SerializedProperty _title;
+        private SerializedProperty _description;
+        private SerializedProperty _contentFolderPath;
+        private SerializedProperty _previewFilePath;
 
         // --- Allowed types for this editor ---
         protected override Type[] AllowedTypes => new Type[]
@@ -105,11 +106,11 @@ namespace Heathen.SteamworksIntegration
 
         private void OnEnable()
         {
-            settings = SteamToolsSettings.GetOrCreate();
-            title = serializedObject.FindProperty(nameof(SteamWorkshopItemEditorData.title));
-            description = serializedObject.FindProperty(nameof(SteamWorkshopItemEditorData.description));
-            contentFolderPath = serializedObject.FindProperty(nameof(SteamWorkshopItemEditorData.contentFolderPath));
-            previewFilePath = serializedObject.FindProperty(nameof(SteamWorkshopItemEditorData.previewFilePath));
+            _settings = SteamToolsSettings.GetOrCreate();
+            _title = serializedObject.FindProperty(nameof(SteamWorkshopItemEditorData.title));
+            _description = serializedObject.FindProperty(nameof(SteamWorkshopItemEditorData.description));
+            _contentFolderPath = serializedObject.FindProperty(nameof(SteamWorkshopItemEditorData.contentFolderPath));
+            _previewFilePath = serializedObject.FindProperty(nameof(SteamWorkshopItemEditorData.previewFilePath));
         }
 
         public override void OnInspectorGUI()
@@ -118,10 +119,10 @@ namespace Heathen.SteamworksIntegration
 
             DrawDefault(
                 "Project/Player/Steamworks"
-                , $"https://partner.steamgames.com/apps/landing/{settings.Get(settings.ActiveApp.Value).applicationId}"
+                , $"https://partner.steamgames.com/apps/landing/{_settings.Get(_settings.ActiveApp.Value).applicationId}"
                 , "https://kb.heathen.group/steam/features/workshop"
                 , "https://discord.gg/heathen-group-463483739612381204"
-                , new[] { title, description, contentFolderPath, previewFilePath });
+                , new[] { _title, _description, _contentFolderPath, _previewFilePath });
 
             serializedObject.ApplyModifiedProperties();
         }

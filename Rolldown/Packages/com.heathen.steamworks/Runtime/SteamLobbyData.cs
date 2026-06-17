@@ -1,15 +1,16 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using UnityEngine.Serialization;
 
 namespace Heathen.SteamworksIntegration
 {
     [AddComponentMenu("Steamworks/Lobby")]
-    [HelpURL("https://kb.heathen.group/steam/features/lobby")]
+    [HelpURL("https://heathen.group/kb/lobby/")]
     public class SteamLobbyData : MonoBehaviour, ISteamLobbyData
     {
         public enum LoadOnStart
@@ -25,10 +26,10 @@ namespace Heathen.SteamworksIntegration
 
         public LobbyData Data
         {
-            get => m_Data;
+            get => _mData;
             set
             {
-                m_Data = value;
+                _mData = value;
                 onChanged?.Invoke(value);
             }
         }
@@ -36,22 +37,22 @@ namespace Heathen.SteamworksIntegration
         [HideInInspector]
         public LobbyDataEvent onChanged;
 
-        private LobbyData m_Data;
+        private LobbyData _mData;
 
-        [SerializeField]
-        private List<string> m_Delegates;
+        [FormerlySerializedAs("m_Delegates")] [SerializeField]
+        private List<string> mDelegates;
 
         private void Start()
         {
             switch (load)
             {
                 case LoadOnStart.Any:
-                    if (API.Matchmaking.Client.memberOfLobbies.Count > 0)
-                        Data = API.Matchmaking.Client.memberOfLobbies[0];
+                    if (API.Matchmaking.Client.MemberOfLobbies.Count > 0)
+                        Data = API.Matchmaking.Client.MemberOfLobbies[0];
                     break;
                 case LoadOnStart.General:
-                    if (API.Matchmaking.Client.memberOfLobbies.Count > 0)
-                        foreach (var lobby in API.Matchmaking.Client.memberOfLobbies)
+                    if (API.Matchmaking.Client.MemberOfLobbies.Count > 0)
+                        foreach (var lobby in API.Matchmaking.Client.MemberOfLobbies)
                             if (lobby.IsGeneral)
                             {
                                 Data = lobby;
@@ -59,8 +60,8 @@ namespace Heathen.SteamworksIntegration
                             }
                     break;
                 case LoadOnStart.Session:
-                    if (API.Matchmaking.Client.memberOfLobbies.Count > 0)
-                        foreach (var lobby in API.Matchmaking.Client.memberOfLobbies)
+                    if (API.Matchmaking.Client.MemberOfLobbies.Count > 0)
+                        foreach (var lobby in API.Matchmaking.Client.MemberOfLobbies)
                             if (lobby.IsSession)
                             {
                                 Data = lobby;
@@ -68,8 +69,8 @@ namespace Heathen.SteamworksIntegration
                             }
                     break;
                 case LoadOnStart.Party:
-                    if (API.Matchmaking.Client.memberOfLobbies.Count > 0)
-                        foreach (var lobby in API.Matchmaking.Client.memberOfLobbies)
+                    if (API.Matchmaking.Client.MemberOfLobbies.Count > 0)
+                        foreach (var lobby in API.Matchmaking.Client.MemberOfLobbies)
                             if (lobby.IsParty)
                             {
                                 Data = lobby;
@@ -84,11 +85,11 @@ namespace Heathen.SteamworksIntegration
     [CustomEditor(typeof(SteamLobbyData), true)]
     public class SteamLobbyDataEditor : ModularEditor
     {
-        private SteamToolsSettings settings;
-        private SerializedProperty loadProperty;
+        private SteamToolsSettings _settings;
+        private SerializedProperty _loadProperty;
 
         // --- Allowed types for this editor ---
-        protected override Type[] AllowedTypes => new Type[]
+        protected override Type[] AllowedTypes => new[]
         {
             // Fields
             typeof(SteamLobbyHexIdInputField),
@@ -116,8 +117,8 @@ namespace Heathen.SteamworksIntegration
 
         private void OnEnable()
         {
-            settings = SteamToolsSettings.GetOrCreate();
-            loadProperty = serializedObject.FindProperty("load");
+            _settings = SteamToolsSettings.GetOrCreate();
+            _loadProperty = serializedObject.FindProperty("load");
         }
 
         public override void OnInspectorGUI()
@@ -126,10 +127,10 @@ namespace Heathen.SteamworksIntegration
 
             DrawDefault(
                 "Project/Player/Steamworks"
-                , $"https://partner.steamgames.com/apps/landing/{settings.Get(settings.ActiveApp.Value).applicationId}"
+                , $"https://partner.steamgames.com/apps/landing/{_settings.Get(_settings.ActiveApp.Value).applicationId}"
                 , "https://kb.heathen.group/steam/features/lobby"
                 , "https://discord.gg/heathen-group-463483739612381204"
-                , new[]{ loadProperty });
+                , new[]{ _loadProperty });
             
             serializedObject.ApplyModifiedProperties();
         }

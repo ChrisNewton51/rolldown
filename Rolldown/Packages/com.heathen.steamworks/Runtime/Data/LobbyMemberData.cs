@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using System;
 
 namespace Heathen.SteamworksIntegration
@@ -24,10 +24,7 @@ namespace Heathen.SteamworksIntegration
         /// <returns>The metadata field value</returns>
         public readonly string this[string metadataKey]
         {
-            get
-            {
-                return API.Matchmaking.Client.GetLobbyMemberData(lobby, user, metadataKey);
-            }
+            get => API.Matchmaking.Client.GetLobbyMemberData(lobby, user, metadataKey);
             set
             {
                 if (user == API.User.Client.Id)

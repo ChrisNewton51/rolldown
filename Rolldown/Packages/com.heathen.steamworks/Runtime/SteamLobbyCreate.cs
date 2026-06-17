@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using UnityEngine;
 
@@ -9,46 +9,46 @@ namespace Heathen.SteamworksIntegration
     [RequireComponent(typeof(SteamLobbyData))]
     public class SteamLobbyCreate : MonoBehaviour
     {
-        public enum SteamLobbyType : int
+        public enum SteamLobbyType
         {
-            Private = 0,        // only way to join the lobby is to invite to someone else
-            FriendsOnly = 1,    // shows for friends or invitees, but not in lobby list
-            Public = 2,         // visible for friends and in lobby list
+            Private = 0,        // the only way to join the lobby is to invite someone else
+            FriendsOnly = 1,    // shows for friends or invitees, but not in the lobby list
+            Public = 2,         // visible for friends and in the lobby list
             Invisible = 3,      // returned by search, but not visible to other friends
         }
 
         /// <summary>
-        /// If true and creating a Party it will leave any existing lobby first, if true when creating a session it will notify any existing party of the new session lobby.
+        /// If true and creating a Party, it will leave any existing lobby first, if true when creating a session it will notify any existing party of the new session lobby.
         /// </summary>
-        [SettingsField(synchronized = true)]
+        [SettingsField(0, true)]
         [Tooltip("If true and creating a Party it will leave any existing lobby first, if true when creating a session it will notify any existing party of the new session lobby.")]
-        public bool partyWise = false;
+        public bool partyWise;
         /// <summary>
         /// How will this lobby be used? This is an optional feature. If set to Party or Session then features of the LobbyData object can be used in code to fetch the created lobby such as LobbyData.GetGroup(...)
         /// </summary>
-        [SettingsField(header = "Create")]
+        [SettingsField(0,false,"Create")]
         [Tooltip("How will this lobby be used? This is an optional feature. If set to Party or Session then features of the LobbyData object can be used in code to fetch the created lobby such as LobbyData.GetGroup(...)")]
         public SteamLobbyModeType usageHint = SteamLobbyModeType.Session;
         /// <summary>
         /// The number of slots the newly created lobby should have
         /// </summary>
-        [SettingsField(header = "Create")]
+        [SettingsField(0,false, "Create")]
         [Tooltip("The number of slots the newly created lobby should have")]
         public int slots;
         /// <summary>
         /// The type of lobby to create
         /// </summary>
-        [SettingsField(header = "Create")]
+        [SettingsField(0,false, "Create")]
         [Tooltip("The type of lobby to create")]
         public SteamLobbyType type;
         
-        private SteamLobbyData m_Inspector;
-        private SteamLobbyDataEvents m_Events;
+        private SteamLobbyData _mInspector;
+        private SteamLobbyDataEvents _mEvents;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamLobbyData>();
-            m_Events = GetComponent<SteamLobbyDataEvents>();
+            _mInspector = GetComponent<SteamLobbyData>();
+            _mEvents = GetComponent<SteamLobbyDataEvents>();
         }
 
         public void Create()
@@ -71,10 +71,10 @@ namespace Heathen.SteamworksIntegration
             {
                 if (!createIoError && createResult == EResult.k_EResultOK)
                 {
-                    m_Inspector.Data = createdLobby;
+                    _mInspector.Data = createdLobby;
 
-                    if(m_Events != null)
-                        m_Events.onCreate?.Invoke(createdLobby);
+                    if(_mEvents != null)
+                        _mEvents.onCreate?.Invoke(createdLobby);
 
                     if (partyLobby.IsValid && usageHint == SteamLobbyModeType.Session)
                     {
@@ -92,8 +92,8 @@ namespace Heathen.SteamworksIntegration
                 }
                 else
                 {
-                    if(m_Events != null)
-                        m_Events.onCreationFailure?.Invoke(createResult);
+                    if(_mEvents != null)
+                        _mEvents.onCreationFailure?.Invoke(createResult);
                 }
             });
         }

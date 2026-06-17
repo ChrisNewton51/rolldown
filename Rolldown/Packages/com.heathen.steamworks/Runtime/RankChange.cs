@@ -1,33 +1,33 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 
 namespace Heathen.SteamworksIntegration
 {
     public struct RankChange
     {
-        public string leaderboardName;
-        public SteamLeaderboard_t leaderboardId;
-        public LeaderboardEntry oldEntry;
-        public LeaderboardEntry newEntry;
-        public int rankDelta
+        public string LeaderboardName;
+        public SteamLeaderboard_t LeaderboardId;
+        public LeaderboardEntry OldEntry;
+        public LeaderboardEntry NewEntry;
+        public int RankDelta
         {
             get
             {
-                if (oldEntry != null)
-                    return newEntry.entry.m_nGlobalRank - oldEntry.entry.m_nGlobalRank;
+                if (OldEntry != null)
+                    return NewEntry.Entry.m_nGlobalRank - OldEntry.Entry.m_nGlobalRank;
                 else
-                    return newEntry.entry.m_nGlobalRank;
+                    return NewEntry.Entry.m_nGlobalRank;
             }
         }
 
-        public int scoreDeta
+        public int ScoreDeta
         {
             get
             {
-                if (oldEntry != null)
-                    return newEntry.entry.m_nScore - oldEntry.entry.m_nScore;
+                if (OldEntry != null)
+                    return NewEntry.Entry.m_nScore - OldEntry.Entry.m_nScore;
                 else
-                    return newEntry.entry.m_nScore;
+                    return NewEntry.Entry.m_nScore;
             }
         }
     }

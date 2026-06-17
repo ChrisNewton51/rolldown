@@ -1,24 +1,24 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 
 namespace Heathen.SteamworksIntegration
 {
     /// <summary>
-    /// Used in the <see cref="API.StatsAndAchievements.Client.GetAchievementDisplayAttribute(string, AchievementAttributes)"/> method to read a specific attribute
+    /// Represents the attributes of a Steam achievement used to retrieve metadata.
     /// </summary>
     public enum AchievementAttributes
     {
         /// <summary>
         /// Get the name of the achievement
         /// </summary>
-        name,
+        Name,
         /// <summary>
         /// Get the description of the achievement
         /// </summary>
-        desc,
+        Desc,
         /// <summary>
         /// Return a value that indicates if the achievement is hidden from users
         /// </summary>
-        hidden,
+        Hidden,
     }
 }
 #endif

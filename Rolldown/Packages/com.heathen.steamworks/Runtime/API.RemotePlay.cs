@@ -1,71 +1,44 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using UnityEngine;
 
 namespace Heathen.SteamworksIntegration.API
 {
     /// <summary>
-    /// Functions that provide information about Steam Remote Play sessions, streaming your game content to another computer or to a Steam Link app or hardware.
+    /// Provides functionality to interact with the Steam Remote Play system,
+    /// allowing developers to manage and gather information about Remote Play sessions.
     /// </summary>
     public static class RemotePlay
     {
+        /// <summary>
+        /// Provides a set of methods and events to interact with Steam Remote Play client sessions,
+        /// enabling developers to query session details, manage connected users, and send Remote Play invites.
+        /// </summary>
         public static class Client
         {
-            [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-            static void Init()
-            {
-                m_OnSteamRemotePlaySessionConnected = new();
-                m_OnSteamRemotePlaySessionDisconnected = new();
-                m_SteamRemotePlaySessionConnected_t = null;
-                m_SteamRemotePlaySessionDisconnected_t = null;
-            }
-
             /// <summary>
-            /// Invoked when a session connects
+            /// Gets the number of currently connected Steam Remote Play sessions.
             /// </summary>
-            public static SteamRemotePlaySessionConnectedEvent OnSessionConnected
-            {
-                get
-                {
-                    m_SteamRemotePlaySessionConnected_t ??= Callback<SteamRemotePlaySessionConnected_t>.Create(m_OnSteamRemotePlaySessionConnected.Invoke);
-
-                    return m_OnSteamRemotePlaySessionConnected;
-                }
-            }
-            /// <summary>
-            /// Invoked when a session disconnects
-            /// </summary>
-            public static SteamRemotePlaySessionDisconnectedEvent OnSessionDisconnected
-            {
-                get
-                {
-                    m_SteamRemotePlaySessionDisconnected_t ??= Callback<SteamRemotePlaySessionDisconnected_t>.Create(m_OnSteamRemotePlaySessionDisconnected.Invoke);
-
-                    return m_OnSteamRemotePlaySessionDisconnected;
-                }
-            }
-
-            private static SteamRemotePlaySessionConnectedEvent m_OnSteamRemotePlaySessionConnected = new();
-            private static SteamRemotePlaySessionDisconnectedEvent m_OnSteamRemotePlaySessionDisconnected = new();
-
-            private static Callback<SteamRemotePlaySessionConnected_t> m_SteamRemotePlaySessionConnected_t;
-            private static Callback<SteamRemotePlaySessionDisconnected_t> m_SteamRemotePlaySessionDisconnected_t;
-
-            /// <summary>
-            /// Get the number of currently connected Steam Remote Play sessions
-            /// </summary>
-            /// <returns></returns>
+            /// <returns>
+            /// The number of active Steam Remote Play sessions.
+            /// </returns>
             public static uint GetSessionCount() => SteamRemotePlay.GetSessionCount();
+
             /// <summary>
-            /// Get the currently connected Steam Remote Play session ID at the specified index
+            /// Retrieves the Steam Remote Play session ID at the specified index.
             /// </summary>
-            /// <param name="index"></param>
-            /// <returns></returns>
+            /// <param name="index">The zero-based index of the session to retrieve the ID for.</param>
+            /// <returns>
+            /// The session ID of the Steam Remote Play session at the specified index.
+            /// </returns>
             public static RemotePlaySessionID_t GetSessionID(int index) => SteamRemotePlay.GetSessionID(index);
+
             /// <summary>
-            /// Get the collection of current remote play sessions
+            /// Retrieves all currently active Steam Remote Play session identifiers.
             /// </summary>
-            /// <returns></returns>
+            /// <returns>
+            /// An array of RemotePlaySessionID_t representing all active Remote Play sessions.
+            /// </returns>
             public static RemotePlaySessionID_t[] GetSessions()
             {
                 var count = SteamRemotePlay.GetSessionCount();
@@ -76,39 +49,58 @@ namespace Heathen.SteamworksIntegration.API
                 }
                 return results;
             }
+
             /// <summary>
-            /// Get the UserData of the connected user
+            /// Retrieves the user data of the connected user in the specified Remote Play session.
             /// </summary>
-            /// <param name="session"></param>
-            /// <returns></returns>
-            public static UserData GetSessionUser(RemotePlaySessionID_t session) => SteamRemotePlay.GetSessionSteamID(session);
+            /// <param name="session">The Remote Play session ID for which to retrieve the user data.</param>
+            /// <returns>
+            /// The user data associated with the connected user in the specified session.
+            /// </returns>
+            public static UserData GetSessionUser(RemotePlaySessionID_t session) =>
+                SteamRemotePlay.GetSessionSteamID(session);
+
             /// <summary>
-            /// Get the name of the session client device
+            /// Retrieves the name of the device associated with the specified Steam Remote Play session.
             /// </summary>
-            /// <param name="session"></param>
-            /// <returns></returns>
-            public static string GetSessionClientName(RemotePlaySessionID_t session) => SteamRemotePlay.GetSessionClientName(session);
+            /// <param name="session">The unique identifier of the Remote Play session.</param>
+            /// <returns>
+            /// The name of the client device for the given Remote Play session, or an empty string if no name is available.
+            /// </returns>
+            public static string GetSessionClientName(RemotePlaySessionID_t session) =>
+                SteamRemotePlay.GetSessionClientName(session);
+
             /// <summary>
-            /// Get the form factor of the session client device
+            /// Retrieves the form factor of the client device associated with a specific Remote Play session.
             /// </summary>
-            /// <param name="session"></param>
-            /// <returns></returns>
-            public static ESteamDeviceFormFactor GetSessionClientFormFactor(RemotePlaySessionID_t session) => SteamRemotePlay.GetSessionClientFormFactor(session);
+            /// <param name="session">The ID of the Remote Play session to query.</param>
+            /// <returns>The form factor of the client device participating in the session.</returns>
+            public static ESteamDeviceFormFactor GetSessionClientFormFactor(RemotePlaySessionID_t session) =>
+                SteamRemotePlay.GetSessionClientFormFactor(session);
+
             /// <summary>
-            /// Get the resolution, in pixels, of the session client device. This is set to 0x0 if the resolution is not available.
+            /// Gets the resolution, in pixels, of the specified Steam Remote Play session client device.
+            /// If the resolution is not available, the result will be 0x0.
             /// </summary>
-            /// <param name="session"></param>
-            /// <returns></returns>
+            /// <param name="session">The ID of the Remote Play session.</param>
+            /// <returns>
+            /// A Vector2Int representing the resolution of the client device in pixels.
+            /// </returns>
             public static Vector2Int GetSessionClientResolution(RemotePlaySessionID_t session)
             {
                 SteamRemotePlay.BGetSessionClientResolution(session, out int x, out int y);
                 return new Vector2Int(x, y);
             }
+
             /// <summary>
-            /// Invite a friend to join the game using Remote Play Together
+            /// Sends a Remote Play Together invite to the specified user.
             /// </summary>
-            /// <param name="user"></param>
-            /// <returns></returns>
+            /// <param name="user">
+            /// The user data representing the friend to whom the invite will be sent.
+            /// </param>
+            /// <returns>
+            /// Returns true if the invite was successfully sent; otherwise, false.
+            /// </returns>
             public static bool SendInvite(UserData user) => SteamRemotePlay.BSendRemotePlayTogetherInvite(user);
 
 #if STEAM_162

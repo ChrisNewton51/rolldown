@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using System.ComponentModel;
@@ -47,20 +47,20 @@ namespace Heathen.SteamworksIntegration
         /// Occurs every frame when the Steamworks API has a voice stream payload from the user.
         /// </summary>
         public ByteArrayEvent onVoiceStream;
-        private float packetCounter = 0;
+        private float _packetCounter = 0;
 
         private void Start()
         {
-            packetCounter = bufferLength;
+            _packetCounter = bufferLength;
         }
 
         private void Update()
         {
-            packetCounter -= Time.unscaledDeltaTime;
+            _packetCounter -= Time.unscaledDeltaTime;
 
-            if (packetCounter <= 0)
+            if (_packetCounter <= 0)
             {
-                packetCounter = bufferLength;
+                _packetCounter = bufferLength;
 
                 if (isRecording)
                 {

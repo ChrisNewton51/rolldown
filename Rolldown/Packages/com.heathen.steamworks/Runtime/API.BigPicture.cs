@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using UnityEngine;
 using UnityEngine.Events;
@@ -9,81 +9,31 @@ namespace Heathen.SteamworksIntegration.API
     {
         public static class Client
         {
-            [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-            static void Init()
-            {
-                m_GamepadTextInputDismissed_t = null;
-
-                m_OnGamepadTextInputDismissed = new();
-                m_OnGamepadTextInputShown = new();
-            }
-
             /// <summary>
-            /// Invoked when Show Text Input is successfully called.
+            /// Indicates whether Steam is currently running in Big Picture mode.
             /// </summary>
-            public static UnityEvent OnGamepadTextInputShown
-            {
-                get
-                {
-                    if (m_OnGamepadTextInputShown == null)
-                        m_OnGamepadTextInputShown = new();
-
-                    return m_OnGamepadTextInputShown;
-                }
-            }
-
-            /// <summary>
-            /// Invoked when the gamepad text input is dismissed and returns the resulting input string.
-            /// </summary>
-            public static UnityEvent<string> OnGamepadTextInputDismissed
-            {
-                get
-                {
-                    if (m_OnGamepadTextInputDismissed == null)
-                        m_OnGamepadTextInputDismissed = new();
-
-                    if (m_GamepadTextInputDismissed_t == null)
-                        m_GamepadTextInputDismissed_t = Callback<GamepadTextInputDismissed_t>.Create(HandleGameTextInputDismissed);
-
-                    return m_OnGamepadTextInputDismissed;
-                }
-            }
-
-            private static void HandleGameTextInputDismissed(GamepadTextInputDismissed_t result)
-            {
-                if (result.m_bSubmitted)
-                {
-                    if (SteamUtils.GetEnteredGamepadTextInput(out string textValue, result.m_unSubmittedText))
-                    {
-                        m_OnGamepadTextInputDismissed.Invoke(textValue);
-                    }
-                }
-            }
-
-            private static UnityEvent<string> m_OnGamepadTextInputDismissed = new();
-            private static UnityEvent m_OnGamepadTextInputShown = new();
-
-#pragma warning disable IDE0052 // Remove unread private members
-            private static Callback<GamepadTextInputDismissed_t> m_GamepadTextInputDismissed_t;
-#pragma warning restore IDE0052 // Remove unread private members
-
             public static bool IsInBigPicture => SteamUtils.IsSteamInBigPictureMode();
+
+            /// <summary>
+            /// Indicates whether the application is currently running on a Steam Deck device.
+            /// </summary>
             public static bool IsRunningOnDeck => SteamUtils.IsSteamRunningOnSteamDeck();
 
             /// <summary>
-            /// Activates the Big Picture text input dialog which only supports gamepad input.
+            /// Displays the Big Picture mode text input dialogue, designed for gamepad input only.
             /// </summary>
-            /// <param name="inputMode">Selects the input mode to use, either Normal or Password (hidden text)</param>
-            /// <param name="lineMode">Controls whether to use single or multi line input.</param>
-            /// <param name="description">Sets the description that should inform the user what the input dialog is for.</param>
-            /// <param name="maxLength">The maximum number of characters that the user can input.</param>
-            /// <param name="currentText">Sets the preexisting text which the user can edit.</param>
-            /// <returns>True if the big picture overlay is running; otherwise, false.</returns>
-            public static bool ShowTextInput(EGamepadTextInputMode inputMode, EGamepadTextInputLineMode lineMode, string description, uint maxLength, string currentText)
+            /// <param name="inputMode">Specifies the input mode to use, such as Normal or Password (hidden text).</param>
+            /// <param name="lineMode">Determines whether single or multi-line input is allowed.</param>
+            /// <param name="description">A description intended to inform the user about the purpose of the input dialogue.</param>
+            /// <param name="maxLength">Defines the maximum character count allowed in the input field.</param>
+            /// <param name="currentText">The initial pre-filled text that the user may edit.</param>
+            /// <returns>Returns true if the Big Picture overlay is active; otherwise, false.</returns>
+            public static bool ShowTextInput(EGamepadTextInputMode inputMode, EGamepadTextInputLineMode lineMode,
+                string description, uint maxLength, string currentText)
             {
                 if (SteamUtils.ShowGamepadTextInput(inputMode, lineMode, description, maxLength, currentText))
                 {
-                    m_OnGamepadTextInputShown.Invoke();
+                    SteamTools.Events.InvokeOnGamepadTextInputShown();
                     return true;
                 }
                 else
@@ -91,11 +41,11 @@ namespace Heathen.SteamworksIntegration.API
             }
 
             /// <summary>
-            /// Activates the Big Picture text input dialog which only supports gamepad input.
+            /// Activates the Big Picture text input dialogue which only supports gamepad input.
             /// </summary>
             /// <param name="inputMode">Selects the input mode to use, either Normal or Password (hidden text)</param>
-            /// <param name="lineMode">Controls whether to use single or multi line input.</param>
-            /// <param name="description">Sets the description that should inform the user what the input dialog is for.</param>
+            /// <param name="lineMode">Controls whether to use single or multi-line input.</param>
+            /// <param name="description">Sets the description that should inform the user what the input dialogue is for.</param>
             /// <param name="maxLength">The maximum number of characters that the user can input.</param>
             /// <param name="currentText">Sets the preexisting text which the user can edit.</param>
             /// <returns>True if the big picture overlay is running; otherwise, false.</returns>
@@ -103,7 +53,7 @@ namespace Heathen.SteamworksIntegration.API
             {
                 if(SteamUtils.ShowGamepadTextInput(inputMode, lineMode, description, System.Convert.ToUInt32(maxLength), currentText))
                 {
-                    m_OnGamepadTextInputShown.Invoke();
+                    SteamTools.Events.InvokeOnGamepadTextInputShown();
                     return true;
                 }
                 else

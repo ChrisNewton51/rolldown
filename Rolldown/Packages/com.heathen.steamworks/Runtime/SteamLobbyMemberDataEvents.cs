@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using UnityEngine;
@@ -16,47 +16,46 @@ namespace Heathen.SteamworksIntegration
         [EventField]
         public UnityEvent<bool> onReadyChanged;
         [EventField]
-        public UnityEvent<LobbyDataUpdateEventData> onMetadataChanged;
+        public UnityEvent<LobbyData, LobbyMemberData> onMetadataChanged;
 
-        private SteamLobbyMemberData m_SteamLobbyMemberData;
-        private bool m_Ready = false;
+        private SteamLobbyMemberData _mSteamLobbyMemberData;
+        private bool _mReady = false;
 
         private void Awake()
         {
-            m_SteamLobbyMemberData = GetComponent<SteamLobbyMemberData>();
-            API.Matchmaking.Client.OnLobbyDataUpdate.AddListener(GlobalDataUpdate);
-            API.Matchmaking.Client.OnLobbyChatUpdate.AddListener(ChatStateUpdate);
-            m_Ready = m_SteamLobbyMemberData.Data.IsReady;
-            onReadyChanged?.Invoke(m_Ready);
+            _mSteamLobbyMemberData = GetComponent<SteamLobbyMemberData>();
+            SteamTools.Events.OnLobbyDataUpdate += GlobalDataUpdate;
+            SteamTools.Events.OnLobbyChatUpdate += ChatStateUpdate;
+            _mReady = _mSteamLobbyMemberData.Data.IsReady;
+            onReadyChanged?.Invoke(_mReady);
         }
 
         private void OnDestroy()
         {
-            API.Matchmaking.Client.OnLobbyDataUpdate.RemoveListener(GlobalDataUpdate);
-            API.Matchmaking.Client.OnLobbyChatUpdate.RemoveListener(ChatStateUpdate);
+            SteamTools.Events.OnLobbyDataUpdate -= GlobalDataUpdate;
+            SteamTools.Events.OnLobbyChatUpdate -= ChatStateUpdate;
         }
         
-        private void GlobalDataUpdate(LobbyDataUpdateEventData arg0)
+        private void GlobalDataUpdate(LobbyData lobby, LobbyMemberData? member)
         {
-            if (arg0.lobby == m_SteamLobbyMemberData.Data.lobby && arg0.member.HasValue && arg0.member.Value == m_SteamLobbyMemberData.Data)
+            if (lobby == _mSteamLobbyMemberData.Data.lobby && member.HasValue && member.Value == _mSteamLobbyMemberData.Data)
             {
-                onIsLobbyOwnerStatus?.Invoke(arg0.lobby.Owner.user == m_SteamLobbyMemberData.Data.user);
+                onIsLobbyOwnerStatus?.Invoke(lobby.Owner.user == _mSteamLobbyMemberData.Data.user);
 
-                if (m_Ready != m_SteamLobbyMemberData.Data.IsReady)
+                if (_mReady != _mSteamLobbyMemberData.Data.IsReady)
                 {
-                    onReadyChanged?.Invoke(m_SteamLobbyMemberData.Data.IsReady);
+                    onReadyChanged?.Invoke(_mSteamLobbyMemberData.Data.IsReady);
                 }
 
-                onMetadataChanged?.Invoke(arg0);
+                onMetadataChanged?.Invoke(lobby, member.Value);
             }
         }
 
-        private void ChatStateUpdate(LobbyChatUpdate_t arg0)
+        private void ChatStateUpdate(LobbyData lobby, UserData user, EChatMemberStateChange state)
         {
-            LobbyData updatedLobby = arg0.m_ulSteamIDLobby;
-            if (updatedLobby == m_SteamLobbyMemberData.Data.lobby)
+            if (lobby == _mSteamLobbyMemberData.Data.lobby)
             {
-                onIsLobbyOwnerStatus?.Invoke(updatedLobby.Owner.user == m_SteamLobbyMemberData.Data.user);
+                onIsLobbyOwnerStatus?.Invoke(lobby.Owner.user == _mSteamLobbyMemberData.Data.user);
             }
         }
     }

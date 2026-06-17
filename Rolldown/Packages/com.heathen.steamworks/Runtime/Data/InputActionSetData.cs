@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using UnityEngine;
@@ -32,7 +32,7 @@ namespace Heathen.SteamworksIntegration
         /// </summary>
         /// <param name="controller">The controller to check for</param>
         /// <returns>True if the set is active</returns>
-        public bool IsActive(Steamworks.InputHandle_t controller)
+        public bool IsActive(InputHandle_t controller)
         {
             if (handle.m_InputActionSetHandle != 0)
             {
@@ -54,7 +54,7 @@ namespace Heathen.SteamworksIntegration
         /// Make this set active for the indicated controller
         /// </summary>
         /// <param name="controller">The controller to active the set for</param>
-        public void Activate(Steamworks.InputHandle_t controller)
+        public void Activate(InputHandle_t controller)
         {
             if (handle.m_InputActionSetHandle != 0)
             {

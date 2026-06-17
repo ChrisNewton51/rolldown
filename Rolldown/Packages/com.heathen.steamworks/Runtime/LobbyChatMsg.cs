@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 
@@ -11,7 +11,7 @@ namespace Heathen.SteamworksIntegration
         public EChatEntryType type;
         public UserData sender;
         public byte[] data;
-        public DateTime receivedTime;
+        public DateTime ReceivedTime;
         public string Message => ToString();
         public override string ToString()
         {

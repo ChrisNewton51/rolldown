@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System.Collections.Generic;
 using UnityEngine;
@@ -60,37 +60,28 @@ namespace Heathen.SteamworksIntegration
             }
         }
 
-        private readonly Dictionary<UserData, GameObject> records = new Dictionary<UserData, GameObject>();
+        private readonly Dictionary<UserData, GameObject> _records = new Dictionary<UserData, GameObject>();
 
         private void OnEnable()
         {
-            Friends.Client.OnPersonaStateChange.AddListener(HandleStateChange);
-
-            if (API.App.Initialized)
-            {
-                UpdateDisplay();
-            }
-            else
-            {
-                API.App.onSteamInitialized.AddListener(DelayUpdate);
-            }
+            SteamTools.Events.OnPersonaStateChange += HandleStateChange;
+            
+            SteamTools.Interface.WhenReady(UpdateDisplay);
         }
 
         private void OnDisable()
         {
-            Friends.Client.OnPersonaStateChange.RemoveListener(HandleStateChange);
+            SteamTools.Events.OnPersonaStateChange -= HandleStateChange;
             Clear();
         }
 
         private void DelayUpdate()
         {
             UpdateDisplay();
-            API.App.onSteamInitialized.RemoveListener(DelayUpdate);
         }
 
-        private void HandleStateChange(PersonaStateChange arg0)
+        private void HandleStateChange(UserData user, EPersonaChange change)
         {
-            UserData user = arg0.SubjectId;
             if (MatchFilter(user))
                 Add(user);
             else
@@ -99,10 +90,10 @@ namespace Heathen.SteamworksIntegration
 
         private void Remove(UserData user)
         {
-            if (records.ContainsKey(user))
+            if (_records.ContainsKey(user))
             {
-                var target = records[user];
-                records.Remove(user);
+                var target = _records[user];
+                _records.Remove(user);
                 Destroy(target.gameObject);
             }
         }
@@ -110,13 +101,13 @@ namespace Heathen.SteamworksIntegration
         private void Add(UserData user)
         {
             //Add the user and then resort the display
-            if (!records.ContainsKey(user))
+            if (!_records.ContainsKey(user))
             {
                 AddNewRecord(user);
                 SortRecords();
             }
             else
-                records[user].GetComponent<SteamUserData>().Data = user;
+                _records[user].GetComponent<SteamUserData>().Data = user;
         }
 
         private void AddNewRecord(UserData user)
@@ -124,17 +115,17 @@ namespace Heathen.SteamworksIntegration
             var go = Instantiate(recordTemplate, content);
             var comp = go.GetComponent<SteamUserData>();
             comp.Data = user;
-            records.Add(user, go);
+            _records.Add(user, go);
         }
 
         private void SortRecords()
         {
-            var keys = records.Keys.ToList();
+            var keys = _records.Keys.ToList();
             keys.Sort((a, b) => { return a.Nickname.CompareTo(b.Nickname); });
 
             foreach (var key in keys)
             {
-                records[key].transform.SetAsLastSibling();
+                _records[key].transform.SetAsLastSibling();
             }
         }
         /// <summary>
@@ -142,7 +133,7 @@ namespace Heathen.SteamworksIntegration
         /// </summary>
         public void Clear()
         {
-            records.Clear();
+            _records.Clear();
 
             if (content.childCount > 0)
             {
@@ -170,11 +161,11 @@ namespace Heathen.SteamworksIntegration
             {
                 var followed = new List<UserData>();
 
-                API.Friends.Client.GetFollowed((r) =>
+                Friends.Client.GetFollowed((r) =>
                 {
                     if (r != null && r.Length > 0)
                     {
-                        var subset = r.Where(p => p.GetEAccountType() == Steamworks.EAccountType.k_EAccountTypeIndividual);
+                        var subset = r.Where(p => p.GetEAccountType() == EAccountType.k_EAccountTypeIndividual);
                         if (subset.Count() > 0)
                         {
                             foreach (var id in subset)
@@ -190,7 +181,7 @@ namespace Heathen.SteamworksIntegration
                     if (filter == Filter.Followed)
                     {
                         foreach (var user in followed)
-                            if (user != UserData.Me && !records.ContainsKey(user))
+                            if (user != UserData.Me && !_records.ContainsKey(user))
                                 AddNewRecord(user);
                     }
                     else
@@ -202,7 +193,7 @@ namespace Heathen.SteamworksIntegration
                         }
 
                         foreach (var user in filtered)
-                            if (user != UserData.Me && !records.ContainsKey(user))
+                            if (user != UserData.Me && !_records.ContainsKey(user))
                                 AddNewRecord(user);
                     }
 

@@ -1,4 +1,5 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
+using System;
 using Steamworks;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,34 +8,68 @@ using Friends = Heathen.SteamworksIntegration.API.Friends;
 namespace Heathen.SteamworksIntegration.UI
 {
     /// <summary>
-    /// This control component is focused on emulation of Steam's own Friend List. It will read for and sort the local player's friends into the same list structure see in Steam Client's Friend List i.e. Playing, Online, Offline, any custom groups the player may have, etc.
+    /// This control component is focused on emulating Steam's Friend List functionality.
+    /// It organises and displays the local player's friends into categories such as Playing, Online, Offline,
+    /// and custom user-defined groups, similar to the layout in the Steam Client's Friend List.
     /// </summary>
     [HelpURL("https://kb.heathen.group/assets/steamworks/unity-engine/ui-components/friend-groups-display")]
     public class FriendGroupsDisplay : MonoBehaviour
     {
-        [SerializeField]
-        private Transform inGameCollection;
-        [SerializeField]
-        private Transform inOtherGameCollection;
+        /// <summary>
+        /// A serialized field that holds a reference to the transform container for displaying
+        /// the list of friends who are currently playing the same game as the local player.
+        /// This container is managed and populated dynamically by the FriendGroupsDisplay component
+        /// to visually organise friends into an "In Game" category.
+        /// </summary>
+        [SerializeField] private Transform inGameCollection;
+
+        /// <summary>
+        /// A serialized field that holds a reference to the transform container for displaying
+        /// the list of friends who are currently playing games other than the one the local player is currently in.
+        /// This container is dynamically managed by the FriendGroupsDisplay component to organize friends
+        /// into an "Other Games" category.
+        /// </summary>
+        [SerializeField] private Transform inOtherGameCollection;
+
+        /// <summary>
+        /// A serialized field that holds a reference to the transform container used for displaying
+        /// friends grouped into custom user-defined categories. This container is dynamically populated
+        /// and managed by the FriendGroupsDisplay component to visually represent friend groups
+        /// beyond the standard categories of Playing, Online, and Offline.
+        /// </summary>
         [SerializeField]
         private Transform groupedCollection;
+
+        /// <summary>
+        /// A serialized field that holds a reference to the transform container used for displaying
+        /// the list of friends who are currently online. This container is dynamically populated
+        /// by the FriendGroupsDisplay component to visually categorize friends into an "Online" group
+        /// based on their Steam presence status.
+        /// </summary>
         [SerializeField]
         private Transform onlineCollection;
+
+        /// <summary>
+        /// A serialized field that holds a reference to the transform container for displaying
+        /// the list of friends who are currently offline. This container is dynamically managed
+        /// by the FriendGroupsDisplay component to organize and visually represent an "Offline" category
+        /// within the friend groups display.
+        /// </summary>
         [SerializeField]
         private Transform offlineCollection;
+
+        /// <summary>
+        /// A serialized field that references a prefab used as the visual and functional template
+        /// for dynamically creating group UI elements within the FriendGroupsDisplay component.
+        /// Each instantiated group represents a category of the local player's friends, such as
+        /// "Online", "Offline", or custom-defined groups, and is populated with relevant friend data.
+        /// </summary>
         [SerializeField]
         private GameObject groupPrefab;
 
         private void OnEnable()
         {
-            if (API.App.Initialized)
-            {
-                UpdateDisplay();
-            }
-            else
-            {
-                API.App.onSteamInitialized.AddListener(DelayUpdate);
-            }
+            SteamTools.Interface.WhenReady(UpdateDisplay);
         }
 
         private void OnDisable()
@@ -42,14 +77,9 @@ namespace Heathen.SteamworksIntegration.UI
             Clear();
         }
 
-        private void DelayUpdate()
-        {
-            UpdateDisplay();
-            API.App.onSteamInitialized.RemoveListener(DelayUpdate);
-        }
-
         /// <summary>
-        /// Clear the display
+        /// Clears all the collections by removing and destroying all child objects from
+        /// in-game, grouped, online, offline, and other game collections.
         /// </summary>
         public void Clear()
         {
@@ -98,8 +128,11 @@ namespace Heathen.SteamworksIntegration.UI
                 }
             }
         }
+
         /// <summary>
-        /// Update the display
+        /// Updates the display by clearing existing groups, categorizing friends into groups such as
+        /// "Online," "In Game," "Other Games," and "Offline," and generating the corresponding UI components
+        /// for each group. Custom groups, if defined, are also processed and displayed.
         /// </summary>
         public void UpdateDisplay()
         {
@@ -185,8 +218,8 @@ namespace Heathen.SteamworksIntegration.UI
 
             if (inOtherGameCollection != null)
             {
-                var otherGO = Instantiate(groupPrefab, inOtherGameCollection);
-                var otherComp = otherGO.GetComponent<FriendGroup>();
+                var otherGo = Instantiate(groupPrefab, inOtherGameCollection);
+                var otherComp = otherGo.GetComponent<FriendGroup>();
                 otherComp.InitializeInOther("Other Games", inOtherGame, true);
             }
 
@@ -194,8 +227,8 @@ namespace Heathen.SteamworksIntegration.UI
             {
                 foreach (var kvp in customGroups)
                 {
-                    var kvpGO = Instantiate(groupPrefab, groupedCollection);
-                    var kvpComp = kvpGO.GetComponent<FriendGroup>();
+                    var kvpGo = Instantiate(groupPrefab, groupedCollection);
+                    var kvpComp = kvpGo.GetComponent<FriendGroup>();
                     kvpComp.InitializeCustom(kvp.Key, kvp.Value, true);
                 }
             }

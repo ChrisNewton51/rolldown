@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using System.Linq;
 using UnityEngine;
 
@@ -6,14 +6,14 @@ namespace Heathen.SteamworksIntegration
 {
     public struct InputActionSetLayerData
     {
-        public string layerName;
+        public string LayerName;
 
         public InputActionSetData Data { get; private set; }
 
         public bool IsActive(Steamworks.InputHandle_t controller)
         {
             if (Data == 0)
-                Data = InputActionSetData.Get(layerName);
+                Data = InputActionSetData.Get(LayerName);
 
             if (Data != 0)
             {
@@ -31,7 +31,7 @@ namespace Heathen.SteamworksIntegration
         public void Activate(Steamworks.InputHandle_t controller)
         {
             if (Data == 0)
-                Data = InputActionSetData.Get(layerName);
+                Data = InputActionSetData.Get(LayerName);
 
             if (Data != 0)
             {
@@ -42,7 +42,7 @@ namespace Heathen.SteamworksIntegration
         public void Activate()
         {
             if (Data == 0)
-                Data = InputActionSetData.Get(layerName);
+                Data = InputActionSetData.Get(LayerName);
 
             if (Data != 0)
             {

@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using UnityEngine;
 using UnityEngine.UI;
@@ -25,17 +25,17 @@ namespace Heathen.SteamworksIntegration
         public enum ConditionMode
         {
             None = 0,
-            OR = 1 << 0,
-            AND = 1 << 1
+            Or = 1 << 0,
+            And = 1 << 1
         }
 
         public SteamLobbyData targetLobby;
         [Tooltip("The conditions that will enable this GameObject.")]
         public EnableWhenRule[] conditions;
         [Tooltip("Should conditions be combined with AND or OR logic?")]
-        public ConditionMode mode = ConditionMode.OR;
+        public ConditionMode mode = ConditionMode.Or;
 
-        private Selectable[] selectable;
+        private Selectable[] _selectable;
 
         private void Awake()
         {
@@ -47,7 +47,7 @@ namespace Heathen.SteamworksIntegration
             else
                 HandleOnChanged(CSteamID.Nil);
 
-            selectable = GetComponents<Selectable>();
+            _selectable = GetComponents<Selectable>();
         }
 
         private void OnDestroy()
@@ -60,19 +60,19 @@ namespace Heathen.SteamworksIntegration
 
         private void HandleOnChanged(LobbyData arg0)
         {
-            bool result = mode == ConditionMode.AND ? true : false;
+            bool result = mode == ConditionMode.And ? true : false;
 
             foreach (var condition in conditions)
             {
                 bool conditionMet = CheckCondition(condition);
 
-                if (mode == ConditionMode.OR)
+                if (mode == ConditionMode.Or)
                     result |= conditionMet; // OR logic
-                else if (mode == ConditionMode.AND)
+                else if (mode == ConditionMode.And)
                     result &= conditionMet; // AND logic
             }
 
-            foreach(var sel in selectable)
+            foreach(var sel in _selectable)
                 sel.interactable = result;
         }
 

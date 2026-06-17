@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Heathen.SteamworksIntegration.API;
 using UnityEngine;
 
@@ -11,33 +11,34 @@ namespace Heathen.SteamworksIntegration
     {
         public TMPro.TextMeshProUGUI label;
 
-        private SteamLobbyData m_Inspector;
+        private SteamLobbyData _mInspector;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamLobbyData>();
-            m_Inspector.onChanged.AddListener(HandleOnChanged);
-            Matchmaking.Client.OnLobbyDataUpdate.AddListener(HandleLobbyDataChange);
-            if (m_Inspector.Data.IsValid)
-                label.text = m_Inspector.Data.Name;
+            _mInspector = GetComponent<SteamLobbyData>();
+            _mInspector.onChanged.AddListener(HandleOnChanged);
+            
+            SteamTools.Events.OnLobbyDataUpdate += HandleLobbyDataChange;
+            if (_mInspector.Data.IsValid)
+                label.text = _mInspector.Data.Name;
         }
 
         private void OnDestroy()
         {
-            m_Inspector.onChanged.RemoveListener(HandleOnChanged);
-            Matchmaking.Client.OnLobbyDataUpdate.RemoveListener(HandleLobbyDataChange);
+            _mInspector.onChanged.RemoveListener(HandleOnChanged);
+            SteamTools.Events.OnLobbyDataUpdate -= HandleLobbyDataChange;
         }
 
-        private void HandleLobbyDataChange(LobbyDataUpdateEventData arg0)
+        private void HandleLobbyDataChange(LobbyData lobby, LobbyMemberData? member)
         {
-            if (arg0.lobby == m_Inspector.Data)
-                label.text = m_Inspector.Data.Name;
+            if (lobby == _mInspector.Data)
+                label.text = _mInspector.Data.Name;
         }
 
         private void HandleOnChanged(LobbyData arg0)
         {
-            if (m_Inspector.Data.IsValid)
-                label.text = m_Inspector.Data.Name;
+            if (_mInspector.Data.IsValid)
+                label.text = _mInspector.Data.Name;
             else
                 label.text = string.Empty;
         }

@@ -1,6 +1,6 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
-using System;
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Heathen.SteamworksIntegration
 {
@@ -9,13 +9,14 @@ namespace Heathen.SteamworksIntegration
     [RequireComponent(typeof(SteamUserData))]
     public class SteamUserLobbyInvite : MonoBehaviour
     {
-        [SettingsField(header = "Invite")]
-        public bool CreateIfMissing = true;
-        private SteamUserData m_SteamUserData;
+        [FormerlySerializedAs("CreateIfMissing")] 
+        [SettingsField(0, false,"Invite")]
+        public bool createIfMissing = true;
+        private SteamUserData _mSteamUserData;
 
         private void Awake()
         {
-            m_SteamUserData = GetComponent<SteamUserData>();
+            _mSteamUserData = GetComponent<SteamUserData>();
         }
 
         public void Invite(SteamLobbyData lobby)
@@ -25,9 +26,9 @@ namespace Heathen.SteamworksIntegration
 
             if (lobby.Data.IsValid)
             {
-                lobby.Data.InviteUserToLobby(m_SteamUserData.Data);
+                lobby.Data.InviteUserToLobby(_mSteamUserData.Data);
             }
-            else if (CreateIfMissing)
+            else if (createIfMissing)
             {
                 var creator = lobby.GetComponent<SteamLobbyCreate>();
                 var events = lobby.GetComponent<SteamLobbyDataEvents>();
@@ -39,16 +40,16 @@ namespace Heathen.SteamworksIntegration
             {
                 var events = lobby.GetComponent<SteamLobbyDataEvents>();
                 events.onCreate.RemoveListener(HandleLobbyCreated);
-                lobby.Data.InviteUserToLobby(m_SteamUserData.Data);
+                lobby.Data.InviteUserToLobby(_mSteamUserData.Data);
             }
         }
 
         public void Invite(LobbyData lobby)
         {
-            if (m_SteamUserData.Data.IsValid
+            if (_mSteamUserData.Data.IsValid
                 && lobby.IsValid)
             {
-                lobby.InviteUserToLobby(m_SteamUserData.Data);
+                lobby.InviteUserToLobby(_mSteamUserData.Data);
             }
         }
     }

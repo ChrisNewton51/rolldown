@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -18,51 +18,51 @@ namespace Heathen.SteamworksIntegration
         /// <summary>
         /// The title of the item
         /// </summary>
-        public string Title => itemDetails.m_rgchTitle;
+        public string Title => ItemDetails.m_rgchTitle;
         /// <summary>
         /// The description of the item
         /// </summary>
-        public string Description => itemDetails.m_rgchDescription;
+        public string Description => ItemDetails.m_rgchDescription;
         /// <summary>
         /// The app this item was created for
         /// </summary>
-        public AppData ConsumerApp => itemDetails.m_nConsumerAppID;
+        public AppData ConsumerApp => ItemDetails.m_nConsumerAppID;
         /// <summary>
         /// The native <see cref="PublishedFileId_t"/> of the item
         /// </summary>
-        public PublishedFileId_t FileId => itemDetails.m_nPublishedFileId;
+        public PublishedFileId_t FileId => ItemDetails.m_nPublishedFileId;
         /// <summary>
         /// The <see cref="UserData"/> that owns the item
         /// </summary>
-        public UserData Owner => new CSteamID(itemDetails.m_ulSteamIDOwner);
+        public UserData Owner => new CSteamID(ItemDetails.m_ulSteamIDOwner);
         /// <summary>
         /// The time stamp the item was created
         /// </summary>
-        public DateTime TimeCreated => new DateTime(1970, 1, 1).AddSeconds(itemDetails.m_rtimeCreated);
+        public DateTime TimeCreated => new DateTime(1970, 1, 1).AddSeconds(ItemDetails.m_rtimeCreated);
         /// <summary>
         /// THe time stamp the item was last updated
         /// </summary>
-        public DateTime TimeUpdated => new DateTime(1970, 1, 1).AddSeconds(itemDetails.m_rtimeUpdated);
+        public DateTime TimeUpdated => new DateTime(1970, 1, 1).AddSeconds(ItemDetails.m_rtimeUpdated);
         /// <summary>
         /// The count of UP votes
         /// </summary>
-        public uint UpVotes => itemDetails.m_unVotesUp;
+        public uint UpVotes => ItemDetails.m_unVotesUp;
         /// <summary>
         /// The count of DOWN votes
         /// </summary>
-        public uint DownVotes => itemDetails.m_unVotesDown;
+        public uint DownVotes => ItemDetails.m_unVotesDown;
         /// <summary>
         /// The averaged vote score
         /// </summary>
-        public float VoteScore => itemDetails.m_flScore;
+        public float VoteScore => ItemDetails.m_flScore;
         /// <summary>
         /// Is the item banned
         /// </summary>
-        public bool IsBanned => itemDetails.m_bBanned;
+        public bool IsBanned => ItemDetails.m_bBanned;
         /// <summary>
         /// Has the tags array been truncated due to length
         /// </summary>
-        public bool IsTagsTruncated => itemDetails.m_bTagsTruncated;
+        public bool IsTagsTruncated => ItemDetails.m_bTagsTruncated;
         /// <summary>
         /// Is the local user subscribed to this item
         /// </summary>
@@ -97,7 +97,7 @@ namespace Heathen.SteamworksIntegration
         /// <summary>
         /// What is the size in bytes of the file
         /// </summary>
-        public int FileSize => itemDetails.m_nFileSize;
+        public int FileSize => ItemDetails.m_nFileSize;
         /// <summary>
         /// The folder path where the items content is located
         /// </summary>
@@ -112,20 +112,20 @@ namespace Heathen.SteamworksIntegration
         /// <summary>
         /// The set of <see cref="EItemState"/> flags related to the item
         /// </summary>
-        public EItemState StateFlags => (EItemState)SteamUGC.GetItemState(itemDetails.m_nPublishedFileId);
+        public EItemState StateFlags => (EItemState)SteamUGC.GetItemState(ItemDetails.m_nPublishedFileId);
         /// <summary>
         /// The visibility state of the item
         /// </summary>
-        public ERemoteStoragePublishedFileVisibility Visibility => itemDetails.m_eVisibility;
+        public ERemoteStoragePublishedFileVisibility Visibility => ItemDetails.m_eVisibility;
         /// <summary>
         /// The list of tags related to the item
         /// </summary>
-        public string[] Tags => itemDetails.m_rgchTags?.Split(',');
+        public string[] Tags => ItemDetails.m_rgchTags?.Split(',');
         /// <summary>
         /// The native <see cref="SteamUGCDetails_t"/> related to the item
         /// </summary>
-        public SteamUGCDetails_t SourceItemDetails => itemDetails;
-        protected SteamUGCDetails_t itemDetails;
+        public SteamUGCDetails_t SourceItemDetails => ItemDetails;
+        protected SteamUGCDetails_t ItemDetails;
         /// <summary>
         /// The metadata related to the item if read
         /// </summary>
@@ -140,7 +140,7 @@ namespace Heathen.SteamworksIntegration
         /// <param name="itemDetails"></param>
         public WorkshopItemDetails(SteamUGCDetails_t itemDetails)
         {
-            this.itemDetails = itemDetails;
+            ItemDetails = itemDetails;
 
             if (itemDetails.m_eFileType != EWorkshopFileType.k_EWorkshopFileTypeCommunity)
             {
@@ -330,9 +330,9 @@ namespace Heathen.SteamworksIntegration
         /// </summary>
         public bool GetPreviewImage(Action<string, byte[]> callback)
         {
-            if (itemDetails.m_nPreviewFileSize > 0 && callback != null)
+            if (ItemDetails.m_nPreviewFileSize > 0 && callback != null)
             {
-                API.UserGeneratedContent.Client.GetUgcImage(itemDetails.m_hPreviewFile, callback);
+                API.UserGeneratedContent.Client.GetUgcImage(ItemDetails.m_hPreviewFile, callback);
                 return true;
             }
             else

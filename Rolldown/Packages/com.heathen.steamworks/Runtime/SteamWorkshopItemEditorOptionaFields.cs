@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using UnityEngine;
 
@@ -12,58 +12,58 @@ namespace Heathen.SteamworksIntegration
         /// <summary>
         /// Any metadata associated with the item, this is optional
         /// </summary>
-        [SettingsField(header = "Optional")]
+        [SettingsField(0, false,"Optional")]
         public string metadata;
         /// <summary>
         /// The YouTube video ID of additional preview videos
         /// </summary>]
-        [SettingsField(header = "Optional")]
+        [SettingsField(0, false,"Optional")]
         public string[] additionalYouTubeIds;
         /// <summary>
         /// Additional preview images
         /// </summary>
-        [SettingsField(header = "Optional")]
+        [SettingsField(0, false,"Optional")]
         public WorkshopItemPreviewFile[] additionalPreviews;
         /// <summary>
         /// additional KVP tags
         /// </summary>
-        [SettingsField(header = "Optional")]
+        [SettingsField(0, false,"Optional")]
         public WorkshopItemKeyValueTag[] additionalKeyValueTags;
         /// <summary>
         /// Any tags associated with the item, this is optional
         /// </summary>
-        [SettingsField(header = "Optional")]
+        [SettingsField(0, false,"Optional")]
         public string[] tags;
         
 
-        private SteamWorkshopItemEditorData m_Inspector;
-        private SteamWorkshopItemEditorDataEvents m_Events;
+        private SteamWorkshopItemEditorData _inspector;
+        private SteamWorkshopItemEditorDataEvents _events;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamWorkshopItemEditorData>();
-            m_Events = GetComponent<SteamWorkshopItemEditorDataEvents>();
+            _inspector = GetComponent<SteamWorkshopItemEditorData>();
+            _events = GetComponent<SteamWorkshopItemEditorDataEvents>();
         }
 
         public void CreateNew()
         {
-            var data = m_Inspector.Data;
+            var data = _inspector.Data;
             data.visibility = ERemoteStoragePublishedFileVisibility.k_ERemoteStoragePublishedFileVisibilityPrivate;
             data.metadata = metadata;
             data.tags = tags;
-            m_Inspector.Data = data;
+            _inspector.Data = data;
 
             data.Create(additionalPreviews, additionalYouTubeIds, additionalKeyValueTags, HandleCompleted, HandleUploaded, HandleFileCreated);
         }
 
         public void CreateOrUpdate()
         {
-            var data = m_Inspector.Data;
+            var data = _inspector.Data;
             data.metadata = metadata;
             data.tags = tags;
-            m_Inspector.Data = data;
+            _inspector.Data = data;
 
-            if (data.publishedFileId.HasValue)
+            if (data.PublishedFileId.HasValue)
                 data.Update(HandleUpdateCompleted, HandleUploaded);
             else
             {
@@ -74,24 +74,24 @@ namespace Heathen.SteamworksIntegration
 
         private void HandleUpdateCompleted(WorkshopItemDataUpdateStatus status)
         {
-            m_Inspector.Data = status.data;
+            _inspector.Data = status.Data;
 
-            if (status.hasError)
+            if (status.HasError)
             {
-                if (m_Events != null)
+                if (_events)
                 {
                     EResult resultCode = EResult.k_EResultFail;
-                    if (status.submitItemUpdateResult.HasValue)
-                        resultCode = status.submitItemUpdateResult.Value.m_eResult;
+                    if (status.SubmitItemUpdateResult.HasValue)
+                        resultCode = status.SubmitItemUpdateResult.Value.m_eResult;
 
-                    m_Events.onCreateUpdateError?.Invoke(resultCode, status.errorMessage);
+                    _events.onCreateUpdateError?.Invoke(resultCode, status.ErrorMessage);
                 }
             }
             else
             {
-                if (m_Events != null)
+                if (_events)
                 {
-                    m_Events.onCreateUpdateSuccess?.Invoke();
+                    _events.onCreateUpdateSuccess?.Invoke();
                 }
             }
         }
@@ -100,8 +100,9 @@ namespace Heathen.SteamworksIntegration
         {
             if (t.m_eResult == EResult.k_EResultOK)
             {
-                var data = m_Inspector.Data;
-                data.publishedFileId = t.m_nPublishedFileId;
+                var data = _inspector.Data;
+                data.PublishedFileId = t.m_nPublishedFileId;
+                _inspector.Data = data;
             }
         }
 
@@ -112,27 +113,27 @@ namespace Heathen.SteamworksIntegration
 
         private void HandleCompleted(WorkshopItemDataCreateStatus status)
         {
-            m_Inspector.Data = status.data;
+            _inspector.Data = status.Data;
 
-            if(status.hasError)
+            if(status.HasError)
             {
-                EResult resultCode = EResult.k_EResultFail;
-                if (status.submitItemUpdateResult.HasValue)
-                    resultCode = status.submitItemUpdateResult.Value.m_eResult;
+                var resultCode = EResult.k_EResultFail;
+                if (status.SubmitItemUpdateResult.HasValue)
+                    resultCode = status.SubmitItemUpdateResult.Value.m_eResult;
                 else
-                if (status.createItemResult.HasValue)
-                    resultCode = status.createItemResult.Value.m_eResult;
+                if (status.CreateItemResult.HasValue)
+                    resultCode = status.CreateItemResult.Value.m_eResult;
 
-                if (m_Events != null)
-                    m_Events.onCreateUpdateError?.Invoke(resultCode, status.errorMessage);
+                if (_events != null)
+                    _events.onCreateUpdateError?.Invoke(resultCode, status.ErrorMessage);
             }
             else
             {
-                if (m_Events != null)
+                if (_events != null)
                 {
-                    m_Events.onCreateUpdateSuccess?.Invoke();
-                    if (status.createItemResult.Value.m_bUserNeedsToAcceptWorkshopLegalAgreement)
-                        m_Events.onUserNeedsToAcceptWorkshopAgreement?.Invoke();
+                    _events.onCreateUpdateSuccess?.Invoke();
+                    if (status.CreateItemResult is { m_bUserNeedsToAcceptWorkshopLegalAgreement: true })
+                        _events.onUserNeedsToAcceptWorkshopAgreement?.Invoke();
                 }
             }
         }

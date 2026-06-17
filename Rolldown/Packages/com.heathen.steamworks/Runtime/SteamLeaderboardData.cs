@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Heathen.SteamworksIntegration.UI;
 using Steamworks;
 using System;
@@ -9,30 +9,28 @@ using System.Collections.Generic;
 using UnityEditor;
 #endif
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Heathen.SteamworksIntegration
 {
+    /// <summary>
+    /// Represents a Steam Leaderboard exposing features as Fields and Settings to the Unity Inspector
+    /// </summary>
     [AddComponentMenu("Steamworks/Leaderboard")]
+    [HelpURL("https://heathen.group/kb/leaderboards/")]
     public class SteamLeaderboardData : MonoBehaviour
     {
-        public enum ManagedLeaderboardEvents
+        /// <summary>
+        /// 
+        /// </summary>
+        public enum LeaderboardSortMethod
         {
-            LeaderboardChanged,
-            FoundOrCreated,
-            FailedToFindOrCreate,
-            RankChange,
-            ScoreUpload,
+            TopIsLowestScore = 1,  // the top-score is the lowest number
+            TopIsHighestScore = 2, // the top-score is the highest number
         }
 
-        // the sort order of a leaderboard
-        public enum LeaderboardSortMethod : int
-        {
-            TopIsLowestScore = 1,  // top-score is lowest number
-            TopIsHighestScore = 2, // top-score is highest number
-        }
-
-        // the display type (used by the Steam Community web site) for a leaderboard
-        public enum LeaderboardDisplayType : int
+        // the display type (used by the Steam Community website) for a leaderboard
+        public enum LeaderboardDisplayType
         {
             Numeric = 1,           // simple numerical score
             TimeSeconds = 2,       // the score represents a time, in seconds
@@ -40,53 +38,55 @@ namespace Heathen.SteamworksIntegration
         }
 
         public string apiName;
-        public bool createIfMissing = false;
+        public bool createIfMissing;
         public LeaderboardDisplayType createAsDisplay = LeaderboardDisplayType.Numeric;
         public LeaderboardSortMethod createWithSort = LeaderboardSortMethod.TopIsLowestScore;
 
         public LeaderboardData Data
         {
-            get => m_Data;
+            get => _data;
             set
             {
-                m_Data = value;
-                if (m_Events != null)
-                    m_Events.onChange?.Invoke();
+                _data = value;
+                if (_events)
+                    _events.onChange?.Invoke();
             }
         }
 
+        [FormerlySerializedAs("_delegates")] 
+        [FormerlySerializedAs("m_Delegates")] 
         [SerializeField]
-        private List<string> m_Delegates;
-        private LeaderboardData m_Data;
-        private SteamLeaderboardDataEvents m_Events;
+        private List<string> delegates;
+        private LeaderboardData _data;
+        private SteamLeaderboardDataEvents _events;
 
         private void Awake()
         {
-            m_Events = GetComponent<SteamLeaderboardDataEvents>();
+            _events = GetComponent<SteamLeaderboardDataEvents>();
         }
 
         private void Interface_OnReady()
         {
             SteamTools.Interface.OnReady -= Interface_OnReady;
 
-            if (!m_Data.IsValid)
+            if (!_data.IsValid)
             {
                 if(!string.IsNullOrEmpty(apiName))
                 {
-                    m_Data = SteamTools.Interface.GetBoard(apiName);
-                    if (!m_Data.IsValid)
+                    _data = SteamTools.Interface.GetBoard(apiName);
+                    if (!_data.IsValid)
                     {
                         if (createIfMissing)
                             API.Leaderboards.Client.FindOrCreate(Data.apiName, (ELeaderboardSortMethod)createWithSort, (ELeaderboardDisplayType)createAsDisplay, (data, ioError) =>
                             {
                                 if (!ioError)
                                 {
-                                    m_Data = data;
-                                    if (m_Events != null)
-                                        m_Events.onFindOrCreate?.Invoke();
+                                    _data = data;
+                                    if (_events != null)
+                                        _events.onFindOrCreate?.Invoke();
                                 }
-                                else if (m_Events != null)
-                                    m_Events.onFindOrCreateFailure?.Invoke();
+                                else if (_events != null)
+                                    _events.onFindOrCreateFailure?.Invoke();
                             });
                     }
                 }
@@ -95,17 +95,11 @@ namespace Heathen.SteamworksIntegration
 
         private void Start()
         {
-            m_Events = GetComponent<SteamLeaderboardDataEvents>();
+            _events = GetComponent<SteamLeaderboardDataEvents>();
             if (SteamTools.Interface.IsReady)
                 Interface_OnReady();
             else
                 SteamTools.Interface.OnReady += Interface_OnReady;
-        }
-
-        private void HandleInitialization()
-        {
-            API.App.onSteamInitialized.RemoveListener(HandleInitialization);
-            Interface_OnReady();
         }
     }
 
@@ -113,17 +107,17 @@ namespace Heathen.SteamworksIntegration
     [CustomEditor(typeof(SteamLeaderboardData), true)]
     public class SteamLeaderboardDataEditor : ModularEditor
     {
-        private SteamToolsSettings settings;
+        private SteamToolsSettings _settings;
 
         private string[] _options;
         private int _selectedIndex;
-        private SerializedProperty apiNameProp;
-        private SerializedProperty createIfMissingProp;
-        private SerializedProperty createAsDisplayProp;
-        private SerializedProperty createWithSortProp;
+        private SerializedProperty _apiNameProp;
+        private SerializedProperty _createIfMissingProp;
+        private SerializedProperty _createAsDisplayProp;
+        private SerializedProperty _createWithSortProp;
 
         // --- Allowed types for this editor ---
-        protected override Type[] AllowedTypes => new Type[]
+        protected override Type[] AllowedTypes => new[]
         {
             typeof(SteamLeaderboardDataEvents),
             typeof(SteamLeaderboardDisplay),
@@ -133,34 +127,25 @@ namespace Heathen.SteamworksIntegration
             typeof(SteamLeaderboardUserEntry),
         };
 
-        // --- Single-instance functions (Flags enum) ---
-        [Flags]
-        private enum FunctionsMask
-        {
-            None = 0,
-            Display = 1 << 0,
-            Upload = 1 << 1,
-            GeneralEvents = 1 << 2,
-        }
-
         private void OnEnable()
         {
-            apiNameProp = serializedObject.FindProperty("apiName");
-            createIfMissingProp = serializedObject.FindProperty("createIfMissing");
-            createAsDisplayProp = serializedObject.FindProperty("createAsDisplay");
-            createWithSortProp = serializedObject.FindProperty("createWithSort");
+            _apiNameProp = serializedObject.FindProperty("apiName");
+            _createIfMissingProp = serializedObject.FindProperty("createIfMissing");
+            _createAsDisplayProp = serializedObject.FindProperty("createAsDisplay");
+            _createWithSortProp = serializedObject.FindProperty("createWithSort");
 
-            settings = SteamToolsSettings.GetOrCreate();
+            _settings = SteamToolsSettings.GetOrCreate();
             
             RefreshOptions();
         }
 
+        // ReSharper disable Unity.PerformanceAnalysis
         private void RefreshOptions()
         {
             var settings = SteamToolsSettings.GetOrCreate();
-            var list = settings != null && settings.leaderboards != null
+            var list = settings && settings.leaderboards != null
                 ? settings.leaderboards
-                : new System.Collections.Generic.List<string>();
+                : new List<string>();
 
             var temp = new string[list.Count + 1];
             for (int i = 0; i < list.Count; i++)
@@ -169,9 +154,9 @@ namespace Heathen.SteamworksIntegration
 
             _options = temp;
 
-            var current = apiNameProp.stringValue;
-            _selectedIndex = Mathf.Max(0, System.Array.IndexOf(_options, current));
-            if (_selectedIndex < 0 || _selectedIndex >= _options.Length - 1)
+            var current = _apiNameProp.stringValue;
+            _selectedIndex = Array.IndexOf(_options, current);
+            if (_selectedIndex < 0)
                 _selectedIndex = _options.Length - 1; // default to <new>
         }
 
@@ -179,14 +164,14 @@ namespace Heathen.SteamworksIntegration
         {
             serializedObject.Update();
 
-            var go = ((SteamLeaderboardData)target).gameObject;
-
             // --- Header links ---
             EditorGUILayout.BeginHorizontal();
             if (EditorGUILayout.LinkButton("Settings"))
                 SettingsService.OpenProjectSettings("Project/Player/Steamworks");
             if (EditorGUILayout.LinkButton("Portal"))
-                Application.OpenURL("https://partner.steamgames.com/apps/landing/" + settings.Get(settings.ActiveApp.Value).applicationId);
+                if (_settings.ActiveApp != null)
+                    Application.OpenURL("https://partner.steamgames.com/apps/landing/" +
+                                        _settings.Get(_settings.ActiveApp.Value).applicationId);
             if (EditorGUILayout.LinkButton("Guide"))
                 Application.OpenURL("https://kb.heathen.group/steam/features/leaderboards");
             if (EditorGUILayout.LinkButton("Support"))
@@ -200,18 +185,18 @@ namespace Heathen.SteamworksIntegration
 
             _selectedIndex = EditorGUILayout.Popup("Leaderboard", _selectedIndex, _options);
 
-            if (_selectedIndex >= 0 && _selectedIndex < _options.Length - 1)
+            if (_selectedIndex >= 0 && _options != null && _selectedIndex < _options.Length - 1)
             {
                 // Existing leaderboard selected
-                apiNameProp.stringValue = _options[_selectedIndex];
+                _apiNameProp.stringValue = _options[_selectedIndex];
             }
             else
             {
                 // <new> selected — show editable fields
-                EditorGUILayout.PropertyField(apiNameProp, new GUIContent("API Name"));
-                EditorGUILayout.PropertyField(createIfMissingProp);
-                EditorGUILayout.PropertyField(createAsDisplayProp);
-                EditorGUILayout.PropertyField(createWithSortProp);
+                EditorGUILayout.PropertyField(_apiNameProp, new GUIContent("API Name"));
+                EditorGUILayout.PropertyField(_createIfMissingProp);
+                EditorGUILayout.PropertyField(_createAsDisplayProp);
+                EditorGUILayout.PropertyField(_createWithSortProp);
             }
 
             EditorGUILayout.Space();

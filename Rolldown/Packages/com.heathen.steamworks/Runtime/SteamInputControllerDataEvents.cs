@@ -1,39 +1,48 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS && STEAM_INSTALLED
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace Heathen.SteamworksIntegration
 {
+    /// <summary>
+    /// Proxies events from a <see cref="SteamInputControllerData"/> component.
+    /// </summary>
     [AddComponentMenu("")]
     [RequireComponent(typeof(SteamInputControllerData))]
     public class SteamInputControllerDataEvents : MonoBehaviour
     {
+        /// <summary>
+        /// Occurs when the controller data changes.
+        /// </summary>
         [EventField]
         public UnityEvent onChange;
+        /// <summary>
+        /// Occurs when the controller data is updated.
+        /// </summary>
         [EventField]
         public ControllerDataEvent onUpdate;
 
-        private SteamInputControllerData m_Inspector;
+        private SteamInputControllerData _inspector;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamInputControllerData>();
-            m_Inspector.onChanged?.AddListener(onChange.Invoke);
-            API.Input.Client.onInputDataChanged.AddListener(HandleEvent);
+            _inspector = GetComponent<SteamInputControllerData>();
+            _inspector.onChanged?.AddListener(onChange.Invoke);
+            SteamTools.Events.OnInputDataChanged += HandleEvent;
         }
 
         private void OnDestroy()
         {
-            if (m_Inspector != null)
-                m_Inspector.onChanged?.RemoveListener(onChange.Invoke);
+            if (_inspector != null)
+                _inspector.onChanged?.RemoveListener(onChange.Invoke);
 
-            API.Input.Client.onInputDataChanged.RemoveListener(HandleEvent);
+            SteamTools.Events.OnInputDataChanged -= HandleEvent;
         }
 
         private void HandleEvent(InputControllerStateData state)
         {
-            if(m_Inspector.Data.HasValue
-                && state.handle == m_Inspector.Data.Value)
+            if(_inspector.Data.HasValue
+                && state.handle == _inspector.Data.Value)
             {
                 onUpdate?.Invoke(state);
             }

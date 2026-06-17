@@ -1,6 +1,7 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 
 namespace Heathen.SteamworksIntegration
 {
@@ -11,20 +12,20 @@ namespace Heathen.SteamworksIntegration
         [Header("Configuration")]
         public int minimalIdLength = 8;
 
-        [Header("Events")]
-        public UnityEvent OnValid;
+        [FormerlySerializedAs("OnValid")] [Header("Events")]
+        public UnityEvent onValid;
 
-        private TMPro.TMP_InputField m_InputField;
+        private TMPro.TMP_InputField _mInputField;
 
         private void Awake()
         {
-            m_InputField = GetComponent<TMPro.TMP_InputField>();
-            m_InputField.onValueChanged.AddListener(HandleValueChanged);
+            _mInputField = GetComponent<TMPro.TMP_InputField>();
+            _mInputField.onValueChanged.AddListener(HandleValueChanged);
         }
 
         private void OnDestroy()
         {
-            m_InputField.onValueChanged.RemoveListener(HandleValueChanged);
+            _mInputField.onValueChanged.RemoveListener(HandleValueChanged);
         }
 
         private void HandleValueChanged(string arg0)
@@ -33,7 +34,7 @@ namespace Heathen.SteamworksIntegration
             {
                 var lobby = LobbyData.Get(arg0);
                 if (lobby.IsValid)
-                    OnValid?.Invoke();
+                    onValid?.Invoke();
             }
         }
     }

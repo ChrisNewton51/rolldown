@@ -251,6 +251,7 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -459,6 +460,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -743,6 +745,7 @@ MonoBehaviour:
   m_VerticalAlignment: 8192
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -792,6 +795,7 @@ GameObject:
   - component: {fileID: 8864398888005605772}
   - component: {fileID: 774349577754676563}
   - component: {fileID: 7628123566378618838}
+  - component: {fileID: 1344348663837995806}
   m_Layer: 5
   m_Name: Friend Profile
   m_TagString: Untagged
@@ -806,7 +810,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4693307505461761195}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -873,7 +877,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: baf93c2e3d6508b43b8b2511f9cbbd22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  localUser: 0
+  localUser: 1
   onChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -1090,6 +1094,19 @@ MonoBehaviour:
   references:
     version: 2
     RefIds: []
+--- !u!114 &1344348663837995806
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4693307505461761195}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70a18874df387bd49842b71568ed2920, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  input: {fileID: 6989945968902769736}
 --- !u!1 &4693307505466040807
 GameObject:
   m_ObjectHideFlags: 0
@@ -1345,6 +1362,7 @@ MonoBehaviour:
   m_VerticalAlignment: 8192
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1481,6 +1499,7 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0

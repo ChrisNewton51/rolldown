@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using UnityEngine;
 
 namespace Heathen.SteamworksIntegration
@@ -11,48 +11,48 @@ namespace Heathen.SteamworksIntegration
     {
         public SteamLeaderboardEntryUI entryUI;
 
-        private SteamLeaderboardData m_Inspector;
-        private SteamLeaderboardDataEvents m_Events;
+        private SteamLeaderboardData _mInspector;
+        private SteamLeaderboardDataEvents _mEvents;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamLeaderboardData>();
-            m_Events = GetComponent<SteamLeaderboardDataEvents>();
+            _mInspector = GetComponent<SteamLeaderboardData>();
+            _mEvents = GetComponent<SteamLeaderboardDataEvents>();
 
-            if (m_Events != null)
+            if (_mEvents != null)
             {
-                m_Events.onChange?.AddListener(Refresh);
-                m_Events.onRankChanged?.AddListener(HandleRankChange);
+                _mEvents.onChange?.AddListener(Refresh);
+                _mEvents.onRankChanged?.AddListener(HandleRankChange);
             }
         }
 
         private void OnDestroy()
         {
-            if (m_Events != null)
+            if (_mEvents != null)
             {
-                m_Events.onChange?.RemoveListener(Refresh);
-                m_Events.onRankChanged?.RemoveListener(HandleRankChange);
+                _mEvents.onChange?.RemoveListener(Refresh);
+                _mEvents.onRankChanged?.RemoveListener(HandleRankChange);
             }
         }
 
         public void Refresh()
         {
-            if (m_Inspector.Data.IsValid && entryUI != null)
+            if (_mInspector.Data.IsValid && entryUI != null)
             {
-                m_Inspector.Data.GetUserEntry(0, (entry, ioError) =>
+                _mInspector.Data.GetUserEntry(0, (entry, ioError) =>
                 {
                     if (!ioError && entry != null)
                         entryUI.Entry = entry;
                     else
                         entryUI.Entry = new()
                         {
-                            entry = new Steamworks.LeaderboardEntry_t()
+                            Entry = new Steamworks.LeaderboardEntry_t()
                             {
                                 m_steamIDUser = UserData.Me,
                                 m_nGlobalRank = 0,
                                 m_nScore = 0
                             },
-                            details = new int[0],
+                            Details = new int[0],
                         };
                 });
             }

@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using System.Collections.Generic;
@@ -8,38 +8,46 @@ using UnityEngine;
 namespace Heathen.SteamworksIntegration.API
 {
     /// <summary>
-    /// Steam Inventory query and manipulation API.
+    /// Provides a set of tools and operations for managing and interacting with Steam inventory,
+    /// including functionalities for handling item definitions, managing promo items, processing inventory results,
+    /// and working with in-game currency and inventory events.
     /// </summary>
     public static class Inventory
     {
+        /// <summary>
+        /// Provides methods and events for interacting with the Steam Inventory service,
+        /// enabling functionalities such as item management, promo item handling, result processing,
+        /// currency details, and inventory item properties.
+        /// </summary>
         public static class Client
         {
             private class SerializationPointer
             {
-                public UserData expectedUser;
-                public Action<InventoryResult> callback;
+                public UserData ExpectedUser;
+                public Action<InventoryResult> Callback;
             }
 
             [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
             static void Init()
             {
-                itemIndex = new Dictionary<ItemData, List<ItemDetail>>();
-                m_OnSteamInventoryDefinitionUpdate = new SteamInventoryDefinitionUpdateEvent();
-                m_OnSteamInventoryResultReady = new SteamInventoryResultReadyEvent();
-                m_OnSteamMTXAuthResponse = new SteamMicroTransactionAuthorizationResponce();
-                m_ResultHandles = new Dictionary<SteamInventoryResult_t, Action<InventoryResult>>();
-                m_SerializationResults = new Dictionary<SteamInventoryResult_t, Action<byte[]>>();
-                m_DeserializationResults = new Dictionary<SteamInventoryResult_t, SerializationPointer>();
-                m_SteamInventoryEligiblePromoItemDefIDs_t = null;
-                m_SteamInventoryStartPurchaseResult_t = null;
-                m_SteamInventoryRequestPricesResult_t = null;
-                m_SteamInventoryDefinitionUpdate_t = null;
-                m_SteamInventoryResultReady_t = null;
-                m_MicroTxnAuthorizationResponse_t = null;
+                _itemIndex = new Dictionary<ItemData, List<ItemDetail>>();
+                _mOnSteamInventoryDefinitionUpdate = new SteamInventoryDefinitionUpdateEvent();
+                _mOnSteamInventoryResultReady = new SteamInventoryResultReadyEvent();
+                _mOnSteamMtxAuthResponse = new SteamMicroTransactionAuthorizationResponce();
+                _mResultHandles = new Dictionary<SteamInventoryResult_t, Action<InventoryResult>>();
+                _mSerializationResults = new Dictionary<SteamInventoryResult_t, Action<byte[]>>();
+                _mDeserializationResults = new Dictionary<SteamInventoryResult_t, SerializationPointer>();
+                _mSteamInventoryEligiblePromoItemDefIDsT = null;
+                _mSteamInventoryStartPurchaseResultT = null;
+                _mSteamInventoryRequestPricesResultT = null;
             }
 
-            private static Dictionary<ItemData, List<ItemDetail>> itemIndex = new Dictionary<ItemData, List<ItemDetail>>();
+            private static Dictionary<ItemData, List<ItemDetail>> _itemIndex = new Dictionary<ItemData, List<ItemDetail>>();
 
+            /// <summary>
+            /// Represents the local currency code used for transactions within the Steamworks inventory system.
+            /// The value is resolved from the current user's regional currency settings and updated when relevant data is fetched.
+            /// </summary>
             public static Currency.Code LocalCurrencyCode
             {
                 get;
@@ -47,101 +55,72 @@ namespace Heathen.SteamworksIntegration.API
             }
             public static string LocalCurrencySymbol => Currency.GetSymbol(LocalCurrencyCode);
 
+            private static SteamInventoryDefinitionUpdateEvent _mOnSteamInventoryDefinitionUpdate = new();
+            private static SteamInventoryResultReadyEvent _mOnSteamInventoryResultReady = new();
+            private static SteamMicroTransactionAuthorizationResponce _mOnSteamMtxAuthResponse = new();
+
+            private static Dictionary<SteamInventoryResult_t, Action<InventoryResult>> _mResultHandles = new();
+            private static Dictionary<SteamInventoryResult_t, Action<byte[]>> _mSerializationResults = new();
+            private static Dictionary<SteamInventoryResult_t, SerializationPointer> _mDeserializationResults = new();
+
+            private static CallResult<SteamInventoryEligiblePromoItemDefIDs_t> _mSteamInventoryEligiblePromoItemDefIDsT;
+            private static CallResult<SteamInventoryStartPurchaseResult_t> _mSteamInventoryStartPurchaseResultT;
+            private static CallResult<SteamInventoryRequestPricesResult_t> _mSteamInventoryRequestPricesResultT;
+
             /// <summary>
-            /// This callback is triggered whenever item definitions have been updated, which could be in response to LoadItemDefinitions or any time new item definitions are available (eg, from the dynamic addition of new item types while players are still in-game).
+            /// Retrieves the list of detailed information associated with the specified item.
             /// </summary>
-            public static SteamInventoryDefinitionUpdateEvent OnSteamInventoryDefinitionUpdate
-            {
-                get
-                {
-                    if (m_SteamInventoryDefinitionUpdate_t == null)
-                        m_SteamInventoryDefinitionUpdate_t = Callback<SteamInventoryDefinitionUpdate_t>.Create((r) => { m_OnSteamInventoryDefinitionUpdate.Invoke(); });
-
-                    return m_OnSteamInventoryDefinitionUpdate;
-                }
-            }
-            /// <summary>
-            /// This is fired whenever an inventory result transitions from k_EResultPending to any other completed state, see GetResultStatus for the complete list of states. There will always be exactly one callback per handle.
-            /// </summary>
-            public static SteamInventoryResultReadyEvent OnSteamInventoryResultReady
-            {
-                get
-                {
-                    if (m_SteamInventoryResultReady_t == null)
-                        m_SteamInventoryResultReady_t = Callback<SteamInventoryResultReady_t>.Create(HandleInventoryResults);
-
-                    return m_OnSteamInventoryResultReady;
-                }
-            }
-            public static SteamMicroTransactionAuthorizationResponce OnSteamMicroTransactionAuthorizationResponse
-            {
-                get
-                {
-                    if (m_MicroTxnAuthorizationResponse_t == null)
-                        m_MicroTxnAuthorizationResponse_t = Callback<MicroTxnAuthorizationResponse_t>.Create((r) => { m_OnSteamMTXAuthResponse.Invoke(new AppId_t(r.m_unAppID), r.m_ulOrderID, r.m_bAuthorized == 1); });
-
-                    return m_OnSteamMTXAuthResponse;
-                }
-            }
-
-            private static SteamInventoryDefinitionUpdateEvent m_OnSteamInventoryDefinitionUpdate = new();
-            private static SteamInventoryResultReadyEvent m_OnSteamInventoryResultReady = new();
-            private static SteamMicroTransactionAuthorizationResponce m_OnSteamMTXAuthResponse = new();
-
-            private static Dictionary<SteamInventoryResult_t, Action<InventoryResult>> m_ResultHandles = new();
-            private static Dictionary<SteamInventoryResult_t, Action<byte[]>> m_SerializationResults = new();
-            private static Dictionary<SteamInventoryResult_t, SerializationPointer> m_DeserializationResults = new();
-
-            private static CallResult<SteamInventoryEligiblePromoItemDefIDs_t> m_SteamInventoryEligiblePromoItemDefIDs_t;
-            private static CallResult<SteamInventoryStartPurchaseResult_t> m_SteamInventoryStartPurchaseResult_t;
-            private static CallResult<SteamInventoryRequestPricesResult_t> m_SteamInventoryRequestPricesResult_t;
-
-            private static Callback<SteamInventoryDefinitionUpdate_t> m_SteamInventoryDefinitionUpdate_t;
-            private static Callback<SteamInventoryResultReady_t> m_SteamInventoryResultReady_t;
-            private static Callback<MicroTxnAuthorizationResponse_t> m_MicroTxnAuthorizationResponse_t;
-
+            /// <param name="item">The item data object for which details are to be retrieved.</param>
+            /// <returns>A list of <see cref="ItemDetail"/> that represents the detailed information about the specified item.</returns>
             public static List<ItemDetail> Details(ItemData item)
             {
-                if (!itemIndex.ContainsKey(item))
-                    itemIndex.Add(item, new List<ItemDetail>());
+                if (!_itemIndex.ContainsKey(item))
+                    _itemIndex.Add(item, new List<ItemDetail>());
 
-                return itemIndex[item];
+                return _itemIndex[item];
             }
+
+            /// <summary>
+            /// Calculates the total quantity of items for the specified item data by summing the quantities of all its associated details.
+            /// </summary>
+            /// <param name="item">The item data object whose total quantity is to be calculated.</param>
+            /// <returns>The total quantity of the specified item as a <see cref="long"/>. Returns 0 if the item has no associated details.</returns>
             public static long ItemTotalQuantity(ItemData item)
             {
-                if (!itemIndex.ContainsKey(item))
+                if (!_itemIndex.TryGetValue(item, out var value))
                     return 0;
                 else
-                    return itemIndex[item].Sum(p => System.Convert.ToInt64(p.Quantity));
+                    return value.Sum(p => Convert.ToInt64(p.Quantity));
             }
+
             /// <summary>
-            /// Grant a specific one-time promotional item to the current user.
-            /// <para>
-            /// This can be safely called from the client because the items it can grant can be locked down via policies in the itemdefs. One of the primary scenarios for this call is to grant an item to users who also own a specific other game. This can be useful if your game has custom UI for showing a specific promo item to the user otherwise if you want to grant multiple promotional items then use AddPromoItems or GrantPromoItems.
-            /// </para>
-            /// <para>
-            /// Any items that can be granted MUST have a "promo" attribute in their itemdef. That promo item list a set of APPIDs that the user must own to be granted this given item. This version will grant all items that have promo attributes specified for them in the configured item definitions. This allows adding additional promotional items without having to update the game client. For example the following will allow the item to be granted if the user owns either TF2 or SpaceWar.
-            /// </para>
+            /// Adds a promotional item to the inventory using the specified item definition and assigns the result to a callback.
             /// </summary>
-            /// <param name="resultHandle"></param>
-            /// <param name="itemDef"></param>
-            /// <returns></returns>
+            /// <param name="itemDef">The item definition representing the promotional item to be added.</param>
+            /// <param name="callback">The callback function to handle the inventory result upon completion.</param>
+            /// <returns>A boolean value indicating whether the operation was successfully initiated.</returns>
             public static bool AddPromoItem(SteamItemDef_t itemDef, Action<InventoryResult> callback)
             {
                 if (callback == null)
                     return false;
-
-                m_SteamInventoryResultReady_t ??= Callback<SteamInventoryResultReady_t>.Create(HandleInventoryResults);
-
+                
                 if (SteamInventory.AddPromoItem(out SteamInventoryResult_t resultHandle, itemDef))
                 {
-                    m_ResultHandles.Add(resultHandle, callback);
+                    _mResultHandles.Add(resultHandle, callback);
                     return true;
                 }
                 else
                     return false;
             }
-            public static bool AddPromoItems(ItemDefinitionSettings item, Action<InventoryResult> callback) => AddPromoItem(item.Id, callback);
+
+            /// <summary>
+            /// Adds promotional items to the user's inventory.
+            /// </summary>
+            /// <param name="items">An array of item definitions representing the promotional items to be added.</param>
+            /// <param name="callback">A callback function invoked after the operation is completed, providing the result of the inventory update.</param>
+            /// <returns>A boolean indicating whether the operation was successfully initiated.</returns>
+            public static bool AddPromoItems(ItemDefinitionSettings item, Action<InventoryResult> callback) =>
+                AddPromoItem(item.Id, callback);
 
             /// <summary>
             /// Grant a specific one-time promotional item to the current user.
@@ -160,17 +139,23 @@ namespace Heathen.SteamworksIntegration.API
                 if (callback == null)
                     return false;
 
-                m_SteamInventoryResultReady_t ??= Callback<SteamInventoryResultReady_t>.Create(HandleInventoryResults);
-
                 if (SteamInventory.AddPromoItems(out SteamInventoryResult_t resultHandle, itemDefs, (uint)itemDefs.Length))
                 {
-                    m_ResultHandles.Add(resultHandle, callback);
+                    _mResultHandles.Add(resultHandle, callback);
                     return true;
                 }
                 else
                     return false;
             }
-            public static bool AddPromoItems(ItemDefinitionSettings[] items, Action<InventoryResult> callback) => AddPromoItems(Array.ConvertAll<ItemDefinitionSettings, SteamItemDef_t>(items, p => p.Id), callback);
+
+            /// <summary>
+            /// Adds a collection of promotional items to the user's inventory.
+            /// </summary>
+            /// <param name="items">An array of <see cref="ItemDefinitionSettings"/> representing the promotional items to be added.</param>
+            /// <param name="callback">The callback method to execute when the operation is complete, providing the result of the inventory operation.</param>
+            /// <returns>A boolean value indicating whether the request to add promotional items was successfully initiated.</returns>
+            public static bool AddPromoItems(ItemDefinitionSettings[] items, Action<InventoryResult> callback) =>
+                AddPromoItems(Array.ConvertAll<ItemDefinitionSettings, SteamItemDef_t>(items, p => p.Id), callback);
             /// <summary>
             /// Grant a specific one-time promotional item to the current user.
             /// <para>
@@ -209,10 +194,8 @@ namespace Heathen.SteamworksIntegration.API
                 if (callback == null)
                     return;
 
-                m_SteamInventoryResultReady_t ??= Callback<SteamInventoryResultReady_t>.Create(HandleInventoryResults);
-
                 SteamInventory.ConsumeItem(out SteamInventoryResult_t resultHandle, itemConsume, quantity);
-                m_ResultHandles.Add(resultHandle, callback);
+                _mResultHandles.Add(resultHandle, callback);
             }
             /// <summary>
             /// Deserializes a result set and verifies the signature bytes.
@@ -228,13 +211,11 @@ namespace Heathen.SteamworksIntegration.API
                 if (callback == null)
                     return;
 
-                m_SteamInventoryResultReady_t ??= Callback<SteamInventoryResultReady_t>.Create(HandleInventoryResults);
-
                 SteamInventory.DeserializeResult(out SteamInventoryResult_t resultHandle, buffer, (uint)buffer.Length);
-                m_DeserializationResults.Add(resultHandle, new SerializationPointer
+                _mDeserializationResults.Add(resultHandle, new SerializationPointer
                 {
-                    callback = callback,
-                    expectedUser = expectedUser,
+                    Callback = callback,
+                    ExpectedUser = expectedUser,
                 });
             }
             /// <summary>
@@ -267,8 +248,6 @@ namespace Heathen.SteamworksIntegration.API
                 if (callback == null)
                     return;
 
-                m_SteamInventoryResultReady_t ??= Callback<SteamInventoryResultReady_t>.Create(HandleInventoryResults);
-
                 SteamInventory.ExchangeItems(out SteamInventoryResult_t resultHandle, 
                     new SteamItemDef_t[] { generate }, 
                     new uint[]{ 1 }, 
@@ -276,7 +255,7 @@ namespace Heathen.SteamworksIntegration.API
                     destroy, 
                     destroyQuantity,
                     (uint)destroy.Length);
-                m_ResultHandles.Add(resultHandle, callback);
+                _mResultHandles.Add(resultHandle, callback);
             }
             /// <summary>
             /// Grants specific items to the current user, for developers only.
@@ -297,10 +276,8 @@ namespace Heathen.SteamworksIntegration.API
                 if (callback == null)
                     return;
 
-                m_SteamInventoryResultReady_t ??= Callback<SteamInventoryResultReady_t>.Create(HandleInventoryResults);
-
                 SteamInventory.GenerateItems(out SteamInventoryResult_t resultHandle, itemDefs, quantity, (uint)itemDefs.Length);
-                m_ResultHandles.Add(resultHandle, callback);
+                _mResultHandles.Add(resultHandle, callback);
             }
             /// <summary>
             /// Start retrieving all items in the current users inventory.
@@ -313,17 +290,15 @@ namespace Heathen.SteamworksIntegration.API
             /// <param name="resultHandle"></param>
             public static void GetAllItems(Action<InventoryResult> callback = null)
             {
-                m_SteamInventoryResultReady_t ??= Callback<SteamInventoryResultReady_t>.Create(HandleInventoryResults);
-
-                itemIndex.Clear();
+                _itemIndex.Clear();
                 SteamInventory.GetAllItems(out SteamInventoryResult_t resultHandle);
 
                 if (callback != null)
                 {
-                    if (m_ResultHandles.ContainsKey(resultHandle))
-                        m_ResultHandles[resultHandle] = callback;
+                    if (_mResultHandles.ContainsKey(resultHandle))
+                        _mResultHandles[resultHandle] = callback;
                     else
-                        m_ResultHandles.Add(resultHandle, callback);
+                        _mResultHandles.Add(resultHandle, callback);
                 }
             }
             /// <summary>
@@ -336,10 +311,10 @@ namespace Heathen.SteamworksIntegration.API
                 if (callback == null)
                     return;
 
-                m_SteamInventoryEligiblePromoItemDefIDs_t ??= CallResult<SteamInventoryEligiblePromoItemDefIDs_t>.Create();
+                _mSteamInventoryEligiblePromoItemDefIDsT ??= CallResult<SteamInventoryEligiblePromoItemDefIDs_t>.Create();
 
                 var handle = SteamInventory.RequestEligiblePromoItemDefinitionsIDs(user);
-                m_SteamInventoryEligiblePromoItemDefIDs_t.Set(handle, (result, e) =>
+                _mSteamInventoryEligiblePromoItemDefIDsT.Set(handle, (result, e) =>
                 {
                     if (e || result.m_result != EResult.k_EResultOK)
                     {
@@ -390,7 +365,7 @@ namespace Heathen.SteamworksIntegration.API
             /// Gets a property value for a specific item definition.
             /// </summary>
             /// <remarks>
-            /// Note that some properties (for example, "name") may be localized and will depend on the current Steam language settings (see ISteamApps::GetCurrentGameLanguage). Property names are always ASCII alphanumeric and underscores.
+            /// Note that some properties (for example, "name") may be localised and will depend on the current Steam language settings (see ISteamApps::GetCurrentGameLanguage). Property names are always ASCII alphanumeric and underscores.
             /// </remarks>
             /// <param name="item">The item definition to get the properties for.</param>
             /// <param name="propertyName">The property name to get the value for</param>
@@ -441,12 +416,10 @@ namespace Heathen.SteamworksIntegration.API
             /// <param name="callback"></param>
             public static void GetItemsByID(SteamItemInstanceID_t[] instanceIds, Action<InventoryResult> callback = null)
             {
-                m_SteamInventoryResultReady_t ??= Callback<SteamInventoryResultReady_t>.Create(HandleInventoryResults);
-
                 SteamInventory.GetItemsByID(out SteamInventoryResult_t resultHandle, instanceIds, (uint)instanceIds.Length);
 
                 if (callback != null)
-                    m_ResultHandles.Add(resultHandle, callback);
+                    _mResultHandles.Add(resultHandle, callback);
             }
             /// <summary>
             /// After a successful call to RequestPrices, you can call this method to get the pricing for a specific item definition.
@@ -512,12 +485,10 @@ namespace Heathen.SteamworksIntegration.API
                 if (callback == null)
                     return false;
 
-                m_SteamInventoryResultReady_t ??= Callback<SteamInventoryResultReady_t>.Create(HandleInventoryResults);
-
                 if (SteamInventory.GrantPromoItems(out SteamInventoryResult_t resultHandle))
                 {
                     if (callback != null)
-                        m_ResultHandles.Add(resultHandle, callback);
+                        _mResultHandles.Add(resultHandle, callback);
 
                     return true;
                 }
@@ -537,10 +508,10 @@ namespace Heathen.SteamworksIntegration.API
             /// <param name="callback"></param>
             public static void RequestPrices(Action<SteamInventoryRequestPricesResult_t, bool> callback)
             {
-                m_SteamInventoryRequestPricesResult_t ??= CallResult<SteamInventoryRequestPricesResult_t>.Create();
+                _mSteamInventoryRequestPricesResultT ??= CallResult<SteamInventoryRequestPricesResult_t>.Create();
 
                 var handle = SteamInventory.RequestPrices();
-                m_SteamInventoryRequestPricesResult_t.Set(handle, (response, ioError) =>
+                _mSteamInventoryRequestPricesResultT.Set(handle, (response, ioError) =>
                 {
                     if (ioError || response.m_result != EResult.k_EResultOK)
                     {
@@ -568,10 +539,8 @@ namespace Heathen.SteamworksIntegration.API
                 if (callback == null)
                     return;
 
-                m_SteamInventoryResultReady_t ??= Callback<SteamInventoryResultReady_t>.Create(HandleInventoryResults);
-
                 SteamInventory.GetItemsByID(out SteamInventoryResult_t resultHandle, instanceIds, (uint)instanceIds.Length);
-                m_SerializationResults.Add(resultHandle, callback);
+                _mSerializationResults.Add(resultHandle, callback);
             }
             /// <summary>
             /// Start retrieving all items in the current users inventory and serializes the data.
@@ -585,10 +554,8 @@ namespace Heathen.SteamworksIntegration.API
                 if (callback == null)
                     return;
 
-                m_SteamInventoryResultReady_t ??= Callback<SteamInventoryResultReady_t>.Create(HandleInventoryResults);
-
                 SteamInventory.GetAllItems(out SteamInventoryResult_t resultHandle);
-                m_SerializationResults.Add(resultHandle, callback);
+                _mSerializationResults.Add(resultHandle, callback);
             }
             /// <summary>
             /// Starts the purchase process for the user, given a "shopping cart" of item definitions that the user would like to buy. The user will be prompted in the Steam Overlay to complete the purchase in their local currency, funding their Steam Wallet if necessary, etc.
@@ -609,10 +576,10 @@ namespace Heathen.SteamworksIntegration.API
                 if (callback == null)
                     return;
 
-                m_SteamInventoryStartPurchaseResult_t ??= CallResult<SteamInventoryStartPurchaseResult_t>.Create();
+                _mSteamInventoryStartPurchaseResultT ??= CallResult<SteamInventoryStartPurchaseResult_t>.Create();
 
                 var handle = SteamInventory.StartPurchase(items, quantities, (uint)items.Length);
-                m_SteamInventoryStartPurchaseResult_t.Set(handle, callback.Invoke);
+                _mSteamInventoryStartPurchaseResultT.Set(handle, callback.Invoke);
             }
             /// <summary>
             /// Transfer items between stacks within a user's inventory.
@@ -626,10 +593,8 @@ namespace Heathen.SteamworksIntegration.API
                 if (callback == null)
                     return;
 
-                m_SteamInventoryResultReady_t ??= Callback<SteamInventoryResultReady_t>.Create(HandleInventoryResults);
-
                 SteamInventory.TransferItemQuantity(out SteamInventoryResult_t resultHandle, source, quantity, destination);
-                m_ResultHandles.Add(resultHandle, callback);
+                _mResultHandles.Add(resultHandle, callback);
             }
             /// <summary>
             /// Trigger an item drop if the user has played a long enough period of time.
@@ -641,10 +606,8 @@ namespace Heathen.SteamworksIntegration.API
                 if (callback == null)
                     return;
 
-                m_SteamInventoryResultReady_t ??= Callback<SteamInventoryResultReady_t>.Create(HandleInventoryResults);
-
                 SteamInventory.TriggerItemDrop(out SteamInventoryResult_t resultHandle, item);
-                m_ResultHandles.Add(resultHandle, callback);
+                _mResultHandles.Add(resultHandle, callback);
             }
             /// <summary>
             /// Starts a transaction request to update dynamic properties on items for the current user. This call is rate-limited by user, so property modifications should be batched as much as possible (e.g. at the end of a map or game session). After calling SetProperty or RemoveProperty for all the items that you want to modify, you will need to call SubmitUpdateProperties to send the request to the Steam servers. A SteamInventoryResultReady_t callback will be fired with the results of the operation.
@@ -661,10 +624,8 @@ namespace Heathen.SteamworksIntegration.API
                 if (callback == null)
                     return;
 
-                m_SteamInventoryResultReady_t ??= Callback<SteamInventoryResultReady_t>.Create(HandleInventoryResults);
-
                 SteamInventory.SubmitUpdateProperties(handle, out SteamInventoryResult_t resultHandle);
-                m_ResultHandles.Add(resultHandle, callback);
+                _mResultHandles.Add(resultHandle, callback);
             }
             /// <summary>
             /// Removes a dynamic property for the given item.
@@ -781,37 +742,37 @@ namespace Heathen.SteamworksIntegration.API
 
                 var nDet = new ItemDetail
                 {
-                    itemDetails = detail,
+                    ItemDetails = detail,
                     properties = values.ToArray(),
                     dynamicProperties = dynProp,
                     tags = tags,
                 };
 
                 ItemData data = nDet.Definition;
-                if(itemIndex.ContainsKey(data))
+                if(_itemIndex.ContainsKey(data))
                 {
-                    var list = itemIndex[data];
+                    var list = _itemIndex[data];
                     list.RemoveAll(p => p.ItemId == nDet.ItemId);
                     list.Add(nDet);
-                    itemIndex[data] = list;
+                    _itemIndex[data] = list;
                 }
                 else
                 {
-                    itemIndex.Add(data, new List<ItemDetail> { nDet });
+                    _itemIndex.Add(data, new List<ItemDetail> { nDet });
                 }
                 return nDet;
             }
 
-            private static void HandleInventoryResults(SteamInventoryResultReady_t results)
+            internal static void HandleInventoryResults(SteamInventoryResultReady_t results)
             {
-                if (m_SerializationResults.ContainsKey(results.m_handle))
+                if (_mSerializationResults.ContainsKey(results.m_handle))
                 {
                     //Serialization request so we don't need to process the results
                     SteamInventory.SerializeResult(results.m_handle, null, out uint size);
                     var buffer = new byte[size];
                     SteamInventory.SerializeResult(results.m_handle, buffer, out size);
-                    m_SerializationResults[results.m_handle]?.Invoke(buffer);
-                    m_SerializationResults.Remove(results.m_handle);
+                    _mSerializationResults[results.m_handle]?.Invoke(buffer);
+                    _mSerializationResults.Remove(results.m_handle);
                     SteamInventory.DestroyResult(results.m_handle);
                 }
                 else
@@ -820,9 +781,9 @@ namespace Heathen.SteamworksIntegration.API
                     uint count = 0;
                     var inventoryResult = new InventoryResult
                     {
-                        items = new ItemDetail[0],
+                        items = Array.Empty<ItemDetail>(),
                         result = results.m_result,
-                        timestamp = new DateTime(1970, 1, 1).AddSeconds(SteamInventory.GetResultTimestamp(results.m_handle))
+                        Timestamp = new DateTime(1970, 1, 1).AddSeconds(SteamInventory.GetResultTimestamp(results.m_handle))
                     };
 
                     SteamInventory.GetResultItems(results.m_handle, null, ref count);
@@ -841,30 +802,30 @@ namespace Heathen.SteamworksIntegration.API
                             //Waiting handle found so let them know we have it
                             items = extendedResults,
                             result = results.m_result,
-                            timestamp = new DateTime(1970, 1, 1).AddSeconds(SteamInventory.GetResultTimestamp(results.m_handle))
+                            Timestamp = new DateTime(1970, 1, 1).AddSeconds(SteamInventory.GetResultTimestamp(results.m_handle))
                         };
                     }
 
-                    if (m_DeserializationResults.ContainsKey(results.m_handle))
+                    if (_mDeserializationResults.ContainsKey(results.m_handle))
                     {
-                        var record = m_DeserializationResults[results.m_handle];
+                        var record = _mDeserializationResults[results.m_handle];
 
-                        if (!SteamInventory.CheckResultSteamID(results.m_handle, record.expectedUser))
+                        if (!SteamInventory.CheckResultSteamID(results.m_handle, record.ExpectedUser))
                         {
                             inventoryResult.result = EResult.k_EResultFail;
                         }
 
-                        record.callback?.Invoke(inventoryResult);
-                        m_DeserializationResults.Remove(results.m_handle);
+                        record.Callback?.Invoke(inventoryResult);
+                        _mDeserializationResults.Remove(results.m_handle);
                     }
                     else
                     {
-                        OnSteamInventoryResultReady?.Invoke(inventoryResult);
+                        SteamTools.Events.InvokeOnInventoryResultReady(inventoryResult);
 
-                        if (m_ResultHandles.ContainsKey(results.m_handle))
+                        if (_mResultHandles.ContainsKey(results.m_handle))
                         {
-                            m_ResultHandles[results.m_handle]?.Invoke(inventoryResult);
-                            m_ResultHandles.Remove(results.m_handle);
+                            _mResultHandles[results.m_handle]?.Invoke(inventoryResult);
+                            _mResultHandles.Remove(results.m_handle);
                         }
                     }
 

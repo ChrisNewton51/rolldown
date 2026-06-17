@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using System.Linq;
@@ -7,43 +7,45 @@ using UnityEngine;
 namespace Heathen.SteamworksIntegration
 {
     /// <summary>
-    /// Steam Groups aka Steam Clans structure
+    /// Represents a Steam Clan (Group) and provides access to its related data and functionalities.
     /// </summary>
     /// <remarks>
-    /// This is interchangeable with CSteamID and simply extends it with Clan related accessor features
+    /// This structure is used to interact with Steam Clans, also referred to as Steam Groups.
+    /// It extends the functionalities of <see cref="CSteamID"/> to include clan-specific features.
     /// <para>
-    /// You can fetch the list of available clans via API.Clans.Client.GetClans()
+    /// Provides properties and methods for accessing clan details, such as its name, tag, owner, officers, members,
+    /// and other relevant information. Utility methods for creating, comparing, and interacting with clans
+    /// are also included.
     /// </para>
     /// </remarks>
     [Serializable]
-    public struct ClanData : IEquatable<CSteamID>, IEquatable<ClanData>, IEquatable<ulong>, IComparable<CSteamID>, IComparable<ClanData>, IComparable<ulong>
+    public struct ClanData : IEquatable<CSteamID>, IEquatable<ClanData>, IEquatable<ulong>, IComparable<CSteamID>,
+        IComparable<ClanData>, IComparable<ulong>
     {
-        [SerializeField]
-        private ulong id;
         /// <summary>
-        /// The native <see cref="Steamworks.CSteamID"/> representation of this Clan
+        /// The unique 64-bit identifier representing the Steam clan.
         /// </summary>
-        public readonly CSteamID SteamId
-        {
-            get => new CSteamID(id);
-        }
+        [SerializeField] private ulong id;
+
         /// <summary>
-        /// The <see cref="AccountID_t"/> portion of the native <see cref="CSteamID"/> representation of this Clan
+        /// Represents the Steam identifier (CSteamID) associated with this clan.
         /// </summary>
-        public readonly AccountID_t AccountId
-        {
-            get => SteamId.GetAccountID();
-        }
+        public readonly CSteamID SteamId => new CSteamID(id);
+
         /// <summary>
-        /// The primitive <see cref="uint"/> value of the <see cref="AccountId"/>
+        /// Represents the account identifier associated with the clan's Steam data.
         /// </summary>
-        public readonly uint FriendId
-        {
-            get => SteamId.GetAccountID().m_AccountID;
-        }
+        public readonly AccountID_t AccountId => SteamId.GetAccountID();
+
         /// <summary>
-        /// Is this Clan value a valid value.
-        /// This does not indicate it is a clan simply that structurally the data is possibly a clan
+        /// The identifier representing the account ID of the friend associated with this clan.
+        /// </summary>
+        public readonly uint FriendId => SteamId.GetAccountID().m_AccountID;
+
+        /// <summary>
+        /// Indicates whether the current clan data instance is valid.
+        /// A valid clan is represented by a non-nil Steam ID, belongs to the 'k_EAccountTypeClan' account type,
+        /// and exists in the public universe.
         /// </summary>
         public readonly bool IsValid
         {
@@ -59,96 +61,117 @@ namespace Heathen.SteamworksIntegration
                     return true;
             }
         }
+
         /// <summary>
-        /// The icon of this clan if loaded
+        /// Provides the avatar image associated with the clan as a Texture2D.
+        /// This property retrieves the preloaded avatar for the clan represented by this instance.
         /// </summary>
         public readonly Texture2D Icon => API.Friends.Client.GetLoadedAvatar(this);
+
         /// <summary>
-        /// The name of this clan as seen by this user, this will account for language specific names if any
+        /// The display name of the Steam clan associated with this instance.
         /// </summary>
         public readonly string Name => API.Clans.Client.GetName(this);
+
         /// <summary>
-        /// The tags for this clan if any
+        /// The tag or shorthand display name associated with the Steam clan.
         /// </summary>
         public readonly string Tag => API.Clans.Client.GetTag(this);
+
         /// <summary>
-        /// The owner of this clan
+        /// The user who owns the clan represented by this instance.
         /// </summary>
         public readonly UserData Owner => API.Clans.Client.GetOwner(this);
+
         /// <summary>
-        /// Lists the officers of the clan
+        /// Provides access to the list of officers associated with the clan.
+        /// Officers are users with administrative or managerial roles within the clan.
         /// </summary>
         public readonly UserData[] Officers => API.Clans.Client.GetOfficers(this);
+
         /// <summary>
-        /// The number of members in chat at the moment
+        /// Gets the number of members currently in the clan's chat.
         /// </summary>
         public readonly int NumberOfMembersInChat => API.Clans.Client.GetChatMemberCount(this);
+
         /// <summary>
-        /// The collection of members in chat at current
+        /// Provides an array of users currently present in the clan's chat.
         /// </summary>
         public readonly UserData[] MembersInChat => API.Clans.Client.GetChatMembers(this);
+
         /// <summary>
-        /// Is this clan an official game group
+        /// Indicates whether the current clan is the official game group of the associated application.
         /// </summary>
         public readonly bool IsOfficialGameGroup => API.Clans.Client.IsClanOfficialGameGroup(this);
+
         /// <summary>
-        /// Is this clan a public group
+        /// Indicates whether the clan is public.
         /// </summary>
         public readonly bool IsPublic => API.Clans.Client.IsClanPublic(this);
+
         /// <summary>
-        /// Is the user the owner of this clan
+        /// Indicates whether the current user is the owner of the Steam clan.
         /// </summary>
         public readonly bool IsUserOwner => Owner == UserData.Me;
+
         /// <summary>
-        /// Is the user an officer of this clan
+        /// Indicates whether the current user is one of the officers in the clan.
         /// </summary>
         public readonly bool IsUserOfficer => Officers.Any(p => p == UserData.Me);
+
         /// <summary>
-        /// Get all the clans this user is a member of
+        /// Retrieves all the clans that the user is currently a member of.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>An array of ClanData objects representing the user's clans.</returns>
         public static ClanData[] Get() => API.Clans.Client.GetClans();
+
         /// <summary>
-        /// Get the clan represented by this account ID
+        /// Retrieves the clan data associated with the specified account ID.
         /// </summary>
-        /// <param name="accountId"></param>
-        /// <returns></returns>
-        public static ClanData Get(uint accountId) => new CSteamID(new AccountID_t(accountId), EUniverse.k_EUniversePublic, EAccountType.k_EAccountTypeClan);
+        /// <param name="accountId">The account ID representing the clan.</param>
+        /// <returns>A ClanData object corresponding to the given account ID.</returns>
+        public static ClanData Get(uint accountId) => new CSteamID(new AccountID_t(accountId),
+            EUniverse.k_EUniversePublic, EAccountType.k_EAccountTypeClan);
+
         /// <summary>
-        /// Get the clan represented by this account ID
+        /// Retrieves the clan associated with the specified account ID.
         /// </summary>
-        /// <param name="accountId"></param>
-        /// <returns></returns>
-        public static ClanData Get(AccountID_t accountId) => new CSteamID(accountId, EUniverse.k_EUniversePublic, EAccountType.k_EAccountTypeClan);
+        /// <param name="accountId">The account ID representing the clan.</param>
+        /// <returns>A <see cref="ClanData"/> instance representing the specified clan.</returns>
+        public static ClanData Get(AccountID_t accountId) =>
+            new CSteamID(accountId, EUniverse.k_EUniversePublic, EAccountType.k_EAccountTypeClan);
+
         /// <summary>
-        /// Get the clan represented by this CSteamID value
+        /// Retrieves all clans available to the client.
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
+        /// <returns>An array of ClanData objects representing all clans available to the client.</returns>
         public static ClanData Get(ulong id) => new ClanData { id = id };
+
         /// <summary>
-        /// Get the clan represented by this CSteamID
+        /// Retrieves all the clans that the user is currently a member of.
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
+        /// <returns>An array of ClanData objects representing the user's clans.</returns>
         public static ClanData Get(CSteamID id) => new ClanData { id = id.m_SteamID };
+
         /// <summary>
-        /// Allows the user to join Steam group (clan) chats right within the game.
+        /// Allows the user to join a Steam group (clan) chat room directly from the game.
         /// </summary>
         /// <remarks>
-        /// The joins the "old" group chat used in Steam not the new channel based chat system introduced 2018-2019.
-        /// It is still usable but will not reflect the chat seen in the Steam client. 
-        /// It can be used as a global chat for in-game players as connecting via the Steam API is the only known way to connect to this legacy chat system.
+        /// This connects to the legacy Steam group chat system and does not represent the channel-based system introduced in the Steam client in 2018-2019.
+        /// It can be an effective way to provide in-game global chat functionality via the Steam API.
         /// </remarks>
-        /// <param name="callback"></param>
+        /// <param name="callback">A callback invoked with the resulting ChatRoom object and a boolean indicating success or failure.</param>
         public readonly void JoinChat(Action<ChatRoom, bool> callback) => API.Clans.Client.JoinChatRoom(id, callback);
-        /// <summary>
-        /// Request the system to locate and load the clan's icon
-        /// </summary>
-        /// <param name="callback"></param>
-        public readonly void LoadIcon(Action<Texture2D> callback) => API.Friends.Client.GetFriendAvatar(SteamId, callback);
 
-    #region Boilerplate
+        /// <summary>
+        /// Requests the system to locate and load the icon for the clan.
+        /// </summary>
+        /// <param name="callback">A callback function that will be invoked with the loaded icon as a Texture2D object.</param>
+        public readonly void LoadIcon(Action<Texture2D> callback) =>
+            API.Friends.Client.GetFriendAvatar(SteamId, callback);
+
+        #region Boilerplate
+
         public readonly int CompareTo(CSteamID other)
         {
             return id.CompareTo(other.m_SteamID);

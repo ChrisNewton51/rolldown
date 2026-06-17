@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using System.IO;
@@ -7,92 +7,97 @@ using UnityEngine;
 namespace Heathen.SteamworksIntegration
 {
     /// <summary>
-    /// Represents a Downloadable Content app.
-    /// <para>Downloadable Content e.g. DLC are child apps of a parent 'game' app. They must be created in Steam Developer Portal and then can be access in code via their id using this structure</para>
+    /// Represents a structure for managing downloadable content (DLC) within the Steamworks integration.
+    /// <para>This structure provides information and operations related to a specific DLC, such as its ID, availability, installation status, subscription status, and more. It allows developers to retrieve and interact with DLC content configured in the Steam Developer Portal.</para>
     /// </summary>
     [Serializable]
-    public struct DlcData : IEquatable<AppId_t>, IEquatable<uint>, IEquatable<AppData>, IComparable<AppData>, IComparable<AppId_t>, IComparable<uint>
+    public struct DlcData : IEquatable<AppId_t>, IEquatable<uint>, IEquatable<AppData>, IComparable<AppData>,
+        IComparable<AppId_t>, IComparable<uint>
     {
-        [SerializeField]
-        private uint id;
         /// <summary>
-        /// The native <see cref="AppId_t"/> representation of this DLC
+        /// The unique identifier representing the downloadable content (DLC).
+        /// </summary>
+        [SerializeField] private uint id;
+
+        /// <summary>
+        /// Represents the unique application identifier (App ID) for a downloadable content (DLC).
         /// </summary>
         public readonly AppId_t AppId => new AppId_t(id);
+
         /// <summary>
-        /// The primitive <see cref="uint"/> representation of this DLC
+        /// Gets the unique identifier of the downloadable content (DLC).
         /// </summary>
         public readonly uint Id => id;
+
         /// <summary>
-        /// Checks if the DLC in question is available or not
+        /// Indicates whether the downloadable content (DLC) is currently available for use or not.
         /// </summary>
         public readonly bool Available
         {
             get
             {
-                if (API.App.dlcAppCash.ContainsKey(Id))
-                    return API.App.dlcAppCash[Id].available;
+                if (API.App.DlcAppCash.TryGetValue(Id, out var cash))
+                    return cash.available;
                 else
                 {
-                    bool _available = false;
+                    bool available = false;
                     var count = SteamApps.GetDLCCount();
                     for (int i = 0; i < count; i++)
                     {
                         if (SteamApps.BGetDLCDataByIndex(i, out var pAppID, out var pAvailable, out var pName, 512))
                         {
-                            if (API.App.dlcAppCash.ContainsKey(pAppID.m_AppId))
-                                API.App.dlcAppCash[pAppID.m_AppId] = (pName, pAvailable);
-                            else
-                                API.App.dlcAppCash.Add(pAppID.m_AppId, (pName, pAvailable));
+                            API.App.DlcAppCash[pAppID.m_AppId] = (pName, pAvailable);
 
                             if (pAppID.m_AppId == id)
-                                _available = pAvailable;
+                                available = pAvailable;
                         }
                     }
-                    return _available;
+                    return available;
                 }
             }
         }
+
         /// <summary>
-        /// Returns the DLC's name as visible to the user
+        /// The name of the downloadable content (DLC) associated with this instance.
+        /// If the name is not cached, it retrieves the name from Steam data and updates the cache.
         /// </summary>
         public readonly string Name
         {
             get
             {
-                if (API.App.dlcAppCash.ContainsKey(Id))
-                    return API.App.dlcAppCash[Id].name;
+                if (API.App.DlcAppCash.TryGetValue(Id, out var cash))
+                    return cash.name;
                 else
                 {
-                    string _name = "None Found";
+                    string name = "None Found";
                     var count = SteamApps.GetDLCCount();
                     for (int i = 0; i < count; i++)
                     {
                         if (SteamApps.BGetDLCDataByIndex(i, out var pAppID, out var pAvailable, out var pName, 512))
                         {
-                            if (API.App.dlcAppCash.ContainsKey(pAppID.m_AppId))
-                                API.App.dlcAppCash[pAppID.m_AppId] = (pName, pAvailable);
-                            else
-                                API.App.dlcAppCash.Add(pAppID.m_AppId, (pName, pAvailable));
+                            API.App.DlcAppCash[pAppID.m_AppId] = (pName, pAvailable);
 
                             if (pAppID.m_AppId == id)
-                                _name = pName;
+                                name = pName;
                         }
                     }
-                    return _name;
+                    return name;
                 }
             }
         }
+
         /// <summary>
-        /// Does the user "own" this DLC.
+        /// Indicates whether the user currently subscribes to the downloadable content (DLC).
         /// </summary>
         public readonly bool IsSubscribed => SteamApps.BIsSubscribedApp(this);
+
         /// <summary>
-        /// Is this DLC installed
+        /// Indicates whether the downloadable content (DLC) associated with this instance is currently installed.
         /// </summary>
         public readonly bool IsInstalled => SteamApps.BIsDlcInstalled(this);
+
         /// <summary>
-        /// The location where this DLC is installed
+        /// The directory where the downloadable content (DLC) is installed on the local system.
         /// </summary>
         public readonly DirectoryInfo InstallDirectory
         {
@@ -104,28 +109,26 @@ namespace Heathen.SteamworksIntegration
                 }
                 else
                 {
-                    return default;
+                    return null;
                 }
             }
         }
+
         /// <summary>
-        /// The download progress of this DLC if known
+        /// Represents the current download progress of the downloadable content (DLC) as a value between 0 and 1.
+        /// Returns 0 if the DLC is not being downloaded.
         /// </summary>
         public readonly float DownloadProgress
         {
             get
             {
-                var IsDownloading = SteamApps.GetDlcDownloadProgress(this, out ulong current, out ulong total);
-                if (IsDownloading)
-                {
-                    return Convert.ToSingle(current / (double)total);
-                }
-                else
-                    return 0f;
+                var isDownloading = SteamApps.GetDlcDownloadProgress(this, out ulong current, out ulong total);
+                return isDownloading ? Convert.ToSingle(current / (double)total) : 0f;
             }
         }
+
         /// <summary>
-        /// The first known date of purchase for this DLC
+        /// Represents the earliest recorded time at which the associated downloadable content (DLC) was purchased.
         /// </summary>
         public readonly DateTime EarliestPurchaseTime
         {
@@ -137,74 +140,76 @@ namespace Heathen.SteamworksIntegration
                 return dateTime;
             }
         }
+
         /// <summary>
-        /// Request that this DLC be installed
+        /// Initiates the installation process for the specified DLC.
         /// </summary>
         public readonly void Install()
         {
             SteamApps.InstallDLC(this);
         }
+
         /// <summary>
-        /// Request that this DLC be uninstalled
+        /// Initiates the uninstallation process for the specified DLC.
         /// </summary>
         public readonly void Uninstall()
         {
             SteamApps.UninstallDLC(this);
         }
+
         /// <summary>
-        /// Open the Steam overlay to the store page for this DLC with the indicated flags
+        /// Opens the Steam overlay to the store page for the current DLC,
+        /// using the specified overlay behaviour flags.
         /// </summary>
-        /// <param name="flag">The <see cref="EOverlayToStoreFlag"/> to open the store page with</param>
-        public readonly void OpenStore(EOverlayToStoreFlag flag = EOverlayToStoreFlag.k_EOverlayToStoreFlag_None) => SteamFriends.ActivateGameOverlayToStore(this, flag);
+        /// <param name="flag">The <see cref="EOverlayToStoreFlag"/> determining how the store page will be displayed.</param>
+        public readonly void OpenStore(EOverlayToStoreFlag flag = EOverlayToStoreFlag.k_EOverlayToStoreFlag_None) =>
+            SteamFriends.ActivateGameOverlayToStore(this, flag);
+
         /// <summary>
-        /// Construct a new <see cref="DlcData"/> based on an <see cref="AppId_t"/> and known availability and name values.
-        /// <para>
-        /// This is an internal feature for the editor tools and in general shouldn't be used by developers at runtime.
-        /// </para>
+        /// Represents downloadable content (DLC) data, including its unique identifier, availability status, and name.
         /// </summary>
-        /// <param name="id"></param>
-        /// <param name="available"></param>
-        /// <param name="name"></param>
         public DlcData(AppId_t id, bool available, string name)
         {
             this.id = id.m_AppId;
-            if (API.App.dlcAppCash.ContainsKey(id.m_AppId))
-                API.App.dlcAppCash[id.m_AppId] = (name, available);
-            else
-                API.App.dlcAppCash.Add(id.m_AppId, (name, available));
+            API.App.DlcAppCash[id.m_AppId] = (name, available);
         }
+
         /// <summary>
-        /// Get <see cref="DlcData"/> based on a <see cref="uint"/> representing its App ID
+        /// Retrieves a <see cref="DlcData"/> instance based on a specified application identifier.
         /// </summary>
-        /// <param name="appId">The ID of the App the DLC is known by</param>
-        /// <returns></returns>
+        /// <param name="appId">The unique identifier of the application associated with the DLC.</param>
+        /// <returns>A <see cref="DlcData"/> structure representing the specified DLC.</returns>
         public static DlcData Get(uint appId) => appId;
+
         /// <summary>
-        /// Get <see cref="DlcData"/> based on a <see cref="AppId_t"/> representing the Dlc in Steam
+        /// Retrieves a <see cref="DlcData"/> instance using the specified <see cref="AppId_t"/>.
         /// </summary>
-        /// <param name="appId">The App ID the DLC is known by</param>
-        /// <returns></returns>
+        /// <param name="appId">The Steam App ID associated with the desired DLC.</param>
+        /// <returns>A <see cref="DlcData"/> instance representing the specified DLC.</returns>
         public static DlcData Get(AppId_t appId) => appId;
+
         /// <summary>
-        /// Get <see cref="DlcData"/> based on a <see cref="AppData"/> representing its Steam App
+        /// Retrieves the <see cref="DlcData"/> associated with the given <see cref="AppData"/> object.
         /// </summary>
-        /// <param name="appData"></param>
-        /// <returns></returns>
+        /// <param name="appData">The <see cref="AppData"/> object representing the Steam application.</param>
+        /// <returns>The corresponding <see cref="DlcData"/> for the provided <see cref="AppData"/>.</returns>
         public static DlcData Get(AppData appData) => appData.AppId;
 
         #region Boilerplate
+
         public override string ToString()
         {
             return id.ToString();
         }
+
         public readonly int CompareTo(AppData other)
         {
-            return id.CompareTo(other.AppId);
+            return id.CompareTo(other.AppId.m_AppId);
         }
 
         public readonly int CompareTo(AppId_t other)
         {
-            return id.CompareTo(other);
+            return id.CompareTo(other.m_AppId);
         }
 
         public readonly int CompareTo(uint other)
@@ -229,12 +234,12 @@ namespace Heathen.SteamworksIntegration
 
         public readonly bool Equals(AppId_t other)
         {
-            return id.Equals(other);
+            return id.Equals(other.m_AppId);
         }
 
         public readonly bool Equals(AppData other)
         {
-            return id.Equals(other.AppId);
+            return id.Equals(other.AppId.m_AppId);
         }
 
         public static bool operator ==(DlcData l, DlcData r) => l.id == r.id;

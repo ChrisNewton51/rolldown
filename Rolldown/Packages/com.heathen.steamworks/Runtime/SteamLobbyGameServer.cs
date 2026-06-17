@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using UnityEngine;
 
@@ -9,22 +9,22 @@ namespace Heathen.SteamworksIntegration
     [RequireComponent(typeof(SteamLobbyData))]
     public class SteamLobbyGameServer : MonoBehaviour
     {
-        private SteamLobbyData m_Inspector;
+        private SteamLobbyData _mInspector;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamLobbyData>();
-            API.Matchmaking.Client.OnLobbyGameCreated.AddListener(GlobalGameCreated);
+            _mInspector = GetComponent<SteamLobbyData>();
+            SteamTools.Events.OnLobbyGameServer += GlobalGameCreated;
         }
 
         private void OnDestroy()
         {
-            API.Matchmaking.Client.OnLobbyGameCreated.RemoveListener(GlobalGameCreated);
+            SteamTools.Events.OnLobbyGameServer -= GlobalGameCreated;
         }
 
         private bool EnsureOwner(out LobbyData data)
         {
-            data = m_Inspector.Data;
+            data = _mInspector.Data;
             if (!data.IsValid)
             {
                 Debug.LogWarning($"[{nameof(SteamLobbyGameServer)}] No lobby to set");
@@ -38,15 +38,15 @@ namespace Heathen.SteamworksIntegration
             return true;
         }
 
-        private void GlobalGameCreated(LobbyGameCreated_t arg0)
+        private void GlobalGameCreated(LobbyData lobby, CSteamID serverId, string ip, ushort port)
         {
-            if (arg0.m_ulSteamIDLobby == m_Inspector.Data)
+            if (lobby == _mInspector.Data)
             {
                 var gameServer = new LobbyGameServer
                 {
-                    id = new CSteamID(arg0.m_ulSteamIDGameServer),
-                    ipAddress = arg0.m_unIP,
-                    port = arg0.m_usPort,
+                    id = serverId,
+                    IpAddress = ip,
+                    port = port,
                 };
             }
         }
@@ -55,39 +55,39 @@ namespace Heathen.SteamworksIntegration
         public void SetListenServer()
         {
             if (EnsureOwner(out var data))
-                m_Inspector.Data.SetGameServer();
+                _mInspector.Data.SetGameServer();
         }
         public void SetDedicatedSteamGameServer(CSteamID serverId)
         {
             if (EnsureOwner(out var data))
-                m_Inspector.Data.SetGameServer(serverId);
+                _mInspector.Data.SetGameServer(serverId);
         }
         public void SetDedicatedGenericServer(string ip, ushort port)
         {
             if (EnsureOwner(out var data))
-                m_Inspector.Data.SetGameServer(ip, port);
+                _mInspector.Data.SetGameServer(ip, port);
         }
         public void SetGameServer(CSteamID id, string ip, ushort port)
         {
             if (EnsureOwner(out var data))
-                m_Inspector.Data.SetGameServer(ip, port, id);
+                _mInspector.Data.SetGameServer(ip, port, id);
         }
 
-        public bool HasGameServer() => m_Inspector.Data.IsValid && m_Inspector.Data.HasServer;
+        public bool HasGameServer() => _mInspector.Data.IsValid && _mInspector.Data.HasServer;
 
         public LobbyGameServer? GetGameServer()
         {
-            if (m_Inspector.Data.IsValid && m_Inspector.Data.HasServer)
-                return m_Inspector.Data.GameServer;
+            if (_mInspector.Data.IsValid && _mInspector.Data.HasServer)
+                return _mInspector.Data.GameServer;
             return null;
         }
 
         public string GetIdAddress()
         {
-            if (m_Inspector.Data.IsValid)
+            if (_mInspector.Data.IsValid)
             {
-                if (m_Inspector.Data.HasServer)
-                    return m_Inspector.Data.GameServer.id.ToString();
+                if (_mInspector.Data.HasServer)
+                    return _mInspector.Data.GameServer.id.ToString();
                 else
                     return string.Empty;
             }
@@ -99,10 +99,10 @@ namespace Heathen.SteamworksIntegration
         }
         public string GetIpAddress()
         {
-            if (m_Inspector.Data.IsValid)
+            if (_mInspector.Data.IsValid)
             {
-                if (m_Inspector.Data.HasServer)
-                    return m_Inspector.Data.GameServer.IpAddress.ToString();
+                if (_mInspector.Data.HasServer)
+                    return _mInspector.Data.GameServer.IpAddress.ToString();
                 else
                     return string.Empty;
             }
@@ -114,10 +114,10 @@ namespace Heathen.SteamworksIntegration
         }
         public ushort GetPort()
         {
-            if (m_Inspector.Data.IsValid)
+            if (_mInspector.Data.IsValid)
             {
-                if (m_Inspector.Data.HasServer)
-                    return m_Inspector.Data.GameServer.port;
+                if (_mInspector.Data.HasServer)
+                    return _mInspector.Data.GameServer.port;
                 else
                     return 0;
             }

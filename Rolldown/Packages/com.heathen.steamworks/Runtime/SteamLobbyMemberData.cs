@@ -1,10 +1,11 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 using System;
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.Serialization;
 
 namespace Heathen.SteamworksIntegration
 {
@@ -15,15 +16,15 @@ namespace Heathen.SteamworksIntegration
     {
         public LobbyMemberData Data
         {
-            get => m_Data;
+            get => _mData;
             set
             {
-                m_Data = value;
-                if(m_UserData == null)
-                    m_UserData = GetComponent<SteamUserData>();
-                m_UserData.Data = value.user;
-                if (m_Events != null)
-                    m_Events.onMetadataChanged?.Invoke(new() { lobby = m_Data.lobby, member = m_Data.user.IsValid ? m_Data : null });
+                _mData = value;
+                if(_mUserData == null)
+                    _mUserData = GetComponent<SteamUserData>();
+                _mUserData.Data = value.user;
+                if (_mEvents != null)
+                    _mEvents.onMetadataChanged?.Invoke(_mData.lobby, _mData);
             }
         }
         
@@ -34,24 +35,25 @@ namespace Heathen.SteamworksIntegration
             get => Data.lobby;
         }
 
-        private LobbyMemberData m_Data;
-        private SteamUserData m_UserData;
-        private SteamLobbyMemberDataEvents m_Events;
+        private LobbyMemberData _mData;
+        private SteamUserData _mUserData;
+        private SteamLobbyMemberDataEvents _mEvents;
+        [FormerlySerializedAs("m_Delegates")] 
         [SerializeField]
-        private List<string> m_Delegates;
+        private List<string> Delegates;
 
         private void Awake()
         {
-            m_UserData = GetComponent<SteamUserData>();
-            m_Events = GetComponent<SteamLobbyMemberDataEvents>();
+            _mUserData = GetComponent<SteamUserData>();
+            _mEvents = GetComponent<SteamLobbyMemberDataEvents>();
         }
     }
 
 #if UNITY_EDITOR
-    [UnityEditor.CustomEditor(typeof(SteamLobbyMemberData), true)]
+    [CustomEditor(typeof(SteamLobbyMemberData), true)]
     public class SteamLobbyMemberDataEditor : ModularEditor
     {
-        private SteamToolsSettings settings;
+        private SteamToolsSettings _settings;
 
         // --- Allowed types for this editor ---
         protected override Type[] AllowedTypes => new Type[]
@@ -62,7 +64,7 @@ namespace Heathen.SteamworksIntegration
 
         private void OnEnable()
         {
-            settings = SteamToolsSettings.GetOrCreate();
+            _settings = SteamToolsSettings.GetOrCreate();
         }
 
         public override void OnInspectorGUI()
@@ -70,7 +72,7 @@ namespace Heathen.SteamworksIntegration
             serializedObject.Update();
             DrawDefault(
                 "Project/Player/Steamworks"
-                , $"https://partner.steamgames.com/apps/landing/{settings.Get(settings.ActiveApp.Value).applicationId}"
+                , $"https://partner.steamgames.com/apps/landing/{_settings.Get(_settings.ActiveApp.Value).applicationId}"
                 , "https://kb.heathen.group/steam/features/lobby"
                 , "https://discord.gg/heathen-group-463483739612381204"
                 , null);

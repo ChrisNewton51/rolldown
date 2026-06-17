@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 
@@ -9,7 +9,7 @@ namespace Heathen.SteamworksIntegration
     {
         public ItemDetail[] items;
         public EResult result;
-        public DateTime timestamp;
+        public DateTime Timestamp;
     }
 }
 #endif

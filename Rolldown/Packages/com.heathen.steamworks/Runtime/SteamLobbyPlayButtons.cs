@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using UnityEngine;
 
@@ -12,17 +12,17 @@ namespace Heathen.SteamworksIntegration
 
         private void Awake()
         {
-            API.Matchmaking.Client.OnLobbyEnterSuccess?.AddListener(HandleLobbyEnter);
-            API.Matchmaking.Client.OnLobbyLeave?.AddListener(HandleLobbyLeave);
+            SteamTools.Events.OnLobbyEnterSuccess += HandleLobbyEnter;
+            SteamTools.Events.OnLobbyLeave += HandleLobbyLeave;
         }
 
         private void OnDestroy()
         {
-            API.Matchmaking.Client.OnLobbyEnterSuccess?.RemoveListener(HandleLobbyEnter);
-            API.Matchmaking.Client.OnLobbyLeave?.RemoveListener(HandleLobbyLeave);
+            SteamTools.Events.OnLobbyEnterSuccess -= HandleLobbyEnter;
+            SteamTools.Events.OnLobbyLeave -= HandleLobbyLeave;
         }
 
-        private void HandleLobbyEnter(LobbyEnter_t arg0) => UpdateLobbyButtons();
+        private void HandleLobbyEnter(LobbyData lobby) => UpdateLobbyButtons();
 
         private void HandleLobbyLeave(LobbyData arg0) => UpdateLobbyButtons();
 

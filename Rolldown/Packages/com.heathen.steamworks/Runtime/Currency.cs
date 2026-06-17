@@ -1,89 +1,102 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 
 namespace Heathen.SteamworksIntegration
 {
+    /// <summary>
+    /// Provides functionality related to currencies, including their codes and symbols.
+    /// </summary>
     public static class Currency
     {
+        /// <summary>
+        /// Represents a set of currency codes corresponding to various currencies
+        /// used in different countries. These codes are used to identify currencies
+        /// in operations involving international monetary transactions.
+        /// </summary>
         public enum Code
         {
             Unknown,
-            AED,
-            ARS,
-            AUD,
-            BRL,
-            CAD,
-            CHF,
-            CLP,
-            CNY,
-            COP,
+            Aed,
+            Ars,
+            Aud,
+            Brl,
+            Cad,
+            Chf,
+            Clp,
+            Cny,
+            Cop,
             CRC,
-            EUR,
-            GBP,
-            HKD,
-            ILS,
-            IDR,
-            INR,
-            JPY,
-            KRW,
-            KWD,
-            KZT,
-            MXN,
-            MYR,
-            NOK,
-            NZD,
-            PEN,
-            PHP,
-            PLN,
-            QAR,
-            RUB,
-            SAR,
-            SGD,
-            THB,
-            TRY,
-            TWD,
-            UAH,
-            USD,
-            UYU,
-            VND,
-            ZAR,
+            Eur,
+            Gbp,
+            Hkd,
+            Ils,
+            Idr,
+            Inr,
+            Jpy,
+            Krw,
+            Kwd,
+            Kzt,
+            Mxn,
+            Myr,
+            Nok,
+            Nzd,
+            Pen,
+            Php,
+            Pln,
+            Qar,
+            Rub,
+            Sar,
+            Sgd,
+            Thb,
+            Try,
+            Twd,
+            Uah,
+            Usd,
+            Uyu,
+            Vnd,
+            Zar,
         }
 
+        /// <summary>
+        /// Retrieves the currency symbol for a given currency code.
+        /// </summary>
+        /// <param name="code">The <see cref="Currency.Code"/> representing the desired currency.</param>
+        /// <returns>A string containing the symbol of the specified currency. If the currency code is unknown, an empty string or a default value is returned.</returns>
         public static string GetSymbol(Code code)
         {
-            switch (code)
+            return code switch
             {
-                case Code.Unknown: return string.Empty;
-                case Code.AED: return "د.إ";
-                case Code.BRL: return "R$";
-                case Code.CHF: return "CHF";
-                case Code.CNY: return "¥";
-                case Code.CRC: return "₡";
-                case Code.EUR: return "€";
-                case Code.GBP: return "£";
-                case Code.ILS: return "₪";
-                case Code.IDR: return "Rp";
-                case Code.INR: return "₹";
-                case Code.JPY: return "¥";
-                case Code.KRW: return "₩";
-                case Code.KWD: return "د.ك";
-                case Code.KZT: return "лв";
-                case Code.MYR: return "RM";
-                case Code.NOK: return "kr";
-                case Code.PEN: return "S/.";
-                case Code.PHP: return "₱";
-                case Code.PLN: return "zł";
-                case Code.QAR: return "﷼";
-                case Code.RUB: return "₽";
-                case Code.SAR: return "﷼";
-                case Code.THB: return "฿";
-                case Code.TRY: return "₺";
-                case Code.TWD: return "NT$";
-                case Code.UAH: return "₴";
-                case Code.UYU: return "$U";
-                case Code.VND: return "₫";
-                case Code.ZAR: return "R";
-                default: return "$";
-            }
+                Code.Unknown => string.Empty,
+                Code.Aed => "د.إ",
+                Code.Brl => "R$",
+                Code.Chf => "CHF",
+                Code.Cny => "¥",
+                Code.CRC => "₡",
+                Code.Eur => "€",
+                Code.Gbp => "£",
+                Code.Ils => "₪",
+                Code.Idr => "Rp",
+                Code.Inr => "₹",
+                Code.Jpy => "¥",
+                Code.Krw => "₩",
+                Code.Kwd => "د.ك",
+                Code.Kzt => "лв",
+                Code.Myr => "RM",
+                Code.Nok => "kr",
+                Code.Pen => "S/.",
+                Code.Php => "₱",
+                Code.Pln => "zł",
+                Code.Qar => "﷼",
+                Code.Rub => "₽",
+                Code.Sar => "﷼",
+                Code.Thb => "฿",
+                Code.Try => "₺",
+                Code.Twd => "NT$",
+                Code.Uah => "₴",
+                Code.Uyu => "$U",
+                Code.Vnd => "₫",
+                Code.Zar => "R",
+                _ => "$"
+            };
         }
     }
 }

@@ -1,31 +1,37 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using UnityEngine;
 
 namespace Heathen.SteamworksIntegration
 {
+    /// <summary>
+    /// Updates a <see cref="TMPro.TextMeshProUGUI"/> label with the name of a <see cref="SteamInventoryItemData"/>.
+    /// </summary>
     [ModularComponent(typeof(SteamInventoryItemData), "Names", nameof(label))]
     [RequireComponent(typeof(SteamInventoryItemDataEvents))]
     [RequireComponent(typeof(SteamInventoryItemData))]
     [AddComponentMenu("")]
     public class SteamInventoryItemName : MonoBehaviour
     {
+        /// <summary>
+        /// The UI label used to display the name of the item.
+        /// </summary>
         public TMPro.TextMeshProUGUI label;
 
-        private SteamInventoryItemData m_Inspector;
-        private SteamInventoryItemDataEvents m_Events;
+        private SteamInventoryItemData _mInspector;
+        private SteamInventoryItemDataEvents _mEvents;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamInventoryItemData>();
-            m_Events = GetComponent<SteamInventoryItemDataEvents>();
+            _mInspector = GetComponent<SteamInventoryItemData>();
+            _mEvents = GetComponent<SteamInventoryItemDataEvents>();
 
-            m_Events.onChange?.AddListener(HandleChange);
+            _mEvents.onChange?.AddListener(HandleChange);
         }
 
         private void HandleChange()
         {
             if (label != null)
-                label.text = m_Inspector.Data.Name;
+                label.text = _mInspector.Data.Name;
         }
     }
 }

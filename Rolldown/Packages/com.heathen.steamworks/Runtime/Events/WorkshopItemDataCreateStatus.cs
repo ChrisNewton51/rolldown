@@ -1,15 +1,15 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 
 namespace Heathen.SteamworksIntegration
 {
     public struct WorkshopItemDataCreateStatus
     {
-        public bool hasError;
-        public string errorMessage;
-        public WorkshopItemEditorData data;
-        public CreateItemResult_t? createItemResult;
-        public SubmitItemUpdateResult_t? submitItemUpdateResult;
+        public bool HasError;
+        public string ErrorMessage;
+        public WorkshopItemEditorData Data;
+        public CreateItemResult_t? CreateItemResult;
+        public SubmitItemUpdateResult_t? SubmitItemUpdateResult;
     }
 }
 #endif

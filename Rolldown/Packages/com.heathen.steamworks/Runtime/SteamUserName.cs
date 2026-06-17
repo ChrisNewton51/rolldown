@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Heathen.SteamworksIntegration.API;
 using Steamworks;
 using UnityEngine;
@@ -12,28 +12,28 @@ namespace Heathen.SteamworksIntegration
     {
         public TMPro.TextMeshProUGUI label;
 
-        private SteamUserData m_SteamUserData;
+        private SteamUserData _mSteamUserData;
 
         private void Awake()
         {
-            m_SteamUserData = GetComponent<SteamUserData>();
-            if (m_SteamUserData.Data.IsValid)
+            _mSteamUserData = GetComponent<SteamUserData>();
+            if (_mSteamUserData.Data.IsValid)
             {
-                label.text = m_SteamUserData.Data.Name;
+                label.text = _mSteamUserData.Data.Name;
             }
-            m_SteamUserData.onChanged.AddListener(HandlePersonaStateChanged);
+            _mSteamUserData.onChanged.AddListener(HandlePersonaStateChanged);
         }
 
         private void OnDestroy()
         {
-            m_SteamUserData.onChanged.RemoveListener(HandlePersonaStateChanged);
+            _mSteamUserData.onChanged.RemoveListener(HandlePersonaStateChanged);
         }
 
-        private void HandlePersonaStateChanged(PersonaStateChange arg0)
+        private void HandlePersonaStateChanged(UserData user, EPersonaChange flag)
         {
-            if (m_SteamUserData.Data.IsValid && Friends.Client.PersonaChangeHasFlag(arg0.Flags, EPersonaChange.k_EPersonaChangeName))
+            if (_mSteamUserData.Data.IsValid && Friends.Client.PersonaChangeHasFlag(flag, EPersonaChange.k_EPersonaChangeName))
             {
-                label.text = m_SteamUserData.Data.Name;
+                label.text = _mSteamUserData.Data.Name;
             }
         }
     }

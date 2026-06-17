@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -6,33 +6,45 @@ using UnityEngine;
 
 namespace Heathen.SteamworksIntegration
 {
+    /// <summary>
+    /// Represents the data of a Steam Game Server.
+    /// </summary>
     [AddComponentMenu("Steamworks/Game Server")]
-    [HelpURL("https://kb.heathen.group/steam/features/authentication")]
+    [HelpURL("https://heathen.group/kb/steam-features-authentication/")]
     public class SteamGameServerData : MonoBehaviour
     {
+        /// <summary>
+        /// Gets or sets the game server data.
+        /// </summary>
         public GameServerData Data
         {
-            get => m_Data;
+            get => _mData;
             set
             {
-                m_Data = value;
-                if (m_Events != null)
-                    m_Events.onChange?.Invoke();
+                _mData = value;
+                if (_mEvents != null)
+                    _mEvents.onChange?.Invoke();
             }
         }
 
-        private GameServerData m_Data;
-        private SteamGameServerEvents m_Events;
+        private GameServerData _mData;
+        private SteamGameServerEvents _mEvents;
 
         private void Awake()
         {
-            m_Events = GetComponent<SteamGameServerEvents>();
+            _mEvents = GetComponent<SteamGameServerEvents>();
         }
     }
 #if UNITY_EDITOR
+    /// <summary>
+    /// Custom editor for the <see cref="SteamGameServerData"/> component.
+    /// </summary>
     [CustomEditor(typeof(SteamGameServerData), true)]
     public class SteamGameServerDataEditor : Editor
     {
+        /// <summary>
+        /// Renders the inspector GUI for the Steam Game Server Data component.
+        /// </summary>
         public override void OnInspectorGUI()
         {
             serializedObject.Update();

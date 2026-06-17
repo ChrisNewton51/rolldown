@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using UnityEngine;
@@ -16,6 +16,9 @@ namespace Heathen.SteamworksIntegration
         /// </summary>
         [SerializeField]
         private string id;
+        /// <summary>
+        /// The API Name as it appears in the Steamworks portal.
+        /// </summary>
         public readonly string ApiName => id;
         /// <summary>
         /// The float value of the stat
@@ -26,6 +29,11 @@ namespace Heathen.SteamworksIntegration
             API.StatsAndAchievements.Client.GetStat(id, out float value);
             return value;
         }
+        /// <summary>
+        /// The float value of the stat for the specified user
+        /// </summary>
+        /// <param name="user">The user to get the stat for</param>
+        /// <returns></returns>
         public readonly float FloatValue(UserData user)
         {
             API.StatsAndAchievements.Client.GetStat(user, id, out float value);
@@ -40,6 +48,11 @@ namespace Heathen.SteamworksIntegration
             API.StatsAndAchievements.Client.GetStat(id, out int value);
             return value;
         }
+        /// <summary>
+        /// The int value of the stat for the specified user
+        /// </summary>
+        /// <param name="user">The user to get the stat for</param>
+        /// <returns></returns>
         public readonly int IntValue(UserData user)
         {
             API.StatsAndAchievements.Client.GetStat(user, id, out int value);
@@ -90,56 +103,100 @@ namespace Heathen.SteamworksIntegration
         /// Store the value set to the Steam backend
         /// </summary>
         public readonly void Store() => API.StatsAndAchievements.Client.StoreStats();
-
+        /// <summary>
+        /// Set the value of the stat on the server
+        /// </summary>
+        /// <param name="user">The user to set the value for</param>
+        /// <param name="value">The value to set</param>
         public readonly void ServerSetValue(UserData user, int value) => API.StatsAndAchievements.Server.SetUserStat(user, this, value);
+        /// <summary>
+        /// Set the value of the stat on the server
+        /// </summary>
+        /// <param name="user">The user to set the value for</param>
+        /// <param name="value">The value to set</param>
         public readonly void ServerSetValue(UserData user, float value) => API.StatsAndAchievements.Server.SetUserStat(user, this, value);
+        /// <summary>
+        /// Get the value of the stat on the server
+        /// </summary>
+        /// <param name="user">The user to get the value for</param>
+        /// <param name="value">The value</param>
+        /// <returns>True if successful</returns>
         public readonly bool ServerGetValue(UserData user, out int value) => API.StatsAndAchievements.Server.GetUserStat(user, this, out value);
+        /// <summary>
+        /// Get the value of the stat on the server
+        /// </summary>
+        /// <param name="user">The user to get the value for</param>
+        /// <param name="value">The value</param>
+        /// <returns>True if successful</returns>
         public readonly bool ServerGetValue(UserData user, out float value) => API.StatsAndAchievements.Server.GetUserStat(user, this, out value);
 
         #region Boilerplate
-        public override readonly string ToString()
+        /// <inheritdoc/>
+        public readonly override string ToString()
         {
             return string.IsNullOrEmpty(id) ? string.Empty : id;
         }
-
+        /// <inheritdoc/>
         public readonly bool Equals(string other)
         {
             return id.Equals(other);
         }
-
+        /// <inheritdoc/>
         public readonly bool Equals(StatData other)
         {
             return id.Equals(other.id);
         }
-
+        /// <inheritdoc/>
         public readonly override bool Equals(object obj)
         {
             return id.Equals(obj);
         }
-
+        /// <inheritdoc/>
         public readonly override int GetHashCode()
         {
             return id.GetHashCode();
         }
-
+        /// <inheritdoc/>
         public readonly int CompareTo(StatData other)
         {
-            return id.CompareTo(other.id);
+            return string.Compare(id, other.id, StringComparison.Ordinal);
         }
-
+        /// <inheritdoc/>
         public readonly int CompareTo(string other)
         {
-            return id.CompareTo(other);
+            return string.Compare(id, other, StringComparison.Ordinal);
         }
-
+        /// <summary>
+        /// Equality operator
+        /// </summary>
         public static bool operator ==(StatData l, StatData r) => l.id == r.id;
+        /// <summary>
+        /// Equality operator
+        /// </summary>
         public static bool operator ==(string l, StatData r) => l == r.id;
+        /// <summary>
+        /// Equality operator
+        /// </summary>
         public static bool operator ==(StatData l, string r) => l.id == r;
+        /// <summary>
+        /// Inequality operator
+        /// </summary>
         public static bool operator !=(StatData l, StatData r) => l.id != r.id;
+        /// <summary>
+        /// Inequality operator
+        /// </summary>
         public static bool operator !=(string l, StatData r) => l != r.id;
+        /// <summary>
+        /// Inequality operator
+        /// </summary>
         public static bool operator !=(StatData l, string r) => l.id != r;
-
+        /// <summary>
+        /// Implicit string operator
+        /// </summary>
         public static implicit operator string(StatData c) => string.IsNullOrEmpty(c.id) ? string.Empty : c.id;
+        /// <summary>
+        /// Implicit StatData operator
+        /// </summary>
         public static implicit operator StatData(string id) => new() { id = id };
         #endregion
     }

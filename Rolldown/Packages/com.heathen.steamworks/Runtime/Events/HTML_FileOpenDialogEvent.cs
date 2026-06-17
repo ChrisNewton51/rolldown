@@ -1,10 +1,10 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using UnityEngine.Events;
 
 namespace Heathen.SteamworksIntegration
 {
     [System.Serializable]
-    public class HTML_FileOpenDialogEvent : UnityEvent<HTML_FileOpenDialog_t> { };
+    public class HtmlFileOpenDialogEvent : UnityEvent<HTML_FileOpenDialog_t> { };
 }
 #endif

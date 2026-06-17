@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System.IO;
 using UnityEngine;
@@ -11,40 +11,40 @@ namespace Heathen.SteamworksIntegration
     [RequireComponent(typeof(SteamWorkshopItemDetailData))]
     public class SteamWorkshopItemDetailEdit : MonoBehaviour
     {
-        [SettingsField(header = "Editor")]
+        [SettingsField(0, false,"Editor")]
         public SteamWorkshopItemEditorData component;
-        [SettingsField(header = "Quick Edits")]
+        [SettingsField(0, false,"Quick Edits")]
         public TMPro.TMP_InputField changeNote;
-        [SettingsField(header = "Quick Edits")]
+        [SettingsField(0, false,"Quick Edits")]
         public TMPro.TMP_InputField title;
-        [SettingsField(header = "Quick Edits")]
+        [SettingsField(0, false,"Quick Edits")]
         public TMPro.TMP_InputField description;
-        [SettingsField(header = "Quick Edits")]
+        [SettingsField(0, false,"Quick Edits")]
         public TMPro.TMP_InputField contentFolder;
-        [SettingsField(header = "Quick Edits")]
+        [SettingsField(0, false,"Quick Edits")]
         public TMPro.TMP_InputField previewImageFile;
-        [SettingsField(header = "Quick Edits")]
+        [SettingsField(0, false,"Quick Edits")]
         public TMPro.TMP_InputField metadata;
 
-        private SteamWorkshopItemDetailData m_Inspector;
-        private SteamWorkshopItemDetailDataEvents m_Events;
+        private SteamWorkshopItemDetailData _mInspector;
+        private SteamWorkshopItemDetailDataEvents _mEvents;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamWorkshopItemDetailData>();
-            m_Events = GetComponent<SteamWorkshopItemDetailDataEvents>();
+            _mInspector = GetComponent<SteamWorkshopItemDetailData>();
+            _mEvents = GetComponent<SteamWorkshopItemDetailDataEvents>();
 
-            m_Events.onChange.AddListener(HandleOnChanged);
+            _mEvents.onChange.AddListener(HandleOnChanged);
         }
 
         private void HandleOnChanged()
         {
             if (title != null)
-                title.text = m_Inspector.Data != null ? m_Inspector.Data.Title : string.Empty;
+                title.text = _mInspector.Data != null ? _mInspector.Data.Title : string.Empty;
             if (description != null)
-                description.text = m_Inspector.Data != null ? m_Inspector.Data.Title : string.Empty;
+                description.text = _mInspector.Data != null ? _mInspector.Data.Title : string.Empty;
             if (metadata != null)
-                metadata.text = m_Inspector.Data != null ? m_Inspector.Data.Title : string.Empty;
+                metadata.text = _mInspector.Data != null ? _mInspector.Data.Title : string.Empty;
         }
 
         private string GetChangeNote()
@@ -57,77 +57,77 @@ namespace Heathen.SteamworksIntegration
 
         public void SetEditor()
         {
-            if (m_Inspector.Data != null && component != null)
+            if (_mInspector.Data != null && component != null)
             {
                 component.Data = new()
                 {
-                    appId = m_Inspector.Data.ConsumerApp,
-                    description = m_Inspector.Data.Description,
-                    metadata = m_Inspector.Data.metadata,
-                    title = m_Inspector.Data.Title,
-                    publishedFileId = m_Inspector.Data.FileId,
-                    visibility = m_Inspector.Data.Visibility,
-                    tags = m_Inspector.Data.Tags,
-                    content = m_Inspector.Data.FolderPath,
+                    appId = _mInspector.Data.ConsumerApp,
+                    description = _mInspector.Data.Description,
+                    metadata = _mInspector.Data.metadata,
+                    title = _mInspector.Data.Title,
+                    PublishedFileId = _mInspector.Data.FileId,
+                    visibility = _mInspector.Data.Visibility,
+                    tags = _mInspector.Data.Tags,
+                    Content = _mInspector.Data.FolderPath,
                 };
             }
         }
 
         public void UpdateTitle()
         {
-            if (m_Inspector.Data != null
+            if (_mInspector.Data != null
                 && title != null
                 && !string.IsNullOrEmpty(title.text))
             {
-                m_Inspector.Data.UpdateTitle(title.text, GetChangeNote(), HandleEditResult);
+                _mInspector.Data.UpdateTitle(title.text, GetChangeNote(), HandleEditResult);
             }
         }
 
         public void UpdateDescription()
         {
-            if (m_Inspector.Data != null
+            if (_mInspector.Data != null
                 && description != null
                 && !string.IsNullOrEmpty(description.text))
             {
-                m_Inspector.Data.UpdateDescription(description.text, GetChangeNote(), HandleEditResult);
+                _mInspector.Data.UpdateDescription(description.text, GetChangeNote(), HandleEditResult);
             }
         }
 
         public void UpdateContent()
         {
-            if (m_Inspector.Data != null
+            if (_mInspector.Data != null
                 && contentFolder != null
                 && !string.IsNullOrEmpty(contentFolder.text)
                 && Directory.Exists(contentFolder.text))
             {
-                m_Inspector.Data.UpdateContent(new(contentFolder.text), GetChangeNote(), HandleEditResult);
+                _mInspector.Data.UpdateContent(new(contentFolder.text), GetChangeNote(), HandleEditResult);
             }
         }
 
         public void UpdatePreviewImage()
         {
-            if (m_Inspector.Data != null
+            if (_mInspector.Data != null
                 && previewImageFile != null
                 && !string.IsNullOrEmpty(previewImageFile.text)
                 && File.Exists(previewImageFile.text))
             {
-                m_Inspector.Data.UpdatePreviewImage(new(previewImageFile.text), GetChangeNote(), HandleEditResult);
+                _mInspector.Data.UpdatePreviewImage(new(previewImageFile.text), GetChangeNote(), HandleEditResult);
             }
         }
 
         public void UpdateMetadata()
         {
-            if (m_Inspector.Data != null
+            if (_mInspector.Data != null
                 && metadata != null
                 && !string.IsNullOrEmpty(metadata.text))
             {
-                m_Inspector.Data.UpdateMetadata(metadata.text, GetChangeNote(), HandleEditResult);
+                _mInspector.Data.UpdateMetadata(metadata.text, GetChangeNote(), HandleEditResult);
             }
         }
 
         public void UpdateAll()
         {
-            if (m_Inspector.Data == null)
+            if (_mInspector.Data == null)
                 return;
 
             if ((title == null || string.IsNullOrEmpty(title.text))
@@ -137,7 +137,7 @@ namespace Heathen.SteamworksIntegration
                 && (metadata == null || string.IsNullOrEmpty(metadata.text)))
                 return;
 
-            var handle = API.UserGeneratedContent.Client.StartItemUpdate(m_Inspector.Data.ConsumerApp, m_Inspector.Data.FileId);
+            var handle = API.UserGeneratedContent.Client.StartItemUpdate(_mInspector.Data.ConsumerApp, _mInspector.Data.FileId);
 
             if (title != null && !string.IsNullOrEmpty(title.text))
                 SteamUGC.SetItemTitle(handle, title.text);
@@ -161,12 +161,12 @@ namespace Heathen.SteamworksIntegration
 
         private void HandleEditResult(SubmitItemUpdateResult_t t, bool arg2)
         {
-            if(m_Events != null)
+            if(_mEvents != null)
             {
                 if (!arg2 && t.m_eResult == EResult.k_EResultOK)
-                    m_Events.onEdited?.Invoke(t.m_nPublishedFileId);
+                    _mEvents.onEdited?.Invoke(t.m_nPublishedFileId);
                 else
-                    m_Events.onEditFailed?.Invoke(t.m_eResult);
+                    _mEvents.onEditFailed?.Invoke(t.m_eResult);
             }
         }
     }

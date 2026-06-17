@@ -1,10 +1,10 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using UnityEngine.Events;
 
 namespace Heathen.SteamworksIntegration
 {
     [System.Serializable]
-    public class HTML_JSAlertEvent : UnityEvent<HTML_JSAlert_t> { };
+    public class HtmlJsAlertEvent : UnityEvent<HTML_JSAlert_t> { };
 }
 #endif

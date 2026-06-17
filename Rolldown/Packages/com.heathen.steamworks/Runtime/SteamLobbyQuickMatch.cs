@@ -1,8 +1,8 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
+using System;
 using Steamworks;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
 
 namespace Heathen.SteamworksIntegration
 {
@@ -11,68 +11,74 @@ namespace Heathen.SteamworksIntegration
     [RequireComponent(typeof(SteamLobbyData))]
     public class SteamLobbyQuickMatch : MonoBehaviour
     {
-        public enum SteamLobbyType : int
+        public enum SteamLobbyType
         {
-            Private = 0,        // only way to join the lobby is to invite to someone else
-            FriendsOnly = 1,    // shows for friends or invitees, but not in lobby list
-            Public = 2,         // visible for friends and in lobby list
+            Private = 0,        // the only way to join the lobby is to invite someone else
+            FriendsOnly = 1,    // shows for friends or invitees, but not in the lobby list
+            Public = 2,         // visible for friends and in the lobby list
             Invisible = 3,      // returned by search, but not visible to other friends
         }
 
-        public enum LobbyDistanceFilter : int
+        public enum LobbyDistanceFilter
         {
             Close,        // only lobbies in the same immediate region will be returned
-            Default,      // only lobbies in the same region or near by regions
-            Far,          // for games that don't have many latency requirements, will return lobbies about half-way around the globe
+            Default,      // only lobbies in the same region or nearby regions
+            Far,          // for games that have few latency requirements, will return lobbies about half-way around the globe
             Worldwide,    // no filtering, will match lobbies as far as India to NY (not recommended, expect multiple seconds of latency between the clients)
         }
 
-        [SettingsField(synchronized = true)]
         /// <summary>
-        /// If true the search will check if there is currently a party lobby if so it will search for a lobby enough slots for each party member, else it will obey the slots field.
+        /// If true, the search will check if there is currently a party lobby if so, it will search for a lobby enough slots for each party member, else it will obey the slots field.
         /// </summary>
+        [SettingsField(0, true)]
         [Tooltip("If true the search will check if there is currently a party lobby if so it will search for a lobby enough slots for each party member, else it will obey the slots field.")]
-        public bool partyWise = false;
+        public bool partyWise;
         /// <summary>
         /// The type of lobby to create
         /// </summary>
-        [SettingsField(header = "Quick Match")]
+        [SettingsField(0, false, "Quick Match")]
         [Tooltip("The type of lobby to create")]
         public SteamLobbyType type = SteamLobbyType.Public;
-        [Header("Search Arguments")]
         /// <summary>
-        /// The distance from teh searching user that should be considered when searching
+        /// The type of lobby to create
         /// </summary>
-        [SettingsField(header = "Quick Match")]
+        [SettingsField(0,false, "Quick Match")]
+        [Tooltip("The number of slots to create the lobby with if created.")]
+        public int slotsOnCreate = 1;
+        /// <summary>
+        /// The distance from the searching user that should be considered when searching
+        /// </summary>
+        [Header("Search Arguments")]
+        [SettingsField(0, false,"Quick Match")]
         [Tooltip("The distance from the searching user that should be considered when searching")]
         public LobbyDistanceFilter distance = LobbyDistanceFilter.Default;
         /// <summary>
         /// Metadata values that should be used to sort the results e.g. values `closer` to these values will be weighted higher in the results
         /// </summary>
-        [SettingsField(header = "Quick Match")]
+        [SettingsField(0, false, "Quick Match")]
         [Tooltip("Metadata values that should be used to sort the results e.g. values `closer` to these values will be weighted higher in the results")]
         public List<NearFilter> nearValues = new();
         /// <summary>
-        /// Metadata values that should be compared as numeric values e.g. should follow typical maths rules for concepts such as less than, greater than, etc.
+        /// Metadata values, which should be compared as numeric values e.g., should follow typical maths rules for concepts such as less than, greater than, etc.
         /// </summary>
-        [SettingsField(header = "Quick Match")]
-        [Tooltip("Metadata values that should be compared as numeric values e.g. should follow typical maths rules for concepts such as less than, greater than, etc.")]
+        [SettingsField(0, false,"Quick Match")]
+        [Tooltip("Metadata values that should be compared as numeric values e.g., should follow typical maths rules for concepts such as less than, greater than, etc.")]
         public List<NumericFilter> numericFilters = new();
         /// <summary>
         /// Metadata values that should be compared as strings
         /// </summary>
-        [SettingsField(header = "Quick Match")]
+        [SettingsField(0, false,"Quick Match")]
         [Tooltip("Metadata values that should be compared as strings")]
         public List<StringFilter> stringFilters = new();
 
-        private int slots = 1;
-        private SteamLobbyData m_Inspector;
-        private SteamLobbyDataEvents m_Events;
+        private int _slots = 1;
+        private SteamLobbyData _inspector;
+        private SteamLobbyDataEvents _events;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamLobbyData>();
-            m_Events = GetComponent<SteamLobbyDataEvents>();
+            _inspector = GetComponent<SteamLobbyData>();
+            _events = GetComponent<SteamLobbyDataEvents>();
         }
 
         public void Match()
@@ -87,15 +93,15 @@ namespace Heathen.SteamworksIntegration
                     return;
                 }
                 else
-                    slots = partyLobby.MemberCount;
+                    _slots = partyLobby.MemberCount;
             }
             else
-                slots = 1;
+                _slots = 1;
 
             API.Matchmaking.Client.AddRequestLobbyListDistanceFilter((ELobbyDistanceFilter)distance);
 
-            if (slots > 0)
-                API.Matchmaking.Client.AddRequestLobbyListFilterSlotsAvailable(slots);
+            if (_slots > 0)
+                API.Matchmaking.Client.AddRequestLobbyListFilterSlotsAvailable(_slots);
 
             foreach (var near in nearValues)
                 API.Matchmaking.Client.AddRequestLobbyListNearValueFilter(near.key, near.value);
@@ -119,9 +125,9 @@ namespace Heathen.SteamworksIntegration
                         {
                             if (!enterIoError && enterLobby.Response == EChatRoomEnterResponse.k_EChatRoomEnterResponseSuccess)
                             {
-                                m_Inspector.Data = enterLobby.Lobby;
-                                if (m_Events != null)
-                                    m_Events.onEnterSuccess?.Invoke(enterLobby.Lobby);
+                                _inspector.Data = enterLobby.Lobby;
+                                if (_events != null)
+                                    _events.onEnterSuccess?.Invoke(enterLobby.Lobby);
 
                                 if (partyLobby.IsValid)
                                 {
@@ -130,15 +136,16 @@ namespace Heathen.SteamworksIntegration
                             }
                             else
                             {
-                                // We failed to join said lobby ... so create one instead
-                                LobbyData.Create((ELobbyType)type, SteamLobbyModeType.Session, slots, (createResult, createdLobby, createIoError) =>
+                                // We failed to join the said lobby ... so create one instead
+                                slotsOnCreate = Convert.ToInt32(Mathf.Max(1, slotsOnCreate));
+                                LobbyData.Create((ELobbyType)type, SteamLobbyModeType.Session, slotsOnCreate, (createResult, createdLobby, createIoError) =>
                                 {
                                     if (!createIoError && createResult == EResult.k_EResultOK)
                                     {
-                                        m_Inspector.Data = createdLobby;
+                                        _inspector.Data = createdLobby;
 
-                                        if (m_Events != null)
-                                            m_Events.onCreate?.Invoke(createdLobby);
+                                        if (_events != null)
+                                            _events.onCreate?.Invoke(createdLobby);
 
                                         if (partyLobby.IsValid)
                                         {
@@ -147,8 +154,8 @@ namespace Heathen.SteamworksIntegration
                                     }
                                     else
                                     {
-                                        if (m_Events != null)
-                                            m_Events.onCreationFailure?.Invoke(createResult);
+                                        if (_events != null)
+                                            _events.onCreationFailure?.Invoke(createResult);
                                     }
                                 });
                             }
@@ -157,14 +164,15 @@ namespace Heathen.SteamworksIntegration
                     else
                     {
                         // No lobby found create a new one
-                        LobbyData.Create((ELobbyType)type, SteamLobbyModeType.Session, slots, (createResult, createdLobby, createIoError) =>
+                        slotsOnCreate = Convert.ToInt32(Mathf.Max(1, slotsOnCreate));
+                        LobbyData.Create((ELobbyType)type, SteamLobbyModeType.Session, slotsOnCreate, (createResult, createdLobby, createIoError) =>
                         {
                             if (!createIoError && createResult == EResult.k_EResultOK)
                             {
-                                m_Inspector.Data = createdLobby;
+                                _inspector.Data = createdLobby;
 
-                                if (m_Events != null)
-                                    m_Events.onCreate?.Invoke(createdLobby);
+                                if (_events != null)
+                                    _events.onCreate?.Invoke(createdLobby);
 
                                 if (partyLobby.IsValid)
                                 {
@@ -173,8 +181,8 @@ namespace Heathen.SteamworksIntegration
                             }
                             else
                             {
-                                if (m_Events != null)
-                                    m_Events.onCreationFailure?.Invoke(createResult);
+                                if (_events != null)
+                                    _events.onCreationFailure?.Invoke(createResult);
                             }
                         });
                     }
@@ -182,14 +190,15 @@ namespace Heathen.SteamworksIntegration
                 else
                 {
                     // We failed to search for a lobby ... try and create one
-                    LobbyData.Create((ELobbyType)type, SteamLobbyModeType.Session, slots, (createResult, createdLobby, createIoError) =>
+                    slotsOnCreate = Convert.ToInt32(Mathf.Max(1, slotsOnCreate));
+                    LobbyData.Create((ELobbyType)type, SteamLobbyModeType.Session, slotsOnCreate, (createResult, createdLobby, createIoError) =>
                     {
                         if (!createIoError && createResult == EResult.k_EResultOK)
                         {
-                            m_Inspector.Data = createdLobby;
+                            _inspector.Data = createdLobby;
 
-                            if (m_Events != null)
-                                m_Events.onCreate?.Invoke(createdLobby);
+                            if (_events != null)
+                                _events.onCreate?.Invoke(createdLobby);
 
                             if (partyLobby.IsValid)
                             {
@@ -198,8 +207,8 @@ namespace Heathen.SteamworksIntegration
                         }
                         else
                         {
-                            if (m_Events != null)
-                                m_Events.onCreationFailure?.Invoke(createResult);
+                            if (_events != null)
+                                _events.onCreationFailure?.Invoke(createResult);
                         }
                     });
                 }

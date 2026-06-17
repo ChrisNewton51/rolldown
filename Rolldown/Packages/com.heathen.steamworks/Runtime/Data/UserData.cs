@@ -1,8 +1,13 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Heathen.SteamworksIntegration.API;
 using Steamworks;
 using System;
+using System.Threading.Tasks;
 using UnityEngine;
+#if UNITASK_INSTALLED
+using Cysharp.Threading.Tasks;
+#endif
+// ReSharper disable PossiblyImpureMethodCallOnReadonlyVariable
 
 namespace Heathen.SteamworksIntegration
 {
@@ -13,32 +18,44 @@ namespace Heathen.SteamworksIntegration
     public struct UserData : IEquatable<CSteamID>, IEquatable<ulong>, IEquatable<UserData>
     {
         /// <summary>
-        /// Get the <see cref="UserData"/> for the local user
+        /// Provides access to the <see cref="UserData"/> instance representing the local user.
         /// </summary>
-        public static UserData Me => API.User.Client.Id;
+        public static UserData Me => User.Client.Id;
+
         /// <summary>
-        /// Get a collection of this user's friends
+        /// Retrieves an array of <see cref="UserData"/> instances representing the user's friends.
+        /// The list is filtered based on the specified <see cref="EFriendFlags.k_EFriendFlagImmediate"/> flag,
+        /// which includes only immediate friends.
         /// </summary>
-        public static UserData[] MyFriends => API.Friends.Client.GetFriends(EFriendFlags.k_EFriendFlagImmediate);
+        public static UserData[] MyFriends => Friends.Client.GetFriends(EFriendFlags.k_EFriendFlagImmediate);
+
         /// <summary>
-        /// The native <see cref="CSteamID"/> of the user
+        /// Represents the unique identifier for a Steam user, encapsulated within a <see cref="CSteamID"/> structure.
         /// </summary>
         public CSteamID id;
+
         /// <summary>
-        /// Is this user the local user
+        /// Indicates whether this <see cref="UserData"/> instance represents the local user.
         /// </summary>
-        public readonly bool IsMe => id == API.User.Client.Id.id;
+        public readonly bool IsMe => id == User.Client.Id.id;
+
         /// <summary>
-        /// The primitive value of the user's id
+        /// Gets the 64-bit Steam identifier associated with the user. This identifier is unique across all Steam accounts.
         /// </summary>
-        public readonly ulong SteamId
-        {
-            get => id.m_SteamID;
-        }
+        public readonly ulong SteamId => id.m_SteamID;
+
         /// <summary>
-        /// Is this UserData value a valid value.
-        /// This does not indicate it is a person simply that structurally the data is possibly a person
+        /// Determines whether the current <see cref="UserData"/> instance is valid.
         /// </summary>
+        /// <remarks>
+        /// A valid <see cref="UserData"/> instance must meet the following criteria:
+        /// 1. The underlying <see cref="CSteamID"/> is not nil.
+        /// 2. The account type of the associated <see cref="CSteamID"/> is an individual account.
+        /// 3. The associated <see cref="CSteamID"/> belongs to the public Steam universe.
+        /// </remarks>
+        /// <returns>
+        /// Returns <c>true</c> if the current <see cref="UserData"/> instance is valid; otherwise, <c>false</c>.
+        /// </returns>
         public readonly bool IsValid
         {
             get
@@ -51,190 +68,258 @@ namespace Heathen.SteamworksIntegration
                     return true;
             }
         }
+
         /// <summary>
-        /// The user's displayed name
+        /// Gets the display name of the user associated with this <see cref="UserData"/> instance.
+        /// If the user is the local user, this is their current Steam Persona name.
+        /// For other users, this represents their Steam Persona name as visible to the local user.
         /// </summary>
-        public readonly string Name => API.Friends.Client.GetFriendPersonaName(id);
+        public readonly string Name => Friends.Client.GetFriendPersonaName(id);
+
         /// <summary>
-        /// The nick name assigned to this user by the local user if any, if none this will be the same as <see cref="Name"/>
+        /// Retrieves the user's preferred nickname. If a custom nickname is not set, it returns the user's default persona name.
         /// </summary>
         public readonly string Nickname
         {
             get
             {
-                var value = API.Friends.Client.GetPlayerNickname(id);
+                var value = Friends.Client.GetPlayerNickname(id);
                 if (!string.IsNullOrEmpty(value))
                     return value;
                 else
-                    return API.Friends.Client.GetFriendPersonaName(id);
+                    return Friends.Client.GetFriendPersonaName(id);
             }
         }
+
         /// <summary>
-        /// The user's persona state value
+        /// Retrieves the current persona state of the user represented by this instance.
+        /// The persona state indicates the user's activity or availability, such as Online, Offline, Away, or Busy.
         /// </summary>
         public readonly EPersonaState State => SteamFriends.GetFriendPersonaState(id);
+
         /// <summary>
-        /// Is this user in a game
+        /// Indicates whether the user is currently playing a game.
         /// </summary>
         public readonly bool InGame => SteamFriends.GetFriendGamePlayed(id, out _);
+
         /// <summary>
-        /// Is this user in this game
+        /// Indicates whether the friend represented by this instance is currently playing the same game as the local user.
         /// </summary>
-        public readonly bool InThisGame => SteamFriends.GetFriendGamePlayed(id, out var friendInfo) ? friendInfo.m_gameID == GameData.Me : false;
+        public readonly bool InThisGame => SteamFriends.GetFriendGamePlayed(id, out var friendInfo) && friendInfo.m_gameID == GameData.Me;
+
         /// <summary>
-        /// The details about the game the user is in if any
+        /// Provides information about the game session in which the user is currently participating.
         /// </summary>
         public readonly FriendGameInfo GameInfo
         {
             get
             {
-                FriendGameInfo_t result;
-                SteamFriends.GetFriendGamePlayed(id, out result);
+                SteamFriends.GetFriendGamePlayed(id, out var result);
                 return result;
             }
         }
+
         /// <summary>
-        /// The Steam Level of the user
+        /// Retrieves the Steam level of the user associated with this <see cref="UserData"/> instance.
         /// </summary>
+        /// <remarks>
+        /// The Steam level represents a user's account level on the Steam platform,
+        /// which is determined by their overall activity and engagement.
+        /// This value is fetched using the Steamworks API.
+        /// </remarks>
         public readonly int Level => SteamFriends.GetFriendSteamLevel(id);
+
         /// <summary>
-        /// Also known as the "Friend ID" or "Friend Code"
+        /// Retrieves the unique account identifier associated with the user in the form of an <see cref="AccountID_t"/>.
+        /// This value can be used to uniquely represent the user's Steam account within the Steamworks API.
         /// </summary>
-        public readonly AccountID_t AccountId
-        {
-            get => id.GetAccountID();
-        }
+        public readonly AccountID_t AccountId => id.GetAccountID();
+
         /// <summary>
-        /// Also known as the "Account ID"
+        /// Gets the unique numeric identifier for a friend account, derived from the associated <see cref="AccountID_t"/>.
         /// </summary>
-        public readonly uint FriendId
-        { 
-            get => AccountId.m_AccountID;
-        }
+        public readonly uint FriendId => AccountId.m_AccountID;
+
+        /// <summary>
+        /// Retrieves the Steam friend's unique identifier represented as a hexadecimal string.
+        /// </summary>
         public readonly string HexId => FriendId.ToString("X");
+
         /// <summary>
-        /// Gets a collection of names the local user knows for the indicated user
+        /// Retrieves the history of persona names associated with the user.
         /// </summary>
-        public readonly string[] NameHistory => API.Friends.Client.GetFriendPersonaNameHistory(this);
+        public readonly string[] NameHistory => Friends.Client.GetFriendPersonaNameHistory(this);
+
         /// <summary>
-        /// Requests the user's avatar be loaded from Steam's backend
+        /// Requests the user's avatar be loaded from Steam's backend.
         /// </summary>
-        /// <param name="callback"></param>
-        public readonly void LoadAvatar(Action<Texture2D> callback) => API.Friends.Client.GetFriendAvatar(id, callback);
+        /// <param name="callback">The callback to invoke when the avatar has been loaded, providing the user's avatar as a Texture2D.</param>
+        public readonly void LoadAvatar(Action<Texture2D> callback) => Friends.Client.GetFriendAvatar(id, callback);
+
         /// <summary>
-        /// Request information about the game the user is playing
+        /// Requests the user's avatar be loaded from Steam's backend asynchronously.
         /// </summary>
-        /// <param name="gameInfo"></param>
-        /// <returns></returns>
-        public readonly bool GetGamePlayed(out FriendGameInfo gameInfo) => API.Friends.Client.GetFriendGamePlayed(id, out gameInfo);
+        /// <returns>A Task that represents the asynchronous operation, containing the user's avatar as a Texture2D.</returns>
+        public readonly Task<Texture2D> LoadAvatarTask()
+        {
+            var tcs = new TaskCompletionSource<Texture2D>();
+            Friends.Client.GetFriendAvatar(id, avatar => tcs.SetResult(avatar));
+            return tcs.Task;
+        }
+
+#if UNITASK_INSTALLED
         /// <summary>
-        /// Invite the user to play on the connection string provided
+        /// Requests the user's avatar be loaded from Steam's backend asynchronously using UniTask.
         /// </summary>
-        /// <param name="connectString"></param>
-        public readonly void InviteToGame(string connectString) => API.Friends.Client.InviteUserToGame(this, connectString);
+        /// <returns>A UniTask that represents the asynchronous operation, containing the user's avatar as a Texture2D.</returns>
+        public readonly UniTask<Texture2D> LoadAvatarUniTask()
+        {
+            var tcs = new UniTaskCompletionSource<Texture2D>();
+            Friends.Client.GetFriendAvatar(id, avatar => tcs.TrySetResult(avatar));
+            return tcs.Task;
+        }
+#endif
+
         /// <summary>
-        /// Send this user a friend chat message
+        /// Retrieves information about the game the user is currently playing.
         /// </summary>
-        /// <param name="message"></param>
-        /// <returns></returns>
-        public readonly bool SendMessage(string message) => API.Friends.Client.ReplyToFriendMessage(this, message);
+        /// <param name="gameInfo">An output parameter that will be populated with the game information if the user is playing a game.</param>
+        /// <returns>Returns true if the user is currently playing a game and the information was successfully retrieved; otherwise, returns false.</returns>
+        public readonly bool GetGamePlayed(out FriendGameInfo gameInfo) =>
+            Friends.Client.GetFriendGamePlayed(id, out gameInfo);
+
+        /// <summary>
+        /// Sends an invitation to the specified user to join the game using the given connection string.
+        /// </summary>
+        /// <param name="connectString">The connection string for the game session to which the user is being invited.</param>
+        public readonly void InviteToGame(string connectString) => Friends.Client.InviteUserToGame(this, connectString);
+
+        /// <summary>
+        /// Sends a chat message to the specified user.
+        /// </summary>
+        /// <param name="message">The message to send to the user.</param>
+        /// <returns>True if the message was successfully sent; otherwise, false.</returns>
+        public readonly bool SendMessage(string message) => Friends.Client.ReplyToFriendMessage(this, message);
+
         /// <summary>
         /// Requests the persona name and avatar of a specified user.
         /// </summary>
         /// <returns>
-        /// true means that the data has being requested, and a PersonaStateChange_t callback will be posted when it's retrieved. false means that we already have all the details about that user, and functions that require this information can be used immediately.
+        /// true if the information is being requested, with a PersonaStateChange_t callback to be posted upon retrieval;
+        /// false if all details about the user are already available and can be used immediately.
         /// </returns>
-        public readonly bool RequestInformation() => API.Friends.Client.RequestUserInformation(this, false);
+        public readonly bool RequestInformation() => Friends.Client.RequestUserInformation(this, false);
+
         /// <summary>
-        /// Get the rich presence value from this user
+        /// Retrieves the rich presence value associated with the specified key from the user's Steam profile.
         /// </summary>
-        /// <param name="key">The key to read</param>
-        /// <returns>The value that was read</returns>
-        public readonly string GetRichPresenceValue(string key) => API.Friends.Client.GetFriendRichPresence(this, key);
+        /// <param name="key">The rich presence key whose value is to be retrieved.</param>
+        /// <returns>The string value associated with the specified rich presence key.</returns>
+        public readonly string GetRichPresenceValue(string key) => Friends.Client.GetFriendRichPresence(this, key);
+
         /// <summary>
-        /// Invite this player to join a lobby
+        /// Invites a user to join the specified Steam lobby.
         /// </summary>
-        /// <param name="lobby"></param>
-        /// <returns></returns>
+        /// <param name="lobby">The target lobby to which the user will be invited.</param>
+        /// <returns>True if the invitation was sent successfully; otherwise, false.</returns>
         public readonly bool InviteToLobby(LobbyData lobby) => lobby.InviteUserToLobby(this);
+
         /// <summary>
-        /// Opens the Overlay Add Friend dialog to add this user as the local user's friend
+        /// Opens the Steam Overlay's Add Friend dialogue for the specified user, allowing the local user to send a friend request.
         /// </summary>
-        public readonly void AddFriend() => UserData.AddFriend(this);
+        public readonly void AddFriend() => AddFriend(this);
+
         /// <summary>
-        /// Opens the Overlay Remove Friend dialog to remove this user as the local user's friend
+        /// Opens the Overlay Remove Friend dialogue to remove this user as the local user's friend
         /// </summary>
-        public readonly void RemoveFriend() => UserData.RemoveFriend(this);
+        public readonly void RemoveFriend() => RemoveFriend(this);
+
         /// <summary>
-        /// Marks this player as "played with"
+        /// Marks the specified user as someone the current player has played with recently.
+        /// This is a notification typically used to help track recent in-game interactions.
         /// </summary>
-        public readonly void SetPlayedWith() => API.Friends.Client.SetPlayedWith(this);
+        public readonly void SetPlayedWith() => Friends.Client.SetPlayedWith(this);
+
+        /// <summary>
+        /// Retrieves the status of an achievement for the specified user, including whether it has been unlocked and the time it was unlocked.
+        /// </summary>
+        /// <param name="achievement">The achievement data to query.</param>
+        /// <returns>A tuple indicating whether the achievement is unlocked and the time it was unlocked, if available.</returns>
         public readonly (bool unlocked, DateTime unlockTime) GetAchievement(AchievementData achievement) => achievement.GetAchievementAndUnlockTime(this);
-        public readonly bool SetAchievement(AchievementData achievement) => API.StatsAndAchievements.Client.SetAchievement(achievement);
+
         /// <summary>
-        /// This clears the rich presence data for the local user
+        /// Attempts to unlock the specified achievement for the current user.
+        /// </summary>
+        /// <param name="achievement">The achievement data representing the achievement to be unlocked.</param>
+        /// <returns>True if the achievement was successfully set, false otherwise.</returns>
+        public readonly bool SetAchievement(AchievementData achievement) => StatsAndAchievements.Client.SetAchievement(achievement);
+
+        /// <summary>
+        /// Clears the rich presence data for the local user, removing any previously set rich presence information.
         /// </summary>
         public static void ClearRichPresence() => SteamFriends.ClearRichPresence();
+
+        /// <summary>
+        /// Retrieves the UserData instance based on the given hexadecimal account ID.
+        /// </summary>
+        /// <param name="accountId">The hexadecimal string representing the user's account ID.</param>
+        /// <returns>The UserData associated with the specified account ID. Returns an empty UserData instance if the ID is invalid.</returns>
         public static UserData Get(string accountId)
         {
-            uint id = Convert.ToUInt32(accountId, 16);
+            var id = Convert.ToUInt32(accountId, 16);
             if (id > 0)
                 return Get(id);
             else
                 return CSteamID.Nil;
         }
+
+        /// <summary>
+        /// Retrieves a UserData instance corresponding to a given Steam ID.
+        /// </summary>
+        /// <param name="id">The 64-bit Steam ID (ulong) to create a UserData instance for.</param>
+        /// <returns>A UserData instance associated with the provided Steam ID.</returns>
         public static UserData Get(ulong id) => new UserData { id = new CSteamID(id) };
+
+        /// <summary>
+        /// Retrieves a <see cref="UserData"/> instance corresponding to the specified <see cref="CSteamID"/>.
+        /// </summary>
+        /// <param name="id">The Steam ID of the user to retrieve as a <see cref="UserData"/> object.</param>
+        /// <returns>A <see cref="UserData"/> instance representing the specified Steam user.</returns>
         public static UserData Get(CSteamID id) => new UserData { id = id };
-        public static UserData Get() => API.User.Client.Id;
+
+        /// <summary>
+        /// Retrieves the current user's Steam user data.
+        /// </summary>
+        /// <returns>The <see cref="UserData"/> representing the current user.</returns>
+        public static UserData Get() => User.Client.Id;
+
+        /// <summary>
+        /// Retrieves the UserData associated with the given account ID.
+        /// </summary>
+        /// <param name="accountId">The unique account ID represented as an uint.</param>
+        /// <returns>A UserData instance corresponding to the provided account ID.</returns>
         public static UserData Get(uint accountId) => Get(new AccountID_t(accountId));
+
+        /// <summary>
+        /// Retrieves a user data instance based on the provided account ID.
+        /// </summary>
+        /// <param name="accountId">The account ID used to generate a UserData instance.</param>
+        /// <returns>A UserData instance associated with the specified account ID.</returns>
         public static UserData Get(AccountID_t accountId) => new CSteamID(accountId, EUniverse.k_EUniversePublic, EAccountType.k_EAccountTypeIndividual);
+
         /// <summary>
-        /// This only updates the local user's rich presence you cannot set the rich presence for other users.
-        /// Sets a Rich Presence key/value for the current user that is automatically shared to all friends playing the same game.
+        /// Sets the rich presence for the current user on Steam.
         /// </summary>
-        /// <remarks>
-        /// <para>
-        /// Each user can have up to 20 keys set as defined by <see cref="Constants.k_cchMaxRichPresenceKeys"/>.
-        /// </para>
-        /// <para>
-        /// There are two special keys used for viewing/joining games:
-        /// </para>
-        /// <list type="bullet">
-        /// <item>"status"
-        /// <para>A UTF-8 string that will show up in the 'view game info' dialog in the Steam friends list.</para></item>
-        /// <item>"connect"
-        /// <para>A UTF-8 string that contains the command-line for how a friend can connect to a game. This enables the 'join game' button in the 'view game info' dialog, in the steam friends list right click menu, and on the players Steam community profile. Be sure your app implements <see cref="App.LaunchCommandLine"/> so you can disable the popup warning when launched via a command line.</para></item>
-        /// </list>
-        /// <para>There are three additional special keys used by the new Steam Chat:</para>
-        /// <list type="bullet">
-        /// <item>"steam_display"
-        /// <para>Names a rich presence localization token that will be displayed in the viewing user's selected language in the Steam client UI. See Rich Presence Localization for more info, including a link to a page for testing this rich presence data. If steam_display is not set to a valid localization tag, then rich presence will not be displayed in the Steam client.</para></item>
-        /// <item> "steam_player_group"
-        /// <para>When set, indicates to the Steam client that the player is a member of a particular group.Players in the same group may be organized together in various places in the Steam UI.This string could identify a party, a server, or whatever grouping is relevant for your game. The string itself is not displayed to users.</para></item>
-        /// <item> "steam_player_group_size"
-        /// <para>When set, indicates the total number of players in the steam_player_group. The Steam client may use this number to display additional information about a group when all of the members are not part of a user's friends list. (For example, "Bob, Pete, and 4 more".)</para></item>
-        /// </list>
-        /// <para>
-        /// You can clear all of the keys for the current user with ClearRichPresence. To get rich presence keys for friends see: GetFriendRichPresence.
-        /// </para>
-        /// </remarks>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        /// <returns>
-        /// <para>true if the rich presence was set successfully.</para>
-        /// <para>false under the following conditions:</para>
-        /// <list type="bullet">
-        /// <item>Key was longer than <see cref="Constants.k_cchMaxRichPresenceKeyLength"/> or had a length of 0.</item>
-        /// <item>Value was longer than <see cref="Constants.k_cchMaxRichPresenceValueLength"/>.</item>
-        /// <item>The user has reached the maximum amount of rich presence keys as defined by <see cref="Constants.k_cchMaxRichPresenceKeys"/>.</item>
-        /// </list>
-        /// </returns>
+        /// <param name="key">The key identifying the field to update in rich presence.</param>
+        /// <param name="value">The value to associate with the specified key.</param>
+        /// <returns>Returns true if the rich presence was successfully updated; otherwise, false.</returns>
         public static bool SetRichPresence(string key, string value) => SteamFriends.SetRichPresence(key, value);
+
         /// <summary>
-        /// Opens the Overlay to the Add Friend dialog
+        /// Opens the Steam Overlay to the Add Friend dialogue, allowing the user to send a friend request to another user.
         /// </summary>
-        /// <param name="friendId"></param>
-        /// <returns>True if ID was parsed, false otherwise</returns>
+        /// <param name="friendId">The Steam ID of the user to whom the friend request will be sent, provided as a string.</param>
+        /// <returns>True if the Steam ID was successfully parsed and the dialogue opened, false otherwise.</returns>
         public static bool AddFriend(string friendId)
         {
             if (uint.TryParse(friendId, out var friend))
@@ -245,32 +330,40 @@ namespace Heathen.SteamworksIntegration
             else
                 return false;
         }
+
         /// <summary>
-        /// Opens the Overlay to the Add Friend dialog
+        /// Opens the Steam Overlay to display the Add Friend dialogue for the specified user.
         /// </summary>
-        /// <param name="friendId"></param>
-        public static void AddFriend(uint friendId) => AddFriend(UserData.Get(friendId));  
+        /// <param name="friendId">The Steam ID of the user to add as a friend.</param>
+        public static void AddFriend(uint friendId) => AddFriend(Get(friendId));
+
         /// <summary>
-        /// Opens the Overlay to the Add Friend dialog
+        /// Opens the Steam Overlay to the "Add Friend" dialogue for the specified user.
         /// </summary>
-        /// <param name="user"></param>
-        public static void AddFriend(UserData user) => API.Overlay.Client.Activate(FriendDialog.friendadd, user);
+        /// <param name="user">The user data of the individual to whom a friend request will be sent.</param>
+        public static void AddFriend(UserData user) => Overlay.Client.Activate(FriendDialog.Friendadd, user);
+
         /// <summary>
-        /// Opens the Overlay to the Add Friend dialog
+        /// Opens the Steam Overlay to the Add Friend dialogue for the specified user.
         /// </summary>
-        /// <param name="user"></param>
-        public static void AddFriend(AccountID_t user) => API.Overlay.Client.Activate(FriendDialog.friendadd, UserData.Get(user));
+        /// <param name="user">The AccountID of the user to whom the Add Friend dialogue will be displayed.</param>
+        public static void AddFriend(AccountID_t user) => Overlay.Client.Activate(FriendDialog.Friendadd, Get(user));
+
         /// <summary>
-        /// Opens the Overlay to the Remove Friend dialog
+        /// Opens the overlay to the "Remove Friend" dialogue for a specified user.
         /// </summary>
-        /// <param name="user"></param>
-        public static void RemoveFriend(UserData user) => API.Overlay.Client.Activate(FriendDialog.friendremove, user);
+        /// <param name="user">The user to be removed from the friend list.</param>
+        public static void RemoveFriend(UserData user) => Overlay.Client.Activate(FriendDialog.Friendremove, user);
+
         /// <summary>
-        /// Opens the Overlay to the Remove Friend dialog
+        /// Opens the overlay displaying the "Remove Friend" dialogue for the specified user.
         /// </summary>
-        /// <param name="user"></param>
-        public static void RemoveFriend(AccountID_t user) => API.Overlay.Client.Activate(FriendDialog.friendremove, UserData.Get(user));
-    #region Boilerplate
+        /// <param name="user">The account ID of the user to be removed as a friend.</param>
+        public static void RemoveFriend(AccountID_t user) =>
+            Overlay.Client.Activate(FriendDialog.Friendremove, Get(user));
+
+        #region Boilerplate
+
         public readonly int CompareTo(UserData other)
         {
             return id.CompareTo(other.id);

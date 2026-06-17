@@ -1,153 +1,160 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 using System;
 using System.Collections.Generic;
+using Steamworks;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 
 namespace Heathen.SteamworksIntegration
 {
     [DisallowMultipleComponent]
     public class SteamworksEventTriggers : MonoBehaviour
     {
+        [FormerlySerializedAs("mDelegates")] 
+        [FormerlySerializedAs("m_Delegates")] 
         [SerializeField]
-        private List<SteamEventTriggerType> m_Delegates;
+        private List<SteamEventTriggerType> delegates;
 
         private void Awake()
         {
-            API.App.onSteamInitialized.AddListener(initSuccess.Invoke);
-            API.App.onSteamInitializationError.AddListener(initFailed.Invoke);
+            SteamTools.Events.OnSteamInitialised += initSuccess.Invoke;
+            SteamTools.Events.OnSteamInitialisationError += initFailed.Invoke;
 
-            API.App.Client.OnDlcInstalled.AddListener(dlcInstalled.Invoke);
-            API.App.Client.OnNewUrlLaunchParameters.AddListener(newUrlLaunchParameters.Invoke);
-            API.App.Client.OnServersDisconnected.AddListener(serversDisconnected.Invoke);
-            API.App.Client.OnServersConnected.AddListener(serversConnected.Invoke);
-            API.App.Client.OnServersConnectFailure.AddListener(serversConnectFailure.Invoke);
+            SteamTools.Events.OnDlcInstalled += dlcInstalled.Invoke;
+            SteamTools.Events.OnNewUrlLaunchParameters += newUrlLaunchParameters.Invoke;
+            SteamTools.Events.OnSteamServersDisconnected += serversDisconnected.Invoke;
+            SteamTools.Events.OnSteamServerConnectFailure += serversConnectFailure.Invoke;
+            SteamTools.Events.OnSteamServersConnected += serversConnected.Invoke;
 
-            API.BigPicture.Client.OnGamepadTextInputShown.AddListener(gamepadTextInputShown.Invoke);
-            API.BigPicture.Client.OnGamepadTextInputDismissed.AddListener(gamepadTextInputDismissed.Invoke);
+            SteamTools.Events.OnGamepadTextInputShown += gamepadTextInputShown.Invoke;
+            SteamTools.Events.OnGamepadTextInputDismissed += gamepadTextInputDismissed.Invoke;
 
-            API.Clans.Client.OnGameConnectedChatLeave.AddListener(gameConnectedChatLeave.Invoke);
-            API.Clans.Client.OnChatMessageReceived.AddListener(chatMessageReceived.Invoke);
-            API.Clans.Client.OnGameConnectedChatJoin.AddListener(gameConnectedChatJoin.Invoke);
+            SteamTools.Events.OnGameConnectedChatLeave += gameConnectedChatLeave.Invoke;
+            SteamTools.Events.OnGameConnectedClanChatMsg += chatMessageReceived.Invoke;
+            SteamTools.Events.OnGameConnectedChatJoin += gameConnectedChatJoin.Invoke;
 
-            API.Friends.Client.OnGameConnectedFriendChatMsg.AddListener(gameConnectedFriendChatMsg.Invoke);
-            API.Friends.Client.OnFriendRichPresenceUpdate.AddListener(friendRichPresenceUpdate.Invoke);
-            API.Friends.Client.OnPersonaStateChange.AddListener(personaStateChange.Invoke);
+            SteamTools.Events.OnGameConnectedFriendChatMsg += gameConnectedFriendChatMsg.Invoke;
+            SteamTools.Events.OnFriendRichPresenceUpdate += friendRichPresenceUpdate.Invoke;
+            SteamTools.Events.OnPersonaStateChange += personaStateChange.Invoke;
 
-            API.Input.Client.onInputDataChanged.AddListener(inputDataChanged.Invoke);
+            SteamTools.Events.OnInputDataChanged += inputDataChanged.Invoke;
+            SteamTools.Events.OnControllerConnected += controllerConnected.Invoke;
+            SteamTools.Events.OnControllerDisconnected += controllerDisconnected.Invoke;
 
-            API.Inventory.Client.OnSteamInventoryDefinitionUpdate.AddListener(inventoryDefinitionUpdate.Invoke);
-            API.Inventory.Client.OnSteamInventoryResultReady.AddListener(inventoryResultReady.Invoke);
-            API.Inventory.Client.OnSteamMicroTransactionAuthorizationResponse.AddListener(microTransactionAuthorizationResponse.Invoke);
+            SteamTools.Events.OnInventoryDefinitionUpdate += inventoryDefinitionUpdate.Invoke;
+            SteamTools.Events.OnInventoryResultReady += inventoryResultReady.Invoke;
+            SteamTools.Events.OnMicroTxnAuthorisationResponse += microTransactionAuthorizationResponse.Invoke;
 
-            API.Matchmaking.Client.OnFavoritesListChanged.AddListener(serverFavoritesListChanged.Invoke);
-            API.Matchmaking.Client.OnLobbyAskedToLeave.AddListener(lobbyAskedToLeave.Invoke);
-            API.Matchmaking.Client.OnLobbyAuthenticationRequest.AddListener(lobbyAuthenticationRequest.Invoke);
-            API.Matchmaking.Client.OnLobbyChatMsg.AddListener(lobbyChatMsg.Invoke);
-            API.Matchmaking.Client.OnLobbyChatUpdate.AddListener(lobbyChatUpdate.Invoke);
-            API.Matchmaking.Client.OnLobbyDataUpdate.AddListener(lobbyChatDataUpdate.Invoke);
-            API.Matchmaking.Client.OnLobbyEnterFailed.AddListener(lobbyEnterFailed.Invoke);
-            API.Matchmaking.Client.OnLobbyEnterSuccess.AddListener(lobbyEnterSuccess.Invoke);
-            API.Matchmaking.Client.OnLobbyGameCreated.AddListener(lobbyGameCreated.Invoke);
-            API.Matchmaking.Client.OnLobbyInvite.AddListener(lobbyInvite.Invoke);
-            API.Matchmaking.Client.OnLobbyLeave.AddListener(lobbyLeave.Invoke);
+            SteamTools.Events.OnFavoritesListChanged += serverFavoritesListChanged.Invoke;
+            SteamTools.Events.OnAskedToLeaveLobby += lobbyAskedToLeave.Invoke;
+            SteamTools.Events.OnLobbyAuthentication += lobbyAuthenticationRequest.Invoke;
+            SteamTools.Events.OnLobbyChatMsg += lobbyChatMsg.Invoke;
+            SteamTools.Events.OnLobbyChatUpdate += lobbyChatUpdate.Invoke;
+            SteamTools.Events.OnLobbyDataUpdate += lobbyChatDataUpdate.Invoke;
+            SteamTools.Events.OnLobbyEnterFailed += lobbyEnterFailed.Invoke;
+            SteamTools.Events.OnLobbyEnterSuccess += lobbyEnterSuccess.Invoke;
+            SteamTools.Events.OnLobbyGameServer += lobbyGameCreated.Invoke;
+            SteamTools.Events.OnLobbyInvite += lobbyInvite.Invoke;
+            SteamTools.Events.OnLobbyLeave += lobbyLeave.Invoke;
 
-            API.Overlay.Client.OnGameLobbyJoinRequested.AddListener(gameLobbyJoinRequested.Invoke);
-            API.Overlay.Client.OnGameOverlayActivated.AddListener(gameOverlayActivated.Invoke);
-            API.Overlay.Client.OnGameRichPresenceJoinRequested.AddListener(gameRichPresenceJoinRequested.Invoke);
-            API.Overlay.Client.OnGameServerChangeRequested.AddListener(gameServerChangeRequested.Invoke);
+            SteamTools.Events.OnLobbyJoinRequested += gameLobbyJoinRequested.Invoke;
+            SteamTools.Events.OnRichPresenceJoinRequested += gameRichPresenceJoinRequested.Invoke;
+            SteamTools.Events.OnGameServerChangeRequested += gameServerChangeRequested.Invoke;
+            SteamTools.Events.OnGameOverlayActivated += gameOverlayActivated.Invoke;
 
-            API.Parties.Client.OnActiveBeaconsUpdated.AddListener(activeBeaconsUpdated.Invoke);
-            API.Parties.Client.OnAvailableBeaconLocationsUpdated.AddListener(availableBeaconLocationsUpdated.Invoke);
-            API.Parties.Client.OnReservationNotificationCallback.AddListener(reservationNotificationCallback.Invoke);
+            SteamTools.Events.OnActiveBeaconsUpdated += activeBeaconsUpdated.Invoke;
+            SteamTools.Events.OnAvailableBeaconLocationsUpdated += availableBeaconLocationsUpdated.Invoke;
+            SteamTools.Events.OnReservationNotification += reservationNotificationCallback.Invoke;
 
-            API.RemotePlay.Client.OnSessionConnected.AddListener(remotePlaySessionConnected.Invoke);
-            API.RemotePlay.Client.OnSessionDisconnected.AddListener(remotePlaySessionDisconnected.Invoke);
+            SteamTools.Events.OnRemotePlaySessionConnected += remotePlaySessionConnected.Invoke;
+            SteamTools.Events.OnRemotePlaySessionDisconnected += remotePlaySessionDisconnected.Invoke;
+            
+            SteamTools.Events.OnRemoteStorageLocalFileChange += remoteStorageFileChange.Invoke;
 
-            API.RemoteStorage.Client.OnLocalFileChange.AddListener(remoteStorageFileChange.Invoke);
+            SteamTools.Events.OnScreenshotReady += screenshotReady.Invoke;
+            SteamTools.Events.OnScreenshotRequested += screenshotRequested.Invoke;
 
-            API.Screenshots.Client.OnScreenshotReady.AddListener(screenshotReady.Invoke);
-            API.Screenshots.Client.OnScreenshotRequested.AddListener(screenshotRequested.Invoke);
+            SteamTools.Events.OnStatsReceived += statsReceived.Invoke;
+            SteamTools.Events.OnStatsStored += statsStored.Invoke;
+            SteamTools.Events.OnStatsUnloaded += statsUnloaded.Invoke;
+            SteamTools.Events.OnUserAchievementStored += achievementStored.Invoke;
 
-            API.StatsAndAchievements.Client.OnUserAchievementStored.AddListener(achievementStored.Invoke);
-            API.StatsAndAchievements.Client.OnUserStatsReceived.AddListener(statsReceived.Invoke);
-            API.StatsAndAchievements.Client.OnUserStatsStored.AddListener(statsStored.Invoke);
-            API.StatsAndAchievements.Client.OnUserStatsUnloaded.AddListener(statsUnloaded.Invoke);
-
-            API.Utilities.Client.OnAppResumeFromSuspend.AddListener(appResumeFromSuspend.Invoke);
-            API.Utilities.Client.OnKeyboardClosed.AddListener(keyboardClosed.Invoke);
-            API.Utilities.Client.OnKeyboardShown.AddListener(keyboardShown.Invoke);
+            SteamTools.Events.OnAppResumeFromSuspend += appResumeFromSuspend.Invoke;
+            SteamTools.Events.OnKeyboardShown += keyboardShown.Invoke;
+            SteamTools.Events.OnKeyboardClosed += keyboardClosed.Invoke;
         }
 
         private void OnDestroy()
         {
-            API.App.onSteamInitialized.RemoveListener(initSuccess.Invoke);
-            API.App.onSteamInitializationError.RemoveListener(initFailed.Invoke);
+            SteamTools.Events.OnSteamInitialised -= initSuccess.Invoke;
+            SteamTools.Events.OnSteamInitialisationError -= initFailed.Invoke;
 
-            API.App.Client.OnDlcInstalled.RemoveListener(dlcInstalled.Invoke);
-            API.App.Client.OnNewUrlLaunchParameters.RemoveListener(newUrlLaunchParameters.Invoke);
-            API.App.Client.OnServersDisconnected.RemoveListener(serversDisconnected.Invoke);
-            API.App.Client.OnServersConnected.RemoveListener(serversConnected.Invoke);
-            API.App.Client.OnServersConnectFailure.RemoveListener(serversConnectFailure.Invoke);
+            SteamTools.Events.OnDlcInstalled -= dlcInstalled.Invoke;
+            SteamTools.Events.OnNewUrlLaunchParameters -= newUrlLaunchParameters.Invoke;
+            SteamTools.Events.OnSteamServersDisconnected -= serversDisconnected.Invoke;
+            SteamTools.Events.OnSteamServerConnectFailure -= serversConnectFailure.Invoke;
+            SteamTools.Events.OnSteamServersConnected -= serversConnected.Invoke;
 
-            API.BigPicture.Client.OnGamepadTextInputShown.RemoveListener(gamepadTextInputShown.Invoke);
-            API.BigPicture.Client.OnGamepadTextInputDismissed.RemoveListener(gamepadTextInputDismissed.Invoke);
+            SteamTools.Events.OnGamepadTextInputShown -= gamepadTextInputShown.Invoke;
+            SteamTools.Events.OnGamepadTextInputDismissed -= gamepadTextInputDismissed.Invoke;
 
-            API.Clans.Client.OnGameConnectedChatLeave.RemoveListener(gameConnectedChatLeave.Invoke);
-            API.Clans.Client.OnChatMessageReceived.RemoveListener(chatMessageReceived.Invoke);
-            API.Clans.Client.OnGameConnectedChatJoin.RemoveListener(gameConnectedChatJoin.Invoke);
+            SteamTools.Events.OnGameConnectedChatLeave -= gameConnectedChatLeave.Invoke;
+            SteamTools.Events.OnGameConnectedClanChatMsg -= chatMessageReceived.Invoke;
+            SteamTools.Events.OnGameConnectedChatJoin -= gameConnectedChatJoin.Invoke;
 
-            API.Friends.Client.OnGameConnectedFriendChatMsg.RemoveListener(gameConnectedFriendChatMsg.Invoke);
-            API.Friends.Client.OnFriendRichPresenceUpdate.RemoveListener(friendRichPresenceUpdate.Invoke);
-            API.Friends.Client.OnPersonaStateChange.RemoveListener(personaStateChange.Invoke);
+            SteamTools.Events.OnGameConnectedFriendChatMsg -= gameConnectedFriendChatMsg.Invoke;
+            SteamTools.Events.OnFriendRichPresenceUpdate -= friendRichPresenceUpdate.Invoke;
+            SteamTools.Events.OnPersonaStateChange -= personaStateChange.Invoke;
 
-            API.Input.Client.onInputDataChanged.RemoveListener(inputDataChanged.Invoke);
+            SteamTools.Events.OnInputDataChanged -= inputDataChanged.Invoke;
+            SteamTools.Events.OnControllerConnected -= controllerConnected.Invoke;
+            SteamTools.Events.OnControllerDisconnected -= controllerDisconnected.Invoke;
 
-            API.Inventory.Client.OnSteamInventoryDefinitionUpdate.RemoveListener(inventoryDefinitionUpdate.Invoke);
-            API.Inventory.Client.OnSteamInventoryResultReady.RemoveListener(inventoryResultReady.Invoke);
-            API.Inventory.Client.OnSteamMicroTransactionAuthorizationResponse.RemoveListener(microTransactionAuthorizationResponse.Invoke);
+            SteamTools.Events.OnInventoryDefinitionUpdate -= inventoryDefinitionUpdate.Invoke;
+            SteamTools.Events.OnInventoryResultReady -= inventoryResultReady.Invoke;
+            SteamTools.Events.OnMicroTxnAuthorisationResponse -= microTransactionAuthorizationResponse.Invoke;
+            
+            SteamTools.Events.OnFavoritesListChanged -= serverFavoritesListChanged.Invoke;
+            SteamTools.Events.OnAskedToLeaveLobby -= lobbyAskedToLeave.Invoke;
+            SteamTools.Events.OnLobbyAuthentication -= lobbyAuthenticationRequest.Invoke;
+            SteamTools.Events.OnLobbyChatMsg -= lobbyChatMsg.Invoke;
+            SteamTools.Events.OnLobbyChatUpdate -= lobbyChatUpdate.Invoke;
+            SteamTools.Events.OnLobbyDataUpdate -= lobbyChatDataUpdate.Invoke;
+            SteamTools.Events.OnLobbyEnterFailed -= lobbyEnterFailed.Invoke;
+            SteamTools.Events.OnLobbyEnterSuccess -= lobbyEnterSuccess.Invoke;
+            SteamTools.Events.OnLobbyGameServer -= lobbyGameCreated.Invoke;
+            SteamTools.Events.OnLobbyInvite -= lobbyInvite.Invoke;
+            SteamTools.Events.OnLobbyLeave -= lobbyLeave.Invoke;
 
-            API.Matchmaking.Client.OnFavoritesListChanged.RemoveListener(serverFavoritesListChanged.Invoke);
-            API.Matchmaking.Client.OnLobbyAskedToLeave.RemoveListener(lobbyAskedToLeave.Invoke);
-            API.Matchmaking.Client.OnLobbyAuthenticationRequest.RemoveListener(lobbyAuthenticationRequest.Invoke);
-            API.Matchmaking.Client.OnLobbyChatMsg.RemoveListener(lobbyChatMsg.Invoke);
-            API.Matchmaking.Client.OnLobbyChatUpdate.RemoveListener(lobbyChatUpdate.Invoke);
-            API.Matchmaking.Client.OnLobbyDataUpdate.RemoveListener(lobbyChatDataUpdate.Invoke);
-            API.Matchmaking.Client.OnLobbyEnterFailed.RemoveListener(lobbyEnterFailed.Invoke);
-            API.Matchmaking.Client.OnLobbyEnterSuccess.RemoveListener(lobbyEnterSuccess.Invoke);
-            API.Matchmaking.Client.OnLobbyGameCreated.RemoveListener(lobbyGameCreated.Invoke);
-            API.Matchmaking.Client.OnLobbyInvite.RemoveListener(lobbyInvite.Invoke);
-            API.Matchmaking.Client.OnLobbyLeave.RemoveListener(lobbyLeave.Invoke);
+            SteamTools.Events.OnLobbyJoinRequested -= gameLobbyJoinRequested.Invoke;
+            SteamTools.Events.OnRichPresenceJoinRequested -= gameRichPresenceJoinRequested.Invoke;
+            SteamTools.Events.OnGameServerChangeRequested -= gameServerChangeRequested.Invoke;
+            SteamTools.Events.OnGameOverlayActivated -= gameOverlayActivated.Invoke;
 
-            API.Overlay.Client.OnGameLobbyJoinRequested.RemoveListener(gameLobbyJoinRequested.Invoke);
-            API.Overlay.Client.OnGameOverlayActivated.RemoveListener(gameOverlayActivated.Invoke);
-            API.Overlay.Client.OnGameRichPresenceJoinRequested.RemoveListener(gameRichPresenceJoinRequested.Invoke);
-            API.Overlay.Client.OnGameServerChangeRequested.RemoveListener(gameServerChangeRequested.Invoke);
+            SteamTools.Events.OnActiveBeaconsUpdated -= activeBeaconsUpdated.Invoke;
+            SteamTools.Events.OnAvailableBeaconLocationsUpdated -= availableBeaconLocationsUpdated.Invoke;
+            SteamTools.Events.OnReservationNotification -= reservationNotificationCallback.Invoke;
 
-            API.Parties.Client.OnActiveBeaconsUpdated.RemoveListener(activeBeaconsUpdated.Invoke);
-            API.Parties.Client.OnAvailableBeaconLocationsUpdated.RemoveListener(availableBeaconLocationsUpdated.Invoke);
-            API.Parties.Client.OnReservationNotificationCallback.RemoveListener(reservationNotificationCallback.Invoke);
+            SteamTools.Events.OnRemotePlaySessionConnected -= remotePlaySessionConnected.Invoke;
+            SteamTools.Events.OnRemotePlaySessionDisconnected -= remotePlaySessionDisconnected.Invoke;
 
-            API.RemotePlay.Client.OnSessionConnected.RemoveListener(remotePlaySessionConnected.Invoke);
-            API.RemotePlay.Client.OnSessionDisconnected.RemoveListener(remotePlaySessionDisconnected.Invoke);
+            SteamTools.Events.OnRemoteStorageLocalFileChange -= remoteStorageFileChange.Invoke;
 
-            API.RemoteStorage.Client.OnLocalFileChange.RemoveListener(remoteStorageFileChange.Invoke);
+            SteamTools.Events.OnScreenshotReady -= screenshotReady.Invoke;
+            SteamTools.Events.OnScreenshotRequested -= screenshotRequested.Invoke;
 
-            API.Screenshots.Client.OnScreenshotReady.RemoveListener(screenshotReady.Invoke);
-            API.Screenshots.Client.OnScreenshotRequested.RemoveListener(screenshotRequested.Invoke);
+            SteamTools.Events.OnStatsReceived -= statsReceived.Invoke;
+            SteamTools.Events.OnStatsStored -= statsStored.Invoke;
+            SteamTools.Events.OnStatsUnloaded -= statsUnloaded.Invoke;
+            SteamTools.Events.OnUserAchievementStored -= achievementStored.Invoke;
 
-            API.StatsAndAchievements.Client.OnUserAchievementStored.RemoveListener(achievementStored.Invoke);
-            API.StatsAndAchievements.Client.OnUserStatsReceived.RemoveListener(statsReceived.Invoke);
-            API.StatsAndAchievements.Client.OnUserStatsStored.RemoveListener(statsStored.Invoke);
-            API.StatsAndAchievements.Client.OnUserStatsUnloaded.RemoveListener(statsUnloaded.Invoke);
-
-            API.Utilities.Client.OnAppResumeFromSuspend.RemoveListener(appResumeFromSuspend.Invoke);
-            API.Utilities.Client.OnKeyboardClosed.RemoveListener(keyboardClosed.Invoke);
-            API.Utilities.Client.OnKeyboardShown.RemoveListener(keyboardShown.Invoke);
+            SteamTools.Events.OnAppResumeFromSuspend -= appResumeFromSuspend.Invoke;
+            SteamTools.Events.OnKeyboardClosed -= keyboardClosed.Invoke;   
+            SteamTools.Events.OnKeyboardShown -= keyboardShown.Invoke;
         }
 
         public UnityEvent initSuccess;
@@ -158,44 +165,46 @@ namespace Heathen.SteamworksIntegration
         public UnityEvent serversConnected;
         public API.App.Client.UnityEventServersConnectFailure serversConnectFailure;
         public UnityEvent gamepadTextInputShown;
-        public StringEvent gamepadTextInputDismissed;
-        public GameConnectedClanChatMsgEvent chatMessageReceived;
+        public UnityEvent<bool, string> gamepadTextInputDismissed;
+        public UnityEvent<ChatRoom, UserData, string, EChatEntryType> chatMessageReceived;
         public GameConnectedChatJoinEvent gameConnectedChatJoin;
-        public GameConnectedChatLeaveEvent gameConnectedChatLeave;
+        public UnityEvent<ChatRoom, UserData, bool, bool> gameConnectedChatLeave;
         public GameConnectedFriendChatMsgEvent gameConnectedFriendChatMsg;
-        public FriendRichPresenceUpdateEvent friendRichPresenceUpdate;
-        public PersonaStateChangeEvent personaStateChange;
+        public UnityEvent<UserData, AppData> friendRichPresenceUpdate;
+        public UnityEvent<UserData, EPersonaChange> personaStateChange;
         public ControllerDataEvent inputDataChanged;
+        public UnityEvent<InputHandle_t> controllerConnected;
+        public UnityEvent<InputHandle_t> controllerDisconnected;
         public SteamInventoryDefinitionUpdateEvent inventoryDefinitionUpdate;
         public SteamInventoryResultReadyEvent inventoryResultReady;
-        public SteamMicroTransactionAuthorizationResponce microTransactionAuthorizationResponse;
+        public UnityEvent<AppData, ulong, bool> microTransactionAuthorizationResponse;
         public FavoritesListChangedEvent serverFavoritesListChanged;
         public LobbyDataEvent lobbyAskedToLeave;
         public LobbyAuthenticationEvent lobbyAuthenticationRequest;
         public LobbyChatMsgEvent lobbyChatMsg;
-        public LobbyChatUpdateEvent lobbyChatUpdate;
-        public LobbyDataUpdateEvent lobbyChatDataUpdate;
-        public LobbyEnterEvent lobbyEnterFailed;
-        public LobbyEnterEvent lobbyEnterSuccess;
-        public LobbyGameCreatedEvent lobbyGameCreated;
-        public LobbyInviteEvent lobbyInvite;
+        public UnityEvent<LobbyData, UserData, EChatMemberStateChange> lobbyChatUpdate;
+        public UnityEvent<LobbyData, LobbyMemberData?> lobbyChatDataUpdate;
+        public UnityEvent<LobbyData, EChatRoomEnterResponse> lobbyEnterFailed;
+        public UnityEvent<LobbyData> lobbyEnterSuccess;
+        public UnityEvent<LobbyData, CSteamID, string, ushort> lobbyGameCreated;
+        public UnityEvent<UserData, LobbyData, GameData> lobbyInvite;
         public LobbyDataEvent lobbyLeave;
         public GameLobbyJoinRequestedEvent gameLobbyJoinRequested;
-        public GameOverlayActivatedEvent gameOverlayActivated;
+        public UnityEvent<bool> gameOverlayActivated;
         public GameRichPresenceJoinRequestedEvent gameRichPresenceJoinRequested;
-        public GameServerChangeRequestedEvent gameServerChangeRequested;
-        public ActiveBeaconsUpdatedEvent activeBeaconsUpdated;
-        public AvailableBeaconLocationsUpdatedEvent availableBeaconLocationsUpdated;
-        public ReservationNotificationCallbackEvent reservationNotificationCallback;
-        public SteamRemotePlaySessionConnectedEvent remotePlaySessionConnected;
-        public SteamRemotePlaySessionDisconnectedEvent remotePlaySessionDisconnected;
-        public RemoteStorageLocalFileChangeEvent remoteStorageFileChange;
-        public ScreenshotReadyEvent screenshotReady;
+        public UnityEvent<string,string> gameServerChangeRequested;
+        public UnityEvent activeBeaconsUpdated;
+        public UnityEvent availableBeaconLocationsUpdated;
+        public UnityEvent<UserData, PartyBeaconID_t> reservationNotificationCallback;
+        public UnityEvent<RemotePlaySessionID_t> remotePlaySessionConnected;
+        public UnityEvent<RemotePlaySessionID_t> remotePlaySessionDisconnected;
+        public UnityEvent remoteStorageFileChange;
+        public UnityEvent<ScreenshotHandle, EResult> screenshotReady;
         public UnityEvent screenshotRequested;
-        public UserAchievementStoredEvent achievementStored;
-        public UserStatsReceivedEvent statsReceived;
-        public UserStatsStoredEvent statsStored;
-        public UserStatsUnloadedEvent statsUnloaded;
+        public UnityEvent<UserAchievementStoredData> achievementStored;
+        public UnityEvent<GameData, EResult, UserData> statsReceived;
+        public UnityEvent<GameData, EResult> statsStored;
+        public UnityEvent<UserData> statsUnloaded;
         public UnityEvent appResumeFromSuspend;
         public UnityEvent keyboardClosed;
         public UnityEvent keyboardShown;
@@ -208,6 +217,8 @@ namespace Heathen.SteamworksIntegration
         AppResumeFromSuspend,
         AvailableBeaconLocationsUpdated,
         ChatMessageReceived,
+        ControllerConnected,
+        ControllerDisconnected,
         DlcInstalled,
         FriendRichPresenceUpdate,
         GameConnectedChatJoin,
@@ -258,27 +269,29 @@ namespace Heathen.SteamworksIntegration
     [CustomEditor(typeof(SteamworksEventTriggers), true)]
     public class SteamworksEventTriggersEditor : Editor
     {
-        SerializedProperty m_DelegatesProperty;
+        SerializedProperty _mDelegatesProperty;
 
-        GUIContent m_IconToolbarMinus;
-        GUIContent m_EventIDName;
-        GUIContent[] m_EventTypes;
-        GUIContent m_AddButtonContent;
+        GUIContent _mIconToolbarMinus;
+        GUIContent _mEventIDName;
+        GUIContent[] _mEventTypes;
+        GUIContent _mAddButtonContent;
 
         protected virtual void OnEnable()
         {
-            m_DelegatesProperty = serializedObject.FindProperty("m_Delegates");
-            m_AddButtonContent = new GUIContent("Add New Event Type");
-            m_EventIDName = new GUIContent("");
+            _mDelegatesProperty = serializedObject.FindProperty("delegates");
+            _mAddButtonContent = new GUIContent("Add New Event Type");
+            _mEventIDName = new GUIContent("");
             // Have to create a copy since otherwise the tooltip will be overwritten.
-            m_IconToolbarMinus = new GUIContent(EditorGUIUtility.IconContent("Toolbar Minus"));
-            m_IconToolbarMinus.tooltip = "Remove all events in this list.";
+            _mIconToolbarMinus = new GUIContent(EditorGUIUtility.IconContent("Toolbar Minus"))
+            {
+                tooltip = "Remove all events in this list."
+            };
 
             string[] eventNames = Enum.GetNames(typeof(SteamEventTriggerType));
-            m_EventTypes = new GUIContent[eventNames.Length];
+            _mEventTypes = new GUIContent[eventNames.Length];
             for (int i = 0; i < eventNames.Length; ++i)
             {
-                m_EventTypes[i] = new GUIContent(ObjectNames.NicifyVariableName(eventNames[i]));
+                _mEventTypes[i] = new GUIContent(ObjectNames.NicifyVariableName(eventNames[i]));
             }
         }
 
@@ -289,169 +302,175 @@ namespace Heathen.SteamworksIntegration
 
             EditorGUILayout.Space();
 
-            Vector2 removeButtonSize = GUIStyle.none.CalcSize(m_IconToolbarMinus);
+            Vector2 removeButtonSize = GUIStyle.none.CalcSize(_mIconToolbarMinus);
 
-            for (int i = 0; i < m_DelegatesProperty.arraySize; ++i)
+            for (int i = 0; i < _mDelegatesProperty.arraySize; ++i)
             {
-                SerializedProperty delegateProperty = m_DelegatesProperty.GetArrayElementAtIndex(i);
+                SerializedProperty delegateProperty = _mDelegatesProperty.GetArrayElementAtIndex(i);
                 //SerializedProperty eventProperty = delegateProperty.FindPropertyRelative("eventID");
                 //SerializedProperty callbacksProperty = delegateProperty.FindPropertyRelative("callback");
-                m_EventIDName.text = delegateProperty.enumDisplayNames[delegateProperty.enumValueIndex];
+                _mEventIDName.text = delegateProperty.enumDisplayNames[delegateProperty.enumValueIndex];
 
                 switch ((SteamEventTriggerType)delegateProperty.enumValueIndex)
                 {
                     case SteamEventTriggerType.AchievementStored:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.achievementStored)), m_EventIDName);
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.achievementStored)), _mEventIDName);
                         break;
                     case SteamEventTriggerType.ActiveBeaconsUpdated:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.activeBeaconsUpdated)), m_EventIDName);
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.activeBeaconsUpdated)), _mEventIDName);
                         break;
                     case SteamEventTriggerType.AppResumeFromSuspend:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.appResumeFromSuspend)), m_EventIDName);
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.appResumeFromSuspend)), _mEventIDName);
                         break;
                     case SteamEventTriggerType.AvailableBeaconLocationsUpdated:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.availableBeaconLocationsUpdated)), m_EventIDName);
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.availableBeaconLocationsUpdated)), _mEventIDName);
                         break;
                     case SteamEventTriggerType.ChatMessageReceived:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.chatMessageReceived)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.chatMessageReceived)), _mEventIDName); 
+                        break;
+                    case SteamEventTriggerType.ControllerConnected:
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.controllerConnected)), _mEventIDName);
+                        break;
+                    case SteamEventTriggerType.ControllerDisconnected:
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.controllerDisconnected)), _mEventIDName);
                         break;
                     case SteamEventTriggerType.DlcInstalled:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.dlcInstalled)), m_EventIDName);
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.dlcInstalled)), _mEventIDName);
                         break;
                     case SteamEventTriggerType.FriendRichPresenceUpdate:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.friendRichPresenceUpdate)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.friendRichPresenceUpdate)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.GameConnectedChatJoin:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.gameConnectedChatJoin)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.gameConnectedChatJoin)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.GameConnectedChatLeave:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.gameConnectedChatLeave)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.gameConnectedChatLeave)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.GameConnectedFriendChatMsg:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.gameConnectedFriendChatMsg)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.gameConnectedFriendChatMsg)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.GamepadTextInputDismissed:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.gamepadTextInputDismissed)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.gamepadTextInputDismissed)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.GamepadTextShown:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.gamepadTextInputShown)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.gamepadTextInputShown)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.InputDataChanged:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.inputDataChanged)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.inputDataChanged)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.InventoryDefinitionUpdate:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.inventoryDefinitionUpdate)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.inventoryDefinitionUpdate)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.InventoryResultReady:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.inventoryResultReady)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.inventoryResultReady)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.KeyboardClosed:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.keyboardClosed)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.keyboardClosed)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.KeyboardShown:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.keyboardShown)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.keyboardShown)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.LobbyAskedToLeave:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.lobbyAskedToLeave)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.lobbyAskedToLeave)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.LobbyAuthenticationRequest:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.lobbyAuthenticationRequest)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.lobbyAuthenticationRequest)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.LobbyChatMsg:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.lobbyChatMsg)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.lobbyChatMsg)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.LobbyChatUpdate:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.lobbyChatUpdate)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.lobbyChatUpdate)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.LobbyDataUpdate:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.lobbyChatDataUpdate)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.lobbyChatDataUpdate)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.LobbyEnterFailed:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.lobbyEnterFailed)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.lobbyEnterFailed)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.LobbyEnterSuccess:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.lobbyEnterSuccess)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.lobbyEnterSuccess)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.LobbyGameCreated:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.lobbyGameCreated)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.lobbyGameCreated)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.LobbyInvite:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.lobbyInvite)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.lobbyInvite)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.LobbyJoinRequested:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.gameLobbyJoinRequested)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.gameLobbyJoinRequested)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.LobbyLeave:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.lobbyLeave)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.lobbyLeave)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.MicroTransactionAuthorizationResponse:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.microTransactionAuthorizationResponse)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.microTransactionAuthorizationResponse)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.NewUrlLaunchParameters:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.newUrlLaunchParameters)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.newUrlLaunchParameters)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.OverlayActivated:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.gameOverlayActivated)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.gameOverlayActivated)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.PersonaStateChange:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.personaStateChange)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.personaStateChange)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.RemotePlaySessionConnected:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.remotePlaySessionConnected)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.remotePlaySessionConnected)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.RemotePlaySessionDisconnected:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.remotePlaySessionDisconnected)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.remotePlaySessionDisconnected)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.RemoteStorageFileChanged:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.remoteStorageFileChange)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.remoteStorageFileChange)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.ReservationNotificationCallback:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.reservationNotificationCallback)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.reservationNotificationCallback)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.RichPresenceJoinRequested:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.gameRichPresenceJoinRequested)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.gameRichPresenceJoinRequested)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.ScreenshotReady:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.screenshotReady)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.screenshotReady)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.ScreenshotRequested:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.screenshotRequested)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.screenshotRequested)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.ServerChangeRequested:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.gameServerChangeRequested)), m_EventIDName); break;
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.gameServerChangeRequested)), _mEventIDName); break;
                     case SteamEventTriggerType.ServerFavoritesListChanged:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.serverFavoritesListChanged)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.serverFavoritesListChanged)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.ServersConnected:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.serversConnected)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.serversConnected)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.ServersConnectFailure:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.serversConnectFailure)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.serversConnectFailure)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.ServersDisconnected:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.serversDisconnected)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.serversDisconnected)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.StatsReceived:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.statsReceived)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.statsReceived)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.StatsStored:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.statsStored)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.statsStored)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.StatsUnloaded:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.statsUnloaded)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.statsUnloaded)), _mEventIDName); 
                         break;
                     case SteamEventTriggerType.InitializationError:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.initFailed)), m_EventIDName);
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.initFailed)), _mEventIDName);
                         break;
                         case SteamEventTriggerType.InitializationSuccess:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.initSuccess)), m_EventIDName);
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(SteamworksEventTriggers.initSuccess)), _mEventIDName);
                         break;
                 }
                 
-                Rect callbackRect = GUILayoutUtility.GetLastRect();
+                var callbackRect = GUILayoutUtility.GetLastRect();
 
-                Rect removeButtonPos = new Rect(callbackRect.xMax - removeButtonSize.x - 8, callbackRect.y + 1, removeButtonSize.x, removeButtonSize.y);
-                if (GUI.Button(removeButtonPos, m_IconToolbarMinus, GUIStyle.none))
+                var removeButtonPos = new Rect(callbackRect.xMax - removeButtonSize.x - 8, callbackRect.y + 1, removeButtonSize.x, removeButtonSize.y);
+                if (GUI.Button(removeButtonPos, _mIconToolbarMinus, GUIStyle.none))
                 {
                     toBeRemovedEntry = i;
                 }
@@ -464,11 +483,11 @@ namespace Heathen.SteamworksIntegration
                 RemoveEntry(toBeRemovedEntry);
             }
 
-            Rect btPosition = GUILayoutUtility.GetRect(m_AddButtonContent, GUI.skin.button);
+            Rect btPosition = GUILayoutUtility.GetRect(_mAddButtonContent, GUI.skin.button);
             const float addButtonWidth = 200f;
             btPosition.x = btPosition.x + (btPosition.width - addButtonWidth) / 2;
             btPosition.width = addButtonWidth;
-            if (GUI.Button(btPosition, m_AddButtonContent))
+            if (GUI.Button(btPosition, _mAddButtonContent))
             {
                 ShowAddTriggerMenu();
             }
@@ -478,21 +497,21 @@ namespace Heathen.SteamworksIntegration
 
         private void RemoveEntry(int toBeRemovedEntry)
         {
-            m_DelegatesProperty.DeleteArrayElementAtIndex(toBeRemovedEntry);
+            _mDelegatesProperty.DeleteArrayElementAtIndex(toBeRemovedEntry);
         }
 
         void ShowAddTriggerMenu()
         {
             // Now create the menu, add items and show it
             GenericMenu menu = new GenericMenu();
-            for (int i = 0; i < m_EventTypes.Length; ++i)
+            for (int i = 0; i < _mEventTypes.Length; ++i)
             {
                 bool active = true;
 
                 // Check if we already have a Entry for the current eventType, if so, disable it
-                for (int p = 0; p < m_DelegatesProperty.arraySize; ++p)
+                for (int p = 0; p < _mDelegatesProperty.arraySize; ++p)
                 {
-                    SerializedProperty delegateEntry = m_DelegatesProperty.GetArrayElementAtIndex(p);
+                    SerializedProperty delegateEntry = _mDelegatesProperty.GetArrayElementAtIndex(p);
                     //SerializedProperty eventProperty = delegateEntry.FindPropertyRelative("eventID");
                     if (delegateEntry.enumValueIndex == i)
                     {
@@ -500,9 +519,9 @@ namespace Heathen.SteamworksIntegration
                     }
                 }
                 if (active)
-                    menu.AddItem(m_EventTypes[i], false, OnAddNewSelected, i);
+                    menu.AddItem(_mEventTypes[i], false, OnAddNewSelected, i);
                 else
-                    menu.AddDisabledItem(m_EventTypes[i]);
+                    menu.AddDisabledItem(_mEventTypes[i]);
             }
             menu.ShowAsContext();
             Event.current.Use();
@@ -512,8 +531,8 @@ namespace Heathen.SteamworksIntegration
         {
             int selected = (int)index;
 
-            m_DelegatesProperty.arraySize += 1;
-            SerializedProperty delegateEntry = m_DelegatesProperty.GetArrayElementAtIndex(m_DelegatesProperty.arraySize - 1);
+            _mDelegatesProperty.arraySize += 1;
+            SerializedProperty delegateEntry = _mDelegatesProperty.GetArrayElementAtIndex(_mDelegatesProperty.arraySize - 1);
             //SerializedProperty eventProperty = delegateEntry.FindPropertyRelative("eventID");
             delegateEntry.enumValueIndex = selected;
             serializedObject.ApplyModifiedProperties();

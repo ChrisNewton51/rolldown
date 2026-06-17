@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 #if UNITY_EDITOR
 using UnityEditor;
 using System.Collections.Generic;
@@ -11,19 +11,19 @@ namespace Heathen.SteamworksIntegration
 {
     public abstract class ModularEditor : Editor
     {
-        protected GameObject TargetGO => ((Component)target).gameObject;
-        protected readonly Dictionary<Component, SerializedObject> soCache = new();
+        protected GameObject TargetGo => ((Component)target).gameObject;
+        protected readonly Dictionary<Component, SerializedObject> SoCache = new();
 
         /// <summary>
         /// Derived editors must populate this with all allowed modular/component types.
         /// </summary>
         protected abstract Type[] AllowedTypes { get; }
 
-        protected SerializedObject GetSO(Component comp)
+        protected SerializedObject GetSo(Component comp)
         {
-            if (comp == null) return null;
-            if (!soCache.TryGetValue(comp, out var so) || so.targetObject == null)
-                soCache[comp] = so = new SerializedObject(comp);
+            if (!comp) return null;
+            if (!SoCache.TryGetValue(comp, out var so) || so.targetObject == null)
+                SoCache[comp] = so = new SerializedObject(comp);
             so.Update();
             return so;
         }
@@ -42,11 +42,11 @@ namespace Heathen.SteamworksIntegration
                     var compAttr = t.GetCustomAttribute<ModularComponentAttribute>();
                     var evtAttr = t.GetCustomAttribute<ModularEventsAttribute>();
                     var parent = compAttr != null ? compAttr.ParentType :
-                                 evtAttr != null ? evtAttr.ParentType : null;
+                                 evtAttr?.ParentType;
 
                     if (parent != ParentType)
                     {
-                        Debug.LogWarning($"Type {t.Name} in AllowedTypes does not match parent {ParentType.Name} and will be ignored.");
+                        Debug.LogWarning($"Type {t.Name} in AllowedTypes does not match parent {(ParentType != null ? ParentType.Name :  "Unknown")} and will be ignored.");
                         continue;
                     }
 
@@ -88,9 +88,10 @@ namespace Heathen.SteamworksIntegration
             }
         }
 
+        // ReSharper disable Unity.PerformanceAnalysis
         protected void DrawFunctionFlags()
         {
-            var go = TargetGO;
+            var go = TargetGo;
             var parentType = target.GetType();
 
             // --- Gather all single-instance types (FieldName empty) ---
@@ -124,7 +125,7 @@ namespace Heathen.SteamworksIntegration
             // --- Build current mask value ---
             int maskValue = 0;
             for (int i = 0; i < maskTypes.Count; i++)
-                if (go.GetComponent(maskTypes[i]) != null)
+                if (go.GetComponent(maskTypes[i]))
                     maskValue |= 1 << i;
 
             // --- Display mask field ---
@@ -147,7 +148,7 @@ namespace Heathen.SteamworksIntegration
                 for (int i = 0; i < maskTypes.Count; i++)
                 {
                     var comp = go.GetComponent(maskTypes[i]);
-                    bool has = comp != null;
+                    bool has = comp;
                     bool should = (maskValue & (1 << i)) != 0;
 
                     if (should && !has)
@@ -182,7 +183,7 @@ namespace Heathen.SteamworksIntegration
                 .ToList();
 
             // Always add Events last if any
-            if (TargetGO.GetComponents<Component>().Any(c => c.GetType().GetCustomAttribute<ModularEventsAttribute>() != null))
+            if (TargetGo.GetComponents<Component>().Any(c => c.GetType().GetCustomAttribute<ModularEventsAttribute>() != null))
                 headers.Add("Events");
 
             return headers.ToArray();
@@ -210,13 +211,13 @@ namespace Heathen.SteamworksIntegration
 
                 foreach (var comp in comps)
                 {
-                    if (comp == null) continue;
+                    if (!comp) continue;
                     comp.hideFlags = HideFlags.HideInInspector;
 
                     using (new EditorGUILayout.HorizontalScope())
                     {
                         var attr = comp.GetType().GetCustomAttribute<ModularComponentAttribute>();
-                        var so = GetSO(comp);
+                        var so = GetSo(comp);
                         var prop = so.FindProperty(attr.FieldName);
                         if (prop != null)
                             DrawPropertyWithOptionalLabel(prop);
@@ -271,14 +272,14 @@ namespace Heathen.SteamworksIntegration
 
             foreach (var comp in comps)
             {
-                var so = GetSO(comp);
+                var so = GetSo(comp);
                 foreach (var field in comp.GetType().GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
                 {
                     if (field.GetCustomAttribute<TAttr>() is not IModularField mf) continue;
                     var prop = so.FindProperty(field.Name);
                     if (prop == null) continue;
 
-                    if (mf.Synchronized)
+                    if (mf.Synchronised)
                     {
                         var key = (field.Name, field.FieldType);
                         synchronized[key] = (prop, mf.Priority);
@@ -313,7 +314,7 @@ namespace Heathen.SteamworksIntegration
 
                         foreach (var comp in syncedComponents[key])
                         {
-                            var so = GetSO(comp);
+                            var so = GetSo(comp);
                             var syncedProp = so.FindProperty(prop.name);
                             SetSerializedValue(syncedProp, cachedValue);
                             so.ApplyModifiedProperties();
@@ -332,7 +333,7 @@ namespace Heathen.SteamworksIntegration
                 EditorGUI.indentLevel++;
                 foreach (var (prop, comp, _) in kvp.Value.OrderBy(f => f.Item3))
                 {
-                    var so = GetSO(comp);
+                    var so = GetSo(comp);
                     EditorGUILayout.PropertyField(so.FindProperty(prop.propertyPath), true);
                     so.ApplyModifiedProperties();
                 }
@@ -348,16 +349,18 @@ namespace Heathen.SteamworksIntegration
         protected void DrawEventFields(string label = "Events")
         {
             var evtComp = GetModularEventComponents().FirstOrDefault();
-            if (evtComp == null) 
+            if (!evtComp) 
                 return;
 
             evtComp.hideFlags = HideFlags.HideInInspector;
             var soEvents = new SerializedObject(evtComp);
 
-            var parentSO = serializedObject;
-            var delegatesProp = parentSO.FindProperty("m_Delegates");
-            if (delegatesProp == null) 
+            var parentSo = serializedObject;
+            var delegatesProp = parentSo.FindProperty("mDelegates");
+            if (delegatesProp == null)
+            {
                 return;
+            }
 
             EditorGUILayout.LabelField(label, EditorStyles.label);
             EditorGUI.indentLevel++;
@@ -402,7 +405,7 @@ namespace Heathen.SteamworksIntegration
                         {
                             delegatesProp.arraySize++;
                             delegatesProp.GetArrayElementAtIndex(delegatesProp.arraySize - 1).stringValue = field.Name;
-                            parentSO.ApplyModifiedProperties();
+                            parentSo.ApplyModifiedProperties();
                         });
                 }
 
@@ -410,7 +413,7 @@ namespace Heathen.SteamworksIntegration
             }
 
             EditorGUI.indentLevel--;
-            parentSO.ApplyModifiedProperties();
+            parentSo.ApplyModifiedProperties();
             soEvents.ApplyModifiedProperties();
         }
 
@@ -494,30 +497,31 @@ namespace Heathen.SteamworksIntegration
             };
         }
 
-        private void SetSerializedValue(SerializedProperty target, object value)
+        private static void SetSerializedValue(SerializedProperty targetProperty, object value)
         {
-            switch (target.propertyType)
+            switch (targetProperty.propertyType)
             {
-                case SerializedPropertyType.Boolean: target.boolValue = (bool)value; break;
-                case SerializedPropertyType.Integer: target.intValue = (int)value; break;
-                case SerializedPropertyType.Float: target.floatValue = (float)value; break;
-                case SerializedPropertyType.String: target.stringValue = (string)value; break;
-                case SerializedPropertyType.Color: target.colorValue = (Color)value; break;
-                case SerializedPropertyType.ObjectReference: target.objectReferenceValue = (UnityEngine.Object)value; break;
-                case SerializedPropertyType.Enum: target.enumValueIndex = (int)value; break;
-                case SerializedPropertyType.Vector2: target.vector2Value = (Vector2)value; break;
-                case SerializedPropertyType.Vector3: target.vector3Value = (Vector3)value; break;
+                case SerializedPropertyType.Boolean: targetProperty.boolValue = (bool)value; break;
+                case SerializedPropertyType.Integer: targetProperty.intValue = (int)value; break;
+                case SerializedPropertyType.Float: targetProperty.floatValue = (float)value; break;
+                case SerializedPropertyType.String: targetProperty.stringValue = (string)value; break;
+                case SerializedPropertyType.Color: targetProperty.colorValue = (Color)value; break;
+                case SerializedPropertyType.ObjectReference: targetProperty.objectReferenceValue = (UnityEngine.Object)value; break;
+                case SerializedPropertyType.Enum: targetProperty.enumValueIndex = (int)value; break;
+                case SerializedPropertyType.Vector2: targetProperty.vector2Value = (Vector2)value; break;
+                case SerializedPropertyType.Vector3: targetProperty.vector3Value = (Vector3)value; break;
                 default:
-                    EditorUtility.CopySerializedIfDifferent(target.serializedObject.targetObject, target.serializedObject.targetObject);
+                    EditorUtility.CopySerializedIfDifferent(targetProperty.serializedObject.targetObject, targetProperty.serializedObject.targetObject);
                     break;
             }
         }
 
+        // ReSharper disable Unity.PerformanceAnalysis
         protected void HideAllAllowedComponents()
         {
             foreach (var type in AllowedTypes)
             {
-                var comps = TargetGO.GetComponents(type);
+                var comps = TargetGo.GetComponents(type);
                 foreach (var comp in comps)
                 {
                     if (comp != null)
@@ -526,26 +530,29 @@ namespace Heathen.SteamworksIntegration
             }
         }
 
+        // ReSharper disable Unity.PerformanceAnalysis
         protected IEnumerable<Component> GetModularComponents() =>
-            TargetGO.GetComponents<Component>()
+            TargetGo.GetComponents<Component>()
                 .Where(c =>
                 {
                     var attr = c.GetType().GetCustomAttribute<ModularComponentAttribute>();
                     return attr != null && attr.ParentType == ParentType;
                 });
 
+        // ReSharper disable Unity.PerformanceAnalysis
         protected IEnumerable<Component> GetModularEventComponents() =>
-            TargetGO.GetComponents<Component>()
+            TargetGo.GetComponents<Component>()
                 .Where(c =>
                 {
                     var attr = c.GetType().GetCustomAttribute<ModularEventsAttribute>();
                     return attr != null && attr.ParentType == ParentType;
                 });
 
+        // ReSharper disable Unity.PerformanceAnalysis
         protected void AddModularComponent(Type type)
         {
             if (type.GetCustomAttribute<ModularComponentAttribute>() == null) return;
-            var comp = TargetGO.AddComponent(type);
+            var comp = TargetGo.AddComponent(type);
             comp.hideFlags = HideFlags.HideInInspector;
         }
 
@@ -565,7 +572,7 @@ namespace Heathen.SteamworksIntegration
             return list.ToArray();
         }
 
-        private void DrawPropertyGeneric(SerializedProperty prop)
+        private static void DrawPropertyGeneric(SerializedProperty prop)
         {
             switch (prop.propertyType)
             {
@@ -577,21 +584,21 @@ namespace Heathen.SteamworksIntegration
             }
         }
 
-        private void CopySerializedValue(SerializedProperty source, SerializedProperty target)
+        private void CopySerializedValue(SerializedProperty source, SerializedProperty targetProperty)
         {
             switch (source.propertyType)
             {
-                case SerializedPropertyType.Boolean: target.boolValue = source.boolValue; break;
-                case SerializedPropertyType.Integer: target.intValue = source.intValue; break;
-                case SerializedPropertyType.Float: target.floatValue = source.floatValue; break;
-                case SerializedPropertyType.String: target.stringValue = source.stringValue; break;
-                case SerializedPropertyType.Color: target.colorValue = source.colorValue; break;
-                case SerializedPropertyType.ObjectReference: target.objectReferenceValue = source.objectReferenceValue; break;
-                case SerializedPropertyType.Enum: target.enumValueIndex = source.enumValueIndex; break;
-                case SerializedPropertyType.Vector2: target.vector2Value = source.vector2Value; break;
-                case SerializedPropertyType.Vector3: target.vector3Value = source.vector3Value; break;
+                case SerializedPropertyType.Boolean: targetProperty.boolValue = source.boolValue; break;
+                case SerializedPropertyType.Integer: targetProperty.intValue = source.intValue; break;
+                case SerializedPropertyType.Float: targetProperty.floatValue = source.floatValue; break;
+                case SerializedPropertyType.String: targetProperty.stringValue = source.stringValue; break;
+                case SerializedPropertyType.Color: targetProperty.colorValue = source.colorValue; break;
+                case SerializedPropertyType.ObjectReference: targetProperty.objectReferenceValue = source.objectReferenceValue; break;
+                case SerializedPropertyType.Enum: targetProperty.enumValueIndex = source.enumValueIndex; break;
+                case SerializedPropertyType.Vector2: targetProperty.vector2Value = source.vector2Value; break;
+                case SerializedPropertyType.Vector3: targetProperty.vector3Value = source.vector3Value; break;
                 default:
-                    EditorUtility.CopySerializedIfDifferent(source.serializedObject.targetObject, target.serializedObject.targetObject);
+                    EditorUtility.CopySerializedIfDifferent(source.serializedObject.targetObject, targetProperty.serializedObject.targetObject);
                     break;
             }
         }

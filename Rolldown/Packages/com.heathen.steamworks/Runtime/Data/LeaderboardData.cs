@@ -1,46 +1,53 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 
 namespace Heathen.SteamworksIntegration
 {
     /// <summary>
-    /// Represents a Steam leaderboard
+    /// Represents a Steam leaderboard, providing access to its metadata, entries, and associated operations.
     /// </summary>
     [Serializable]
     public struct LeaderboardData : IEquatable<SteamLeaderboard_t>, IEquatable<ulong>, IEquatable<string>
     {
         /// <summary>
-        /// What is the name of the board ... if this is not to be created at run time then this must match the name as it appears in Steamworks
+        /// The unique identifier or name of the leaderboard.
+        /// This value must match the name of the leaderboard as defined in Steamworks if it is not to be created at runtime.
         /// </summary>
         public string apiName;
+
         /// <summary>
-        /// What is the leaderboard ID ... this is nullable if null then no leaderboard has been connected
+        /// Represents the unique identifier for a leaderboard within Steamworks.
+        /// This value can be null, indicating that no leaderboard has been associated.
         /// </summary>
         public SteamLeaderboard_t id;
+
         /// <summary>
-        /// The display name of the leaderboard if any
+        /// The display name of the leaderboard associated with this data.
+        /// This value is retrieved from Steamworks using the leaderboard's unique identifier.
         /// </summary>
-        public readonly string DisplayName => Steamworks.SteamUserStats.GetLeaderboardName(id);
+        public readonly string DisplayName => SteamUserStats.GetLeaderboardName(id);
+
         /// <summary>
-        /// Is the board valid and ready for use
+        /// Indicates whether the leaderboard data is valid.
+        /// A leaderboard is considered valid if its underlying SteamLeaderboard_t identifier has a value greater than 0.
         /// </summary>
         public readonly bool IsValid => id.m_SteamLeaderboard > 0;
+
         /// <summary>
-        /// The number of entries on the board
+        /// Represents the total number of entries in the associated leaderboard.
+        /// This value is retrieved using the Steamworks API and reflects the current count of entries maintained by the leaderboard.
         /// </summary>
         public readonly int EntryCount => API.Leaderboards.Client.GetEntryCount(id);
 
         /// <summary>
-        /// Returns the user entry for the local user
+        /// Retrieves the user entry for the local user from the specified leaderboard.
         /// </summary>
-        /// <param name="callback">The delegate to invoke when the process is complete</param>
+        /// <param name="maxDetailEntries">The maximum number of detail entries to retrieve for the user's leaderboard entry.</param>
+        /// <param name="callback">The delegate to invoke upon completion, providing the retrieved leaderboard entry and an error state if applicable.</param>
         public readonly void GetUserEntry(int maxDetailEntries, Action<LeaderboardEntry, bool> callback)
         {
             API.Leaderboards.Client.DownloadEntries(id, new CSteamID[] { UserData.Me }, maxDetailEntries, (results, error) =>
@@ -48,66 +55,89 @@ namespace Heathen.SteamworksIntegration
                 if (error || results.Length == 0)
                     callback.Invoke(null, error);
                 else
-                    callback.Invoke(results[0], error);
+                    callback.Invoke(results[0], false);
             });
-        }
-        /// <summary>
-        /// Returns the top number of entries on the board
-        /// </summary>
-        /// <param name="count">How many top entries to return</param>
-        /// <param name="maxDetailEntries">How many detail entries should be read</param>
-        /// <param name="callback">This will be invoked when the process is completed</param>
-        public readonly void GetTopEntries(int count, int maxDetailEntries, Action<LeaderboardEntry[], bool> callback) => GetEntries(ELeaderboardDataRequest.k_ELeaderboardDataRequestGlobal, 0, count, maxDetailEntries, callback);
-        /// <summary>
-        /// Invokes the callback with the query results
-        /// </summary>
-        /// <param name="request">The type of range to get from the board</param>
-        /// <param name="start">The index to start downloading at</param>
-        /// <param name="end">The index to end downloading at</param>
-        /// <param name="callback">The delegate to invoke when the process is complete</param>
-        public readonly void GetEntries(ELeaderboardDataRequest request, int start, int end, int maxDetailEntries, Action<LeaderboardEntry[], bool> callback) => API.Leaderboards.Client.DownloadEntries(id, request, start, end, maxDetailEntries, callback);
-        /// <summary>
-        /// Invokes the callback with the query results 
-        /// </summary>
-        /// <param name="users">The users to get results for</param>
-        /// <param name="callback">The delegate to invoke when the process is complete</param>
-        public readonly void GetEntries(UserData[] users, int maxDetailEntries, Action<LeaderboardEntry[], bool> callback) => API.Leaderboards.Client.DownloadEntries(id, Array.ConvertAll<UserData, CSteamID>(users, p => p.id), maxDetailEntries, callback);
-        /// <summary>
-        /// Attempt to return all entries or this board, this is not recommended and may not return all results in that Steam may rate limit the request
-        /// </summary>
-        /// <param name="maxDetailEntries"></param>
-        /// <param name="callback"></param>
-        public readonly void GetAllEntries(int maxDetailEntries, Action<LeaderboardEntry[], bool> callback)
-        {
-            GetEntries(ELeaderboardDataRequest.k_ELeaderboardDataRequestGlobal, 0, int.MaxValue, maxDetailEntries, callback);
         }
 
         /// <summary>
-        /// Invokes the callback with the query results 
+        /// Retrieves the top entries from the leaderboard.
         /// </summary>
-        /// <param name="users">The users to get results for</param>
-        /// <param name="callback">The delegate to invoke when the process is complete</param>
-        public readonly void GetEntries(CSteamID[] users, int maxDetailEntries, Action<LeaderboardEntry[], bool> callback) => API.Leaderboards.Client.DownloadEntries(id, users, maxDetailEntries, callback);
+        /// <param name="count">The number of top entries to retrieve.</param>
+        /// <param name="maxDetailEntries">The maximum number of detail entries to retrieve for each leaderboard entry.</param>
+        /// <param name="callback">The delegate to invoke upon completion, providing the retrieved leaderboard entries and a boolean indicating success or failure.</param>
+        public readonly void
+            GetTopEntries(int count, int maxDetailEntries, Action<LeaderboardEntry[], bool> callback) =>
+            GetEntries(ELeaderboardDataRequest.k_ELeaderboardDataRequestGlobal, 0, count, maxDetailEntries, callback);
+
         /// <summary>
-        /// Get the board that matches the name provided
+        /// Retrieves leaderboard entries within the specified range and invokes the callback with the results.
         /// </summary>
-        /// <param name="name">The API name of the board to get</param>
-        /// <param name="callback">A delegate of the form (<see cref="LeaderboardData"/> result, <see cref="bool"/> ioError) that will be invoked when the process completes</param>
-        public static void Get(string name, Action<LeaderboardData, bool> callback) => API.Leaderboards.Client.Find(name, callback);
+        /// <param name="request">Specifies the type of range to retrieve, such as global, around the user, or friends-only entries.</param>
+        /// <param name="start">The starting index of the leaderboard entries to download.</param>
+        /// <param name="end">The ending index of the leaderboard entries to download.</param>
+        /// <param name="maxDetailEntries">The maximum number of detailed values to retrieve per leaderboard entry.</param>
+        /// <param name="callback">The delegate invoked upon completion, providing an array of retrieved leaderboard entries and the success state of the operation.</param>
+        public readonly void GetEntries(ELeaderboardDataRequest request, int start, int end, int maxDetailEntries,
+            Action<LeaderboardEntry[], bool> callback) =>
+            API.Leaderboards.Client.DownloadEntries(id, request, start, end, maxDetailEntries, callback);
+
         /// <summary>
-        /// Get the board based on its ID
+        /// Retrieves leaderboard entries for the specified users and invokes the provided callback upon completion.
         /// </summary>
-        /// <param name="id">The id of the board to get</param>
-        /// <returns>The resulting <see cref="LeaderboardData"/></returns>
+        /// <param name="users">An array of users for whom the leaderboard entries are to be retrieved.</param>
+        /// <param name="maxDetailEntries">The maximum number of detail entries to retrieve for each user's leaderboard entry.</param>
+        /// <param name="callback">The delegate to invoke when the retrieval process is completed, providing an array of leaderboard entries and a success state.</param>
+        public readonly void GetEntries(UserData[] users, int maxDetailEntries,
+            Action<LeaderboardEntry[], bool> callback) => API.Leaderboards.Client.DownloadEntries(id,
+            Array.ConvertAll(users, p => p.id), maxDetailEntries, callback);
+
+        /// <summary>
+        /// Retrieves all leaderboard entries for the specified leaderboard.
+        /// This operation may not return all results as Steam could impose rate limits on the request.
+        /// </summary>
+        /// <param name="maxDetailEntries">The maximum number of detail entries to retrieve for each leaderboard entry.</param>
+        /// <param name="callback">The delegate to invoke upon completion, providing the retrieved leaderboard entries and a success state.</param>
+        public readonly void GetAllEntries(int maxDetailEntries, Action<LeaderboardEntry[], bool> callback)
+        {
+            GetEntries(ELeaderboardDataRequest.k_ELeaderboardDataRequestGlobal, 0, int.MaxValue, maxDetailEntries,
+                callback);
+        }
+
+        /// <summary>
+        /// Retrieves leaderboard entries for the specified users.
+        /// </summary>
+        /// <param name="users">The array of user SteamIDs for whom leaderboard entries will be retrieved.</param>
+        /// <param name="maxDetailEntries">The maximum number of detail entries to retrieve for each user's leaderboard entry.</param>
+        /// <param name="callback">The delegate to invoke upon completion, providing the retrieved leaderboard entries and a success state.</param>
+        public readonly void GetEntries(CSteamID[] users, int maxDetailEntries,
+            Action<LeaderboardEntry[], bool> callback) =>
+            API.Leaderboards.Client.DownloadEntries(id, users, maxDetailEntries, callback);
+
+        /// <summary>
+        /// Retrieves the leaderboard data corresponding to the specified board name.
+        /// </summary>
+        /// <param name="name">The name of the leaderboard to retrieve, as defined in the API.</param>
+        /// <param name="callback">The delegate to invoke when the retrieval process completes, providing the retrieved <see cref="LeaderboardData"/> and a boolean indicating whether an I/O error occurred.</param>
+        public static void Get(string name, Action<LeaderboardData, bool> callback) =>
+            API.Leaderboards.Client.Find(name, callback);
+
+        /// <summary>
+        /// Retrieves the leaderboard data associated with the specified ID.
+        /// </summary>
+        /// <param name="id">The unique identifier of the leaderboard to retrieve.</param>
+        /// <returns>An instance of <see cref="LeaderboardData"/> representing the requested leaderboard.</returns>
         public static LeaderboardData Get(ulong id) => id;
+
         /// <summary>
-        /// Get the board based on its ID
+        /// Retrieves the leaderboard data associated with the specified leaderboard ID.
         /// </summary>
-        /// <param name="id">The id of the board to get</param>
-        /// <returns>The resulting <see cref="LeaderboardData"/></returns>
+        /// <param name="id">The unique identifier of the leaderboard to retrieve.</param>
+        /// <returns>An instance of <see cref="LeaderboardData"/> representing the leaderboard details.</returns>
         public static LeaderboardData Get(SteamLeaderboard_t id) => id;
+
         /// <summary>
-        /// An internal helper struct used to fetch all leaderboards in sequence on initialization of the Steam API
+        /// Represents a request structure used to fetch or create Steam leaderboards,
+        /// including settings such as name, sort method, display type, and creation flag.
         /// </summary>
         [Serializable]
         public struct GetAllRequest
@@ -119,10 +149,10 @@ namespace Heathen.SteamworksIntegration
         }
 
         /// <summary>
-        /// Get all the boards indicated by the input
+        /// Retrieves all leaderboard data as specified by the provided input commands.
         /// </summary>
-        /// <param name="commands">The set of commands representing each board to be fetched</param>
-        /// <param name="callback">A delegate of the form (<see cref="LeaderboardData"/>[] boards, <see cref="EResult"/> result) that will be invoked when completed</param>
+        /// <param name="commands">An array of requests specifying the leaderboards to fetch.</param>
+        /// <param name="callback">A delegate to invoke upon completion, providing the retrieved leaderboard data and the result state.</param>
         public static void GetAll(GetAllRequest[] commands, Action<LeaderboardData[], EResult> callback)
         {
             if (commands == null || commands.Length == 0)
@@ -137,7 +167,7 @@ namespace Heathen.SteamworksIntegration
             {
                 var bgWorker = new BackgroundWorker();
                 bgWorker.DoWork += BgWorker_DoWork;
-                bgWorker.RunWorkerCompleted += (sender, arguments) =>
+                bgWorker.RunWorkerCompleted += (_, arguments) =>
                 {
                     if (arguments.Cancelled)
                         callback?.Invoke(null, EResult.k_EResultCancelled);
@@ -145,11 +175,12 @@ namespace Heathen.SteamworksIntegration
                         callback?.Invoke(null, EResult.k_EResultUnexpectedError);
                     else
                     {
-                        var results = arguments.Result as LeaderboardData[];
-                        for (int i = 0; i < results.Length; i++)
-                        {
-                            boards[i] = results[i];
-                        }
+                        if (arguments.Result is LeaderboardData[] results)
+                            for (int i = 0; i < results.Length; i++)
+                            {
+                                boards[i] = results[i];
+                            }
+
                         callback?.Invoke(boards, EResult.k_EResultOK);
                     }
 
@@ -159,34 +190,40 @@ namespace Heathen.SteamworksIntegration
             }
             catch (Exception ex)
             {
-                Debug.LogError("Get All Leaderboards experienced and unhandled exception: " + ex.ToString());
+                Debug.LogError("Get All Leaderboards experienced and unhandled exception: " + ex);
                 callback?.Invoke(null, EResult.k_EResultUnexpectedError);
             }
         }
 
         private static void BgWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            var boards = e.Argument as GetAllRequest[];
+            if (e.Argument is not GetAllRequest[] boards) return;
             var results = new LeaderboardData[boards.Length];
 
-            for (int i = 0; i < boards.Length; i++)
+            for (var i = 0; i < boards.Length; i++)
             {
                 try
                 {
                     var board = boards[i];
-                    bool waiting = true;
+                    var waiting = true;
                     if (board.create)
-                        GetOrCreate(board.name, board.type, board.sort, (result, error) =>
+                    {
+                        var i1 = i;
+                        GetOrCreate(board.name, board.type, board.sort, (result, _) =>
                         {
-                            results[i] = result;
+                            results[i1] = result;
                             waiting = false;
                         });
+                    }
                     else
-                        Get(board.name, (result, error) =>
+                    {
+                        var i1 = i;
+                        Get(board.name, (result, _) =>
                         {
-                            results[i] = result;
+                            results[i1] = result;
                             waiting = false;
                         });
+                    }
 
                     while (waiting)
                     {
@@ -201,109 +238,154 @@ namespace Heathen.SteamworksIntegration
 
             e.Result = results;
         }
+
         /// <summary>
-        /// Find or if not available create the indicated board
+        /// Finds or creates a leaderboard with the specified parameters.
         /// </summary>
-        /// <param name="name">The API name of the board</param>
-        /// <param name="displayType">How the board should display</param>
-        /// <param name="sortMethod">The sorting method of the board</param>
-        /// <param name="callback">A delegate of the form (<see cref="LeaderboardData"/> board, <see cref="bool"/> ioError) that will be called when completed</param>
-        public static void GetOrCreate(string name, ELeaderboardDisplayType displayType, ELeaderboardSortMethod sortMethod, Action<LeaderboardData, bool> callback) => API.Leaderboards.Client.FindOrCreate(name, sortMethod, displayType, callback);
+        /// <param name="name">The API name of the leaderboard.</param>
+        /// <param name="displayType">The display type of the leaderboard, specifying how its entries should be presented.</param>
+        /// <param name="sortMethod">The sorting method for the leaderboard's entries.</param>
+        /// <param name="callback">A delegate to invoke upon completion, providing the resulting leaderboard data and an indication of whether there was an I/O error.</param>
+        public static void GetOrCreate(string name, ELeaderboardDisplayType displayType,
+            ELeaderboardSortMethod sortMethod, Action<LeaderboardData, bool> callback) =>
+            API.Leaderboards.Client.FindOrCreate(name, sortMethod, displayType, callback);
+
         /// <summary>
-        /// Upload the score with keep best as the upload mode
+        /// Uploads a score to the leaderboard using the "keep best" upload mode. The leaderboard will keep the highest score between the existing score and the uploaded score.
         /// </summary>
-        public readonly void UploadScoreKeepBest(int score, Action<LeaderboardScoreUploaded, bool> callback = null) => UploadScore(score, ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodKeepBest, callback);
+        /// <param name="score">The score to be uploaded to the leaderboard.</param>
+        /// <param name="callback">Optional callback invoked upon completion, providing the result of the upload and a success state.</param>
+        public readonly void UploadScoreKeepBest(int score, Action<LeaderboardScoreUploaded, bool> callback = null) =>
+            UploadScore(score, ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodKeepBest, callback);
+
         /// <summary>
-        /// Upload the score with force update as the upload mode
+        /// Uploads a score to the leaderboard using the force update method, ensuring that the submitted score replaces any existing score.
         /// </summary>
+        /// <param name="score">The score value to upload to the leaderboard.</param>
+        /// <param name="callback">
+        /// The delegate to invoke upon completion of the upload. This provides information about the upload result via a
+        /// <see cref="LeaderboardScoreUploaded"/> object and a success flag.
+        /// </param>
         public readonly void UploadScoreForceUpdate(int score, Action<LeaderboardScoreUploaded, bool> callback = null) => UploadScore(score, ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodForceUpdate, callback);
+
         /// <summary>
-        /// Upload the score with keep best as the upload mode
+        /// Uploads a score to the leaderboard using the "Keep Best" upload method, where only the best score is retained.
         /// </summary>
+        /// <param name="score">The score to upload to the leaderboard.</param>
+        /// <param name="details">An array of integers containing additional details about the score.</param>
+        /// <param name="callback">The delegate to invoke upon completion, providing details of the score upload and a success state.</param>
         public readonly void UploadScoreKeepBest(int score, int[] details, Action<LeaderboardScoreUploaded, bool> callback = null) => UploadScore(score, details, ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodKeepBest, callback);
+
         /// <summary>
-        /// Upload the score with force update as the upload mode
+        /// Uploads a score to the leaderboard using the Force Update method, which overrides any existing scores for the current user.
         /// </summary>
+        /// <param name="score">The score to upload to the leaderboard.</param>
+        /// <param name="details">An optional array of additional data to attach to the score entry.</param>
+        /// <param name="callback">The delegate to invoke upon completion, providing details of the score upload operation and a success indicator.</param>
         public readonly void UploadScoreForceUpdate(int score, int[] details, Action<LeaderboardScoreUploaded, bool> callback = null) => UploadScore(score, details, ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodForceUpdate, callback);
 
         /// <summary>
-        /// Uploads a score for the player to this board
+        /// Uploads a score for the player to the leaderboard.
         /// </summary>
-        /// <param name="score"></param>
-        /// <param name="method"></param>
-        /// <param name="callback">A delegate of the form (<see cref="LeaderboardScoreUploaded"/> results, <see cref="bool"/> ioError) that will be invoked when the process is completed</param>
-        public readonly void UploadScore(int score, ELeaderboardUploadScoreMethod method, Action<LeaderboardScoreUploaded, bool> callback = null) => API.Leaderboards.Client.UploadScore(id, method, score, null, callback);
+        /// <param name="score">The score to upload to the leaderboard.</param>
+        /// <param name="method">The method used to upload the score, such as keeping the best score or forcing an update.</param>
+        /// <param name="callback">A delegate invoked upon completion of the upload process, providing the results of the score upload and an error state if applicable.</param>
+        public readonly void UploadScore(int score, ELeaderboardUploadScoreMethod method,
+            Action<LeaderboardScoreUploaded, bool> callback = null) =>
+            API.Leaderboards.Client.UploadScore(id, method, score, null, callback);
 
         /// <summary>
-        /// Uploads a score for the player to this board
+        /// Uploads a score for the player to the leaderboard.
         /// </summary>
-        /// <param name="score"></param>
-        /// <param name="method"></param>
-        /// <param name="callback">A delegate of the form (<see cref="LeaderboardScoreUploaded"/> results, <see cref="bool"/> ioError) that will be invoked when the process is completed</param>
-        public readonly void UploadScore(int score, int[] scoreDetails, ELeaderboardUploadScoreMethod method, Action<LeaderboardScoreUploaded, bool> callback = null) => API.Leaderboards.Client.UploadScore(id, method, score, scoreDetails, callback);
+        /// <param name="score">The score to upload to the leaderboard.</param>
+        /// <param name="scoreDetails">Optional detailed breakdown of the score.</param>
+        /// <param name="method">The method used to upload the score, such as keeping the best score or forcing an update.</param>
+        /// <param name="callback">Optional delegate to invoke upon the completion of the score upload. Provides the result of the upload process and an error state if applicable.</param>
+        public readonly void UploadScore(int score, int[] scoreDetails, ELeaderboardUploadScoreMethod method,
+            Action<LeaderboardScoreUploaded, bool> callback = null) =>
+            API.Leaderboards.Client.UploadScore(id, method, score, scoreDetails, callback);
 
         /// <summary>
-        /// Attempts to save, share and attach an object to the leaderboard
+        /// Attaches a user-generated content (UGC) file to the leaderboard for the associated entry.
         /// </summary>
-        /// <remarks>
-        /// Note that this depends on being able to save the file to the User's Remote Storage which is a limited resource so use this sparingly.
-        /// </remarks>
-        /// <param name="fileName">The name the file should be saved as. This must be unique on the user's storage</param>
-        /// <param name="jsonObject">A JsonUtility serializable object, we will serialize this to UTF8 format and then convert to byte[] for you and upload to Steam Remote Storage</param>
-        /// <param name="callback">A delegate of the form (<see cref="LeaderboardUGCSet"/> results, <see cref="bool"/> ioError) that will be invoked when the process is completed</param>
-        public readonly void AttachUGC(string fileName, object jsonObject, System.Text.Encoding encoding, Action<LeaderboardUGCSet, bool> callback = null) => API.Leaderboards.Client.AttachUGC(id, fileName, jsonObject, encoding, callback);
+        /// <param name="fileName">
+        /// The unique name of the file to be saved to the user's Steam Remote Storage.
+        /// </param>
+        /// <param name="jsonObject">
+        /// The object to be serialized into JSON format as the content of the file. This object must be serializable using JsonUtility.
+        /// </param>
+        /// <param name="encoding">
+        /// The character encoding to use for converting the JSON data into a byte array.
+        /// </param>
+        /// <param name="callback">
+        /// A delegate invoked upon completion of the operation, providing the results of the UGC attachment and a boolean indicating whether an I/O error occurred.
+        /// </param>
+        public readonly void AttachUgc(string fileName, object jsonObject, System.Text.Encoding encoding,
+            Action<LeaderboardUgcSet, bool> callback = null) =>
+            API.Leaderboards.Client.AttachUgc(id, fileName, jsonObject, encoding, callback);
+
         /// <summary>
-        /// Attempts to save, share and attach an object to the leaderboard
+        /// Saves, shares, and attaches a user-generated content (UGC) object to the leaderboard.
         /// </summary>
-        /// <remarks>
-        /// Note that this depends on being able to save the file to the User's Remote Storage which is a limited resource so use this sparingly.
-        /// </remarks>
-        /// <param name="fileName">The name the file should be saved as. This must be unique on the user's storage</param>
-        /// <param name="jsonObject">A JsonUtility serializable object, we will serialize this to UTF8 format and then convert to byte[] for you and upload to Steam Remote Storage</param>
-        /// <param name="callback">A delegate of the form (<see cref="LeaderboardUGCSet"/> results, <see cref="bool"/> ioError) that will be invoked when the process is completed</param>
-        public readonly void AttachUGC(string fileName, object jsonObject, Action<LeaderboardUGCSet, bool> callback = null) => API.Leaderboards.Client.AttachUGC(id, fileName, jsonObject, System.Text.Encoding.UTF8, callback);
+        /// <param name="fileName">The unique name used to save the file in the user's storage.</param>
+        /// <param name="jsonObject">An object serializable by JsonUtility, which will be converted to a UTF8 byte array and uploaded to Steam Remote Storage.</param>
+        /// <param name="callback">An optional callback that provides the result of the UGC attachment along with an IO error flag if applicable.</param>
+        public readonly void AttachUgc(string fileName, object jsonObject,
+            Action<LeaderboardUgcSet, bool> callback = null) =>
+            API.Leaderboards.Client.AttachUgc(id, fileName, jsonObject, System.Text.Encoding.UTF8, callback);
+
         /// <summary>
-        /// Uploads a score using the <see cref="ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodForceUpdate"/> option
+        /// Forces the upload of a score to the leaderboard, overriding any existing score.
         /// </summary>
-        /// <param name="score">The score to upload</param>
+        /// <param name="score">The score to upload as a string. It will be parsed into an integer before uploading.</param>
         public readonly void ForceUploadScore(string score)
         {
             if (int.TryParse(score, out int result))
                 UploadScore(result, ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodForceUpdate);
         }
+
         /// <summary>
-        /// Uploads a score using the <see cref="ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodForceUpdate"/> option
+        /// Forces the upload of a specified score to the leaderboard using the ForceUpdate method.
         /// </summary>
-        /// <param name="score">The score to upload</param>
-        public readonly void ForceUploadScore(int score) => UploadScore(score, ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodForceUpdate);
+        /// <param name="score">The score to upload to the leaderboard.</param>
+        public readonly void ForceUploadScore(int score) => UploadScore(score,
+            ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodForceUpdate);
+
         /// <summary>
-        /// Uploads a score using the <see cref="ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodForceUpdate"/> option
+        /// Uploads a score to the leaderboard using the ForceUpdate method, ensuring the submitted score is updated on the leaderboard regardless of any conditions.
         /// </summary>
-        /// <param name="score">The score to upload</param>
-        /// <param name="details">additional details to be attached to the board</param>
-        public readonly void ForceUploadScore(int score, int[] details) => UploadScore(score, details, ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodForceUpdate);
+        /// <param name="score">The score to be uploaded to the leaderboard.</param>
+        /// <param name="details">Additional details or score components to be attached to the leaderboard entry.</param>
+        public readonly void ForceUploadScore(int score, int[] details) => UploadScore(score, details,
+            ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodForceUpdate);
+
         /// <summary>
-        /// Uploads a score using the <see cref="ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodKeepBest"/> option
+        /// Uploads a score to the leaderboard using the "Keep Best" method, retaining the higher of the current score or the newly provided score.
         /// </summary>
-        /// <param name="score">The score to upload</param>
+        /// <param name="score">The score to upload as a string. If the string cannot be converted to an integer, the score will not be uploaded.</param>
         public readonly void KeepBestUploadScore(string score)
         {
             if (int.TryParse(score, out int result))
                 UploadScore(result, ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodKeepBest);
         }
+
         /// <summary>
-        /// Uploads a score using the <see cref="ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodKeepBest"/> option
+        /// Uploads a score to the leaderboard using the "Keep Best" method.
         /// </summary>
-        /// <param name="score">The score to upload</param>
-        public readonly void KeepBestUploadScore(int score) => UploadScore(score, ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodKeepBest);
+        /// <param name="score">The score to be uploaded that will be compared with the existing score, retaining the best value.</param>
+        public readonly void KeepBestUploadScore(int score) => UploadScore(score,
+            ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodKeepBest);
+
         /// <summary>
-        /// Uploads a score using the <see cref="ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodKeepBest"/> option
+        /// Uploads the specified score to the leaderboard using the keep-best upload method.
         /// </summary>
-        /// <param name="score">The score to upload</param>
-        /// <param name="details">additional details to be attached to the board</param>
-        public readonly void KeepBestUploadScore(int score, int[] details) => UploadScore(score, details, ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodKeepBest);
+        /// <param name="score">The score to upload to the leaderboard.</param>
+        /// <param name="details">An array of additional details to be associated with the leaderboard entry.</param>
+        public readonly void KeepBestUploadScore(int score, int[] details) => UploadScore(score, details,
+            ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodKeepBest);
 
         #region Boilerplate
+
         public readonly override string ToString()
         {
             return apiName;
@@ -316,12 +398,12 @@ namespace Heathen.SteamworksIntegration
 
         public readonly override bool Equals(object obj)
         {
-            if (obj.GetType() == typeof(SteamLeaderboard_t))
-                return Equals((SteamLeaderboard_t)obj);
-            else if (obj.GetType() == typeof(string))
-                return Equals((string)obj);
-            else if (obj.GetType() == typeof(ulong))
-                return Equals((ulong)obj);
+            if (obj is SteamLeaderboard_t t)
+                return Equals(t);
+            else if (obj is string s)
+                return Equals(s);
+            else if (obj is ulong ulongValue)
+                return Equals(ulongValue);
             else
                 return id.Equals(obj);
         }

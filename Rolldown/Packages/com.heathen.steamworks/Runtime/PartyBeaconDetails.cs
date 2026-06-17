@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 
@@ -9,7 +9,7 @@ namespace Heathen.SteamworksIntegration
     {
         public PartyBeaconID_t id;
         public UserData owner;
-        public SteamPartyBeaconLocation_t location;
+        public SteamPartyBeaconLocation_t Location;
         public string metadata;
     }
     //*/

@@ -1,31 +1,37 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using UnityEngine;
 
 namespace Heathen.SteamworksIntegration
 {
+    /// <summary>
+    /// Updates a <see cref="TMPro.TextMeshProUGUI"/> label with the base price of a <see cref="SteamInventoryItemData"/>.
+    /// </summary>
     [ModularComponent(typeof(SteamInventoryItemData), "Base Prices", nameof(label))]
     [RequireComponent(typeof(SteamInventoryItemDataEvents))]
     [RequireComponent(typeof(SteamInventoryItemData))]
     [AddComponentMenu("")]
     public class SteamInventoryItemBasePrice : MonoBehaviour
     {
+        /// <summary>
+        /// The UI label used to display the base price string.
+        /// </summary>
         public TMPro.TextMeshProUGUI label;
 
-        private SteamInventoryItemData m_Inspector;
-        private SteamInventoryItemDataEvents m_Events;
+        private SteamInventoryItemData _inspector;
+        private SteamInventoryItemDataEvents _events;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamInventoryItemData>();
-            m_Events = GetComponent<SteamInventoryItemDataEvents>();
+            _inspector = GetComponent<SteamInventoryItemData>();
+            _events = GetComponent<SteamInventoryItemDataEvents>();
 
-            m_Events.onChange?.AddListener(HandleChange);
+            _events.onChange?.AddListener(HandleChange);
         }
 
         private void HandleChange()
         {
             if (label != null)
-                label.text = m_Inspector.Data.BasePriceString();
+                label.text = _inspector.Data.BasePriceString();
         }
     }
 }

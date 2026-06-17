@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS && STEAM_INSTALLED
 using Steamworks;
 using System;
 using System.IO;
@@ -13,39 +13,39 @@ namespace Heathen.SteamworksIntegration
         /// <summary>
         /// The resulting file ID
         /// </summary>
-        public PublishedFileId_t? FileId => itemData.publishedFileId;
+        public PublishedFileId_t? FileId => _itemData.PublishedFileId;
         /// <summary>
         /// The App ID related to the item
         /// </summary>
-        public AppData AppId => itemData.appId;
+        public AppData AppId => _itemData.appId;
         /// <summary>
         /// The item's title
         /// </summary>
-        public string Title => itemData.title;
+        public string Title => _itemData.title;
         /// <summary>
         /// The items description
         /// </summary>
-        public string Description => itemData.description;
+        public string Description => _itemData.description;
         /// <summary>
         /// The content folder of the item's content
         /// </summary>
-        public DirectoryInfo Content => itemData.content;
+        public DirectoryInfo Content => _itemData.Content;
         /// <summary>
         /// The location of the item's preview image
         /// </summary>
-        public FileInfo Preview => itemData.preview;
+        public FileInfo Preview => _itemData.Preview;
         /// <summary>
         /// The item's metadata
         /// </summary>
-        public string Metadata => itemData.metadata;
+        public string Metadata => _itemData.metadata;
         /// <summary>
         /// The items tags
         /// </summary>
-        public string[] Tags => itemData.tags;
+        public string[] Tags => _itemData.tags;
         /// <summary>
         /// The items visibility
         /// </summary>
-        public ERemoteStoragePublishedFileVisibility Visibility => itemData.visibility;
+        public ERemoteStoragePublishedFileVisibility Visibility => _itemData.visibility;
         /// <summary>
         /// An event that is invoked when the process is completed
         /// </summary>
@@ -59,23 +59,23 @@ namespace Heathen.SteamworksIntegration
         /// </summary>
         public event EventHandler<CreateItemResult_t> FileCreated;
 
-        private WorkshopItemEditorData itemData;
-        private UGCUpdateHandle_t? updateHandle;
+        private WorkshopItemEditorData _itemData;
+        private UGCUpdateHandle_t? _updateHandle;
 
         /// <summary>
         /// Gets a new <see cref="WorkshopUploadWorker"/> based on provided <see cref="WorkshopItemEditorData"/>
         /// </summary>
         /// <param name="data">The data to create the worker with</param>
         /// <returns>A new worker</returns>
-        public static WorkshopUploadWorker Get(WorkshopItemEditorData data) => new WorkshopUploadWorker { itemData = data };
+        public static WorkshopUploadWorker Get(WorkshopItemEditorData data) => new WorkshopUploadWorker { _itemData = data };
         /// <summary>
         /// Run the create process
         /// </summary>
         /// <returns></returns>
         public bool RunCreate()
         {
-            if (itemData.IsValid)
-                return itemData.Create(CompletedHandler, UploadStartedHandler, FileCreatedHandler);
+            if (_itemData.IsValid)
+                return _itemData.Create(CompletedHandler, UploadStartedHandler, FileCreatedHandler);
             else
                 return false;
         }
@@ -88,8 +88,8 @@ namespace Heathen.SteamworksIntegration
         /// <returns>True if the request was accepted</returns>
         public bool RunCreate(WorkshopItemPreviewFile[] additionalPreviews, string[] additionalYouTubeIds, WorkshopItemKeyValueTag[] additionalKeyValueTags)
         {
-            if (itemData.IsValid)
-                return itemData.Create(additionalPreviews, additionalYouTubeIds, additionalKeyValueTags, CompletedHandler, UploadStartedHandler, FileCreatedHandler);
+            if (_itemData.IsValid)
+                return _itemData.Create(additionalPreviews, additionalYouTubeIds, additionalKeyValueTags, CompletedHandler, UploadStartedHandler, FileCreatedHandler);
             else
                 return false;
         }
@@ -101,20 +101,20 @@ namespace Heathen.SteamworksIntegration
         public EItemUpdateStatus GetUpdateProgress(out float progress)
         {
             progress = 0;
-            if (updateHandle.HasValue)
-                return API.UserGeneratedContent.Client.GetItemUpdateProgress(updateHandle.Value, out progress);
+            if (_updateHandle.HasValue)
+                return API.UserGeneratedContent.Client.GetItemUpdateProgress(_updateHandle.Value, out progress);
             else
                 return EItemUpdateStatus.k_EItemUpdateStatusInvalid;
         }
 
         private void CompletedHandler(WorkshopItemDataCreateStatus arg)
         {
-            updateHandle = null;
+            _updateHandle = null;
             Completed?.Invoke(this, arg);
         }
         private void UploadStartedHandler(UGCUpdateHandle_t arg)
         {
-            updateHandle = arg;
+            _updateHandle = arg;
             UpdateStarted?.Invoke(this, arg);
         }
         private void FileCreatedHandler(CreateItemResult_t arg) => FileCreated?.Invoke(this, arg);

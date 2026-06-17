@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using System.Collections.Generic;
@@ -19,8 +19,8 @@ namespace Heathen.SteamworksIntegration
         public uint customSampleRate = 28000;
         [Range(0, 3)]
         public float playbackDelay = 0.25f;
-        private int sampleRate;
-        private Queue<float> audioBuffer = new Queue<float>(48000);
+        private int _sampleRate;
+        private Queue<float> _audioBuffer = new Queue<float>(48000);
 
         public double encodingTime = 0;
 
@@ -34,7 +34,7 @@ namespace Heathen.SteamworksIntegration
                 for (int i = 0; i < delaySamples; i++)
                 {
                     //Prebuffer silence equal to our delay, this will cause our playback to be behind real time by the amount of delay
-                    audioBuffer.Enqueue(0);
+                    _audioBuffer.Enqueue(0);
                 }
             }
         }
@@ -43,15 +43,15 @@ namespace Heathen.SteamworksIntegration
         {
             var nSample = sampleRateMethod == SampleRateMethod.Optimal ? (int)SteamUser.GetVoiceOptimalSampleRate() : sampleRateMethod == SampleRateMethod.Native ? AudioSettings.outputSampleRate : (int)customSampleRate;
 
-            if (nSample != sampleRate)
+            if (nSample != _sampleRate)
             {
-                sampleRate = nSample;
+                _sampleRate = nSample;
                 outputSource.Stop();
 
-                if (outputSource.clip != null)
+                if (outputSource.clip)
                     Destroy(outputSource.clip);
 
-                outputSource.clip = AudioClip.Create("VOICE", sampleRate * 2, 1, (int)sampleRate, true, OnAudioRead);
+                outputSource.clip = AudioClip.Create("VOICE", _sampleRate * 2, 1, (int)_sampleRate, true, OnAudioRead);
                 outputSource.Play();
             }
         }
@@ -64,13 +64,13 @@ namespace Heathen.SteamworksIntegration
         {
             uint bytesWritten;
             byte[] destBuffer = new byte[20000];
-            var result = API.Voice.Client.DecompressVoice(buffer, destBuffer, out bytesWritten, (uint)sampleRate);
+            var result = API.Voice.Client.DecompressVoice(buffer, destBuffer, out bytesWritten, (uint)_sampleRate);
             var timeStamp = DateTime.Now;
 
             if (result == EVoiceResult.k_EVoiceResultBufferTooSmall)
             {
                 destBuffer = new byte[bytesWritten];
-                result = API.Voice.Client.DecompressVoice(buffer, destBuffer, out bytesWritten, (uint)sampleRate);
+                result = API.Voice.Client.DecompressVoice(buffer, destBuffer, out bytesWritten, (uint)_sampleRate);
             }
 
             //Handle audio encoding result == EVoiceResult.k_EVoiceResultOK && 
@@ -79,7 +79,7 @@ namespace Heathen.SteamworksIntegration
                 //We are currently playing so enqueue this data and let the reader handle it
                 for (int i = 0; i < bytesWritten; i += 2)
                 {
-                    audioBuffer.Enqueue((short)(destBuffer[i] | destBuffer[i + 1] << 8) / 32768f);
+                    _audioBuffer.Enqueue((short)(destBuffer[i] | destBuffer[i + 1] << 8) / 32768f);
                 }
 
                 var clip = (DateTime.Now - timeStamp).TotalMilliseconds;
@@ -96,10 +96,10 @@ namespace Heathen.SteamworksIntegration
         {
             for (int i = 0; i < data.Length; i++)
             {
-                if (audioBuffer.Count > 0)
+                if (_audioBuffer.Count > 0)
                 {
                     //If we have data write it
-                    data[i] = audioBuffer.Dequeue();
+                    data[i] = _audioBuffer.Dequeue();
                 }
                 else
                 {

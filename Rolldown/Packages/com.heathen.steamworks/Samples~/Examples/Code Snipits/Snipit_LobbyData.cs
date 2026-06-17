@@ -1,5 +1,5 @@
 ﻿//Anything that works with Steamworks should only compile if Steamworks is available
-#if !DISABLESTEAMWORKS  && STEAMWORKSNET
+#if true || !DISABLESTEAMWORKS  && STEAMWORKSNET
 using System;
 using UnityEngine;
 
@@ -139,44 +139,33 @@ namespace MyProperlyFormedNamespaceName
             }
 
             // How to know when this was done?
-            Matchmaking.Client.OnLobbyGameCreated.AddListener(HandleGameServerSet);
+            SteamTools.Events.OnLobbyGameServer += HandleGameServerSet;
         }
 
-        private void HandleGameServerSet(LobbyGameCreated_t callback)
+        private void HandleGameServerSet(LobbyData lobby, CSteamID serverId, string ip, ushort port)
         {
-            LobbyData theLobbyThatWasSet = callback.m_ulSteamIDLobby;
-
-            // You can read the current game server
-            if (theLobbyThatWasSet.HasServer)
-            {
-                LobbyGameServer server = theLobbyThatWasSet.GameServer;
-
-                CSteamID serverId = server.id;
-                string ipAddress = server.IpAddress;
-                ushort port = server.port;
-            }
         }
 
         public void LobbyUserJoinOrLeave()
         {
-            Matchmaking.Client.OnLobbyChatUpdate.AddListener(HandleChatUpdate);
+            SteamTools.Events.OnLobbyChatUpdate += HandleChatUpdate;
         }
 
-        private void HandleChatUpdate(LobbyChatUpdate_t callback)
+        private void HandleChatUpdate(LobbyData lobby, UserData user, EChatMemberStateChange state)
         {
-            UserData who = callback.m_ulSteamIDUserChanged;
-            LobbyData whatLobby = callback.m_ulSteamIDLobby;
+            UserData who = user;
+            LobbyData whatLobby = lobby;
 
 
-            if(((EChatMemberStateChange)callback.m_rgfChatMemberStateChange) == EChatMemberStateChange.k_EChatMemberStateChangeLeft)
+            if(state == EChatMemberStateChange.k_EChatMemberStateChangeLeft)    
             {
                 // The user left
             }
-            else if (((EChatMemberStateChange)callback.m_rgfChatMemberStateChange) == EChatMemberStateChange.k_EChatMemberStateChangeEntered)
+            else if (state== EChatMemberStateChange.k_EChatMemberStateChangeEntered)
             {
                 // The user joined
             }
-            else if (((EChatMemberStateChange)callback.m_rgfChatMemberStateChange) == EChatMemberStateChange.k_EChatMemberStateChangeDisconnected)
+            else if (state == EChatMemberStateChange.k_EChatMemberStateChangeDisconnected)
             {
                 // The user lost connection
             }

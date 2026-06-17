@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using System.Text;
@@ -29,7 +29,7 @@ namespace Heathen.SteamworksIntegration
         public UnityEvent evtDataUpdated = new UnityEvent();
 
         [NonSerialized]
-        public RemoteStorageFile[] availableFiles;
+        public RemoteStorageFile[] AvailableFiles;
 
         /// <summary>
         /// Gets the base type of the data stored by this model
@@ -38,7 +38,7 @@ namespace Heathen.SteamworksIntegration
 
         public void Refresh()
         {
-            availableFiles = API.RemoteStorage.Client.GetFiles(extension);
+            AvailableFiles = API.RemoteStorage.Client.GetFiles(extension);
         }
 
         public abstract void LoadByteArray(byte[] data);
@@ -187,8 +187,8 @@ namespace Heathen.SteamworksIntegration
             {
                 if (!e)
                 {
-                    var JsonString = System.Text.Encoding.UTF8.GetString(r);
-                    data = JsonUtility.FromJson<T>(JsonString);
+                    var jsonString = Encoding.UTF8.GetString(r);
+                    data = JsonUtility.FromJson<T>(jsonString);
                     evtDataUpdated?.Invoke();
                 }
                 else
@@ -217,8 +217,8 @@ namespace Heathen.SteamworksIntegration
             {
                 if (!e)
                 {
-                    var JsonString = System.Text.Encoding.UTF8.GetString(r);
-                    data = JsonUtility.FromJson<T>(JsonString);
+                    var jsonString = Encoding.UTF8.GetString(r);
+                    data = JsonUtility.FromJson<T>(jsonString);
                     evtDataUpdated?.Invoke();
                 }
                 else

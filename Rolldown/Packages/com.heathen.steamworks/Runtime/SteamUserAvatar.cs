@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using UnityEngine;
 using Steamworks;
 using FriendsAPI = Heathen.SteamworksIntegration.API.Friends.Client;
@@ -16,39 +16,32 @@ namespace Heathen.SteamworksIntegration
     {
         public RawImage image;
 
-        private SteamUserData m_Inspector;
+        private SteamUserData _inspector;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamUserData>();
-            m_Inspector.onChanged.AddListener(HandlePersonaStateChange);            
+            _inspector = GetComponent<SteamUserData>();
+            _inspector.onChanged.AddListener(HandlePersonaStateChange);            
         }
-         
+
         private void Start()
         {
-            if (m_Inspector.Data.IsValid)
+            if (_inspector.Data.IsValid)
             {
-                if (API.App.Initialized && m_Inspector.Data.IsValid)
-                {
-                    LoadAvatar(m_Inspector.Data);
-                }
-                else
-                    API.App.onSteamInitialized.AddListener(HandleSteamInitialized);
+                SteamTools.Interface.WhenReady(HandleSteamInitialized);
             }
         }
 
         private void HandleSteamInitialized()
         {
-            LoadAvatar(m_Inspector.Data);
-
-            API.App.onSteamInitialized.RemoveListener(HandleSteamInitialized);
+            LoadAvatar(_inspector.Data);
         }
 
-        private void HandlePersonaStateChange(PersonaStateChange arg)
+        private void HandlePersonaStateChange(UserData user, EPersonaChange flag)
         {
-            if (FriendsAPI.PersonaChangeHasFlag(arg.Flags, EPersonaChange.k_EPersonaChangeAvatar))
+            if (FriendsAPI.PersonaChangeHasFlag(flag, EPersonaChange.k_EPersonaChangeAvatar))
             {
-                m_Inspector.Data.LoadAvatar(AvatarLoaded);
+                _inspector.Data.LoadAvatar(AvatarLoaded);
             }
         }
 
@@ -56,7 +49,7 @@ namespace Heathen.SteamworksIntegration
 
         public void LoadAvatar(CSteamID user) => UserData.Get(user).LoadAvatar((r) =>
         {
-            if (image == null)
+            if (!image)
                 return;
 
             image.texture = r;
@@ -66,7 +59,7 @@ namespace Heathen.SteamworksIntegration
 
         private void AvatarLoaded(Texture2D texture)
         {
-            if (texture != null && image != null)
+            if (texture && image)
                 image.texture = texture;
         }
     }

@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using System;
 using UnityEngine.EventSystems;
 #if ENABLE_INPUT_SYSTEM
@@ -10,12 +10,12 @@ namespace Heathen.SteamworksIntegration.UI
     public class UserAndPointerData
     {
         public UserData user;
-        public PointerEventData pointerEventData;
+        public PointerEventData PointerEventData;
 
         public UserAndPointerData(UserData userData, PointerEventData data)
         {
             user = userData;
-            pointerEventData = data;
+            PointerEventData = data;
         }
     }
 }

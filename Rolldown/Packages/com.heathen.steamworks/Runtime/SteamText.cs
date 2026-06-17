@@ -1,39 +1,44 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using System;
+using UnityEngine.Serialization;
 
 namespace Heathen.SteamworksIntegration
 {
     /// <summary>
-    /// A localized FText like feature inspired by Unreal Engine's localization model
+    /// A localised FText like feature inspired by Unreal Engine's localisation model
     /// </summary>
     [Serializable]
     public struct SteamText
     {
 #if LOCALIZED
-        public UnityEngine.Localization.LocalizedString Localized;
+        [FormerlySerializedAs("localized")] 
+        [FormerlySerializedAs("Localized")] 
+        public UnityEngine.Localization.LocalizedString localised;
 #endif
-        public string Default;
+        [FormerlySerializedAs("default")] 
+        [FormerlySerializedAs("Default")] 
+        public string defaultText;
 
         public SteamText(string value)
         {
 #if LOCALIZED
-            Localized = new();
+            localised = new();
 #endif
-            Default = value;
+            defaultText = value;
         }
 
         public readonly string Get()
         {
 #if LOCALIZED
-            if (Localized != null &&
-                Localized.TableReference.ReferenceType != UnityEngine.Localization.Tables.TableReference.Type.Empty &&
-                Localized.TableEntryReference.ReferenceType != UnityEngine.Localization.Tables.TableEntryReference.Type.Empty)
-            {
-                string value = Localized.GetLocalizedString();
-                return string.IsNullOrEmpty(value) ? Default : value;
-            }
+            if (localised == null ||
+                localised.TableReference.ReferenceType == UnityEngine.Localization.Tables.TableReference.Type.Empty ||
+                localised.TableEntryReference.ReferenceType ==
+                UnityEngine.Localization.Tables.TableEntryReference.Type.Empty) return defaultText;
+            var value = localised.GetLocalizedString();
+            return string.IsNullOrEmpty(value) ? defaultText : value;
+#else
+            return defaultText;
 #endif
-            return Default;
         }
 
         public override string ToString() => Get();

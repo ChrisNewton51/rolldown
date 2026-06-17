@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using UnityEngine;
@@ -16,7 +16,7 @@ namespace Heathen.SteamworksIntegration
         /// <summary>
         /// Returns the <see cref="GameData"/> for the current program
         /// </summary>
-        public static GameData Me => API.App.Client.Id;
+        public static GameData Me => API.App.Id.AppId;
         /// <summary>
         /// Returns the native <see cref="CGameID"/> representing the game
         /// </summary>
@@ -58,11 +58,6 @@ namespace Heathen.SteamworksIntegration
         /// </summary>
         public readonly bool IsMe => this == Me;
         /// <summary>
-        /// Gets the display name for the app this game is related to if known. You must have called <see cref="AppData.LoadNames(Action)"/> before this will be set.
-        /// <para>Note that <see cref="InitializeSteamworks"/> and other tools from Heathen will have already loaded the App names for you during initialization. You usually only need to call this your self when your using a manual form of initialization.</para>
-        /// </summary>
-        public readonly string Name => App.Name;
-        /// <summary>
         /// Returns the <see cref="CGameID.EGameIDType"/> for this game, this is similar to checking the <see cref="IsMod"/>, <see cref="IsShortcut"/>, <see cref="IsP2PFile"/> or <see cref="IsSteamApp"/> flags
         /// </summary>
         public readonly CGameID.EGameIDType Type => GameId.Type();
@@ -86,36 +81,15 @@ namespace Heathen.SteamworksIntegration
         /// <summary>
         /// Returns the <see cref="GameData"/> given a primitive <see cref="uint"/> representing its App ID
         /// </summary>
-        /// <param name="gameId">The <see cref="GameData"/> represented by the provided app id</param>
+        /// <param name="appId">The <see cref="GameData"/> represented by the provided app id</param>
         /// <returns></returns>
         public static GameData Get(uint appId) => appId;
         /// <summary>
         /// Returns the <see cref="GameData"/> given a native <see cref="AppId_t"/> representing its App ID
         /// </summary>
-        /// <param name="gameId">The <see cref="GameData"/> represented by the provided app id</param>
+        /// <param name="appId">The <see cref="GameData"/> represented by the provided app id</param>
         /// <returns></returns>
         public static GameData Get(AppId_t appId) => appId;
-        /// <summary>
-        /// Returns the name of the game if known.
-        /// <para>This will attempt to load the list of App names from Steam Web API if it has not already been loaded.</para>
-        /// </summary>
-        /// <param name="name">The name of the game</param>
-        /// <returns></returns>
-        public readonly bool GetName(out string name) => API.App.Web.GetAppName(App, out name);
-        /// <summary>
-        /// Requests the system to load the app names and return the name represented by this <see cref="GameData"/>
-        /// </summary>
-        /// <param name="callback">A delegate of the form (<see cref="string"/> name, <see cref="bool"/> ioError) that will be invoked when completed</param>
-        public readonly void GetName(Action<string, bool> callback) => API.App.Web.GetAppName(App, callback);
-        /// <summary>
-        /// Returns true if the list of App Names have already been loaded
-        /// </summary>
-        public static bool NamesLoaded => API.App.Web.IsAppsListLoaded;
-        /// <summary>
-        /// Requests the system to load the list of app names from the Steam Web API
-        /// </summary>
-        /// <param name="callback">A delegate of the form () that will be invoked when completed</param>
-        public static void LoadNames(Action callback) => API.App.Web.LoadAppNames(callback);
         /// <summary>
         /// Opens the Steam Overlay to the store page for the provided app
         /// </summary>
@@ -171,7 +145,7 @@ namespace Heathen.SteamworksIntegration
 
         public readonly bool Equals(AppId_t other)
         {
-            return App.Id.Equals(other);
+            return App.Id.Equals(other.m_AppId);
         }
 
         public readonly bool Equals(uint other)
@@ -181,12 +155,12 @@ namespace Heathen.SteamworksIntegration
 
         public readonly bool Equals(CGameID other)
         {
-            return GameId.Equals(other.AppID());
+            return GameId.AppID().Equals(other.AppID());
         }
 
         public readonly bool Equals(ulong other)
         {
-            return GameId.Equals(new CGameID(other).AppID());
+            return GameId.Equals(new CGameID(other));
         }
 
         public readonly override bool Equals(object obj)

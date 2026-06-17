@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using System.Collections.Generic;
@@ -18,13 +18,12 @@ namespace Heathen.SteamworksIntegration
         {
             get
             {
-                if (eventChanged == null)
-                    eventChanged = new InventoryChangedEvent();
+                _eventChanged ??= new InventoryChangedEvent();
 
-                return eventChanged;
+                return _eventChanged;
             }
         }
-        private InventoryChangedEvent eventChanged = new InventoryChangedEvent();
+        private InventoryChangedEvent _eventChanged = new InventoryChangedEvent();
 
 #if UNITY_EDITOR
         public void UpdateItemDefinitions(bool debugLog)
@@ -36,10 +35,6 @@ namespace Heathen.SteamworksIntegration
             {
                 if (debugLog)
                     Debug.Log($"Get Item Definition IDs found {results.Length} entries.");
-
-                List<ItemDefinitionSettings> bundles = new List<ItemDefinitionSettings>();
-                Dictionary<ItemDefinitionSettings, string> craftable = new Dictionary<ItemDefinitionSettings, string>();
-                Dictionary<ItemDefinitionSettings, string> generators = new Dictionary<ItemDefinitionSettings, string>();
 
                 for (int i = 0; i < results.Length; i++)
                 {
@@ -59,154 +54,79 @@ namespace Heathen.SteamworksIntegration
                             target = new();
                         }
                         else if (debugLog)
-                            Debug.Log($"Item Definition Object {target.item_name.GetSimpleValue()} found");
+                            Debug.Log($"Item Definition Object {target.itemName.GetSimpleValue()} found");
 
                         target.id = itemDefId.m_SteamItemDef;
 
-                        target.item_name.Populate(itemDefId);
+                        target.itemName.Populate(itemDefId);
 
-                        var namePart = "";
-
-                        if (!string.IsNullOrEmpty(target.item_name.value))
-                            namePart = itemDefId.ToString() + " " + target.item_name.value;
-                        else if (target.item_name.variants.Count > 0)
-                            namePart = itemDefId.ToString() + " " + target.item_name.variants[0].value;
-                        else
-                            namePart = itemDefId.ToString() + " UNKNOWN";
-
-                        target.item_description.Populate(itemDefId);
-                        target.item_display_type.Populate(itemDefId);
+                        target.itemDescription.Populate(itemDefId);
+                        target.itemDisplayType.Populate(itemDefId);
 
                         var type = API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "type");
                         switch (type)
                         {
                             case "item":
-                                target.item_type = InventoryItemType.item;
+                                target.itemType = InventoryItemType.Item;
                                 break;
                             case "bundle":
-                                target.item_type = InventoryItemType.bundle;
-                                bundles.Add(target);
+                                target.itemType = InventoryItemType.Bundle;
                                 break;
                             case "generator":
-                                target.item_type = InventoryItemType.generator;
-                                bundles.Add(target);
-                                Debug.LogWarning("Importing an Item Generator from Steam API ...\nValve deliberately omits the bundle node when importing items from the Steam API. As such the item pool (aka Items, aka Bundle) of this generator will be blank. You must manually reset this value before you export the JSON otherwise the generator will have an empty bundle.\nPlease let Valve know that this is a problem for you and that you would like to see this changed. This is a limitation from Valve and not something Heathen can effect.");
+                                target.itemType = InventoryItemType.Generator;
                                 break;
                             case "playtimegenerator":
-                                target.item_type = InventoryItemType.playtimegenerator;
-                                bundles.Add(target);
+                                target.itemType = InventoryItemType.Playtimegenerator;
                                 break;
                             case "tag_generator":
-                                target.item_type = InventoryItemType.tag_generator;
+                                target.itemType = InventoryItemType.TagGenerator;
                                 break;
                             default:
-                                UnityEngine.Debug.LogWarning("Unknown Item Type: " + target.item_name.GetSimpleValue());
+                                Debug.LogWarning("Unknown Item Type: " + target.itemName.GetSimpleValue());
                                 break;
                         }
-
-                        target.item_promo.Populate(itemDefId);
-                        target.item_drop_start_time = API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "drop_start_time");
-
-                        var excahnge = API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "exchange");
-                        if (!string.IsNullOrEmpty(excahnge) && !craftable.ContainsKey(target))
-                            craftable.Add(target, excahnge);
-
-                        target.item_price.Populate(itemDefId);
 
                         var bgColor = API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "background_color");
                         if (!string.IsNullOrEmpty(bgColor))
                         {
-                            if (UnityEngine.ColorUtility.TryParseHtmlString(bgColor, out Color color))
-                                target.item_background_color.color = color;
+                            if (ColorUtility.TryParseHtmlString(bgColor, out Color color))
+                                target.itemBackgroundColour.color = color;
                             else
-                                target.item_background_color.use = false;
+                                target.itemBackgroundColour.use = false;
                         }
                         else
-                            target.item_background_color.use = false;
+                            target.itemBackgroundColour.use = false;
 
                         var nColor = API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "name_color");
                         if (!string.IsNullOrEmpty(nColor))
                         {
-                            if (UnityEngine.ColorUtility.TryParseHtmlString(nColor, out Color color))
-                                target.item_name_color.color = color;
+                            if (ColorUtility.TryParseHtmlString(nColor, out Color color))
+                                target.itemNameColour.color = color;
                             else
-                                target.item_name_color.use = false;
+                                target.itemNameColour.use = false;
                         }
                         else
-                            target.item_name_color.use = false;
+                            target.itemNameColour.use = false;
 
-                        target.item_icon_url = API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "icon_url");
-                        target.item_icon_url_large = API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "icon_url_large");
+                        target.itemIconURL = API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "icon_url");
+                        target.itemIconURLLarge = API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "icon_url_large");
 
                         var returnString = API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "marketable");
                         if (!string.IsNullOrEmpty(returnString) && bool.TryParse(returnString, out bool marketable))
-                            target.item_marketable = marketable;
+                            target.itemMarketable = marketable;
 
                         returnString = API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "tradable");
                         if (!string.IsNullOrEmpty(returnString) && bool.TryParse(returnString, out bool tradable))
-                            target.item_tradable = tradable;
-
-                        returnString = API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "tag_generators");
-                        if (!string.IsNullOrEmpty(returnString))
-                            generators.Add(target, returnString);
-
-                        returnString = API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "store_hidden");
-                        if (!string.IsNullOrEmpty(returnString) && bool.TryParse(returnString, out bool store_hidden))
-                            target.item_store_hidden = store_hidden;
-
-                        returnString = API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "use_drop_limit");
-                        if (!string.IsNullOrEmpty(returnString) && bool.TryParse(returnString, out bool use_drop_limit))
-                            target.item_use_drop_limit = use_drop_limit;
-
-                        returnString = API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "use_drop_window");
-                        if (!string.IsNullOrEmpty(returnString) && bool.TryParse(returnString, out bool item_use_drop_window))
-                            target.item_tradable = item_use_drop_window;
-
-                        returnString = API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "granted_manually");
-                        if (!string.IsNullOrEmpty(returnString) && bool.TryParse(returnString, out bool item_granted_manually))
-                            target.item_tradable = item_granted_manually;
-
-                        returnString = API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "use_bundle_price");
-                        if (!string.IsNullOrEmpty(returnString) && bool.TryParse(returnString, out bool item_use_bundle_price))
-                            target.item_tradable = item_use_bundle_price;
-
-                        returnString = API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "auto_stack");
-                        if (!string.IsNullOrEmpty(returnString) && bool.TryParse(returnString, out bool item_auto_stack))
-                            target.item_tradable = item_auto_stack;
-
-                        target.item_tag_generator_name = API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "tag_generator_name");
-                        target.item_tag_generator_values.Populate(itemDefId);
-                        target.item_tags.Populate(itemDefId);
-
-                        target.item_store_tags = new List<string>(API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "store_tags").Split(';'));
-                        target.item_store_images = new List<string>(API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "store_images").Split(';'));
-
-                        returnString = API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "tradabitem_drop_limitle");
-                        if (!string.IsNullOrEmpty(returnString) && uint.TryParse(returnString, out uint item_drop_limit))
-                            target.item_drop_limit = item_drop_limit;
-
-                        returnString = API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "item_drop_interval");
-                        if (!string.IsNullOrEmpty(returnString) && bool.TryParse(returnString, out bool item_drop_interval))
-                            target.item_tradable = item_drop_interval;
-
-                        returnString = API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "item_drop_window");
-                        if (!string.IsNullOrEmpty(returnString) && bool.TryParse(returnString, out bool item_drop_window))
-                            target.item_tradable = item_drop_window;
-
-                        returnString = API.Inventory.Client.GetItemDefinitionProperty(itemDefId, "item_drop_max_per_window");
-                        if (!string.IsNullOrEmpty(returnString) && bool.TryParse(returnString, out bool item_drop_max_per_window))
-                            target.item_tradable = item_drop_max_per_window;
-
-                        //TODO: check for and parse extended properties
+                            target.itemTradable = tradable;
 
                         if (created)
                         {
                             if (debugLog)
-                                Debug.Log($"Adding new Item Definition Object: {target.item_name.GetSimpleValue()}, to Steam Settings");
+                                Debug.Log($"Adding new Item Definition Object: {target.itemName.GetSimpleValue()}, to Steam Settings");
                             items.Add(target);
                         }
                         else if(debugLog)
-                                Debug.Log($"Updating Item Definition Object: {target.item_name.GetSimpleValue()}");
+                                Debug.Log($"Updating Item Definition Object: {target.itemName.GetSimpleValue()}");
 
                     }
                     catch (Exception ex)
@@ -215,202 +135,6 @@ namespace Heathen.SteamworksIntegration
                     }
                 }
 
-                if (debugLog)
-                    Debug.Log($"Processing {bundles.Count} bundles");
-
-                for (int i = 0; i < bundles.Count; i++)
-                {
-                    try
-                    {
-                        var target = bundles[i];
-                        target.item_bundle.entries = new List<ItemDefinitionSettings.Bundle.Entry>();
-                        var bundleData = API.Inventory.Client.GetItemDefinitionProperty(target.Id, "bundle");
-                        if (!string.IsNullOrEmpty(bundleData))
-                        {
-                            var bundleString = bundleData.Split(';');
-                            for (int ii = 0; ii < bundleString.Length; ii++)
-                            {
-                                var bundleItem = bundleString[ii];
-                                if (bundleItem.Contains("x"))
-                                {
-                                    var kvp = bundleItem.Split('x');
-                                    var id = int.Parse(kvp[0]);
-                                    var count = int.Parse(kvp[1]);
-                                    target.item_bundle.entries.Add(new ItemDefinitionSettings.Bundle.Entry
-                                    {
-                                        count = count,
-                                        item = items.FirstOrDefault(p => p.Id.m_SteamItemDef == id)
-                                    });
-                                }
-                                else
-                                {
-                                    var id = int.Parse(bundleItem);
-                                    target.item_bundle.entries.Add(new ItemDefinitionSettings.Bundle.Entry
-                                    {
-                                        count = 1,
-                                        item = items.FirstOrDefault(p => p.Id.m_SteamItemDef == id)
-                                    });
-                                }
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-#pragma warning disable UNT0008 // Null propagation on Unity objects
-                        Debug.LogError("Failed to process bundle information for " + bundles[i]?.ToString() + "\nException: " + ex.Message);
-#pragma warning restore UNT0008 // Null propagation on Unity objects
-                    }
-                }
-
-                if (debugLog)
-                    Debug.Log($"Processing {craftable.Count} craftable");
-
-                foreach (var keyValuePair in craftable)
-                {
-
-                    var target = keyValuePair.Key;
-                    var schema = keyValuePair.Value;
-                    try
-                    {
-                        target.item_exchange = new ItemDefinitionSettings.ExchangeCollection();
-                        target.item_exchange.recipe = new List<ItemDefinitionSettings.ExchangeRecipe>();
-                        var recipies = schema.Split(';');
-                        foreach (var recipe in recipies)
-                        {
-                            var recipieObject = new ItemDefinitionSettings.ExchangeRecipe();
-                            var materials = recipe.Split(',');
-                            foreach (var material in materials)
-                            {
-                                if (material.Contains(":"))
-                                {
-                                    //Tag
-                                    var tagCat = material.Split(':');
-                                    var catigory = tagCat[0];
-                                    var tag = string.Empty;
-                                    uint count = 1;
-                                    if (tagCat[1].Contains("*"))
-                                    {
-                                        var tagCount = tagCat[1].Split('*');
-                                        tag = tagCount[0];
-                                        count = uint.Parse(tagCount[1]);
-                                    }
-                                    else
-                                        tag = tagCat[1];
-
-                                    if (recipieObject.materials == null)
-                                        recipieObject.materials = new List<ItemDefinitionSettings.ExchangeRecipe.Material>();
-
-                                    recipieObject.materials.Add(new ItemDefinitionSettings.ExchangeRecipe.Material
-                                    {
-                                        item = new ItemDefinitionSettings.ExchangeRecipe.Material.Item_Def_Descriptor { item = 0, count = 0 },
-                                        tag = new ItemDefinitionSettings.ExchangeRecipe.Material.Item_Tag_Descriptor
-                                        {
-                                            name = catigory,
-                                            value = tag,
-                                            count = count
-                                        }
-                                    });
-                                }
-                                else
-                                {
-                                    //Item
-                                    if (material.Contains("x"))
-                                    {
-                                        //Has count
-                                        var itemCount = material.Split('x');
-                                        var itemID = int.Parse(itemCount[0]);
-                                        var count = uint.Parse(itemCount[1]);
-                                        var itemTarget = items.FirstOrDefault(p => p.Id.m_SteamItemDef == itemID);
-
-                                        if (recipieObject.materials == null)
-                                            recipieObject.materials = new List<ItemDefinitionSettings.ExchangeRecipe.Material>();
-
-                                        recipieObject.materials.Add(new ItemDefinitionSettings.ExchangeRecipe.Material
-                                        {
-                                            item = new ItemDefinitionSettings.ExchangeRecipe.Material.Item_Def_Descriptor
-                                            {
-                                                item = itemTarget.id,
-                                                count = count
-                                            },
-                                            tag = new ItemDefinitionSettings.ExchangeRecipe.Material.Item_Tag_Descriptor
-                                            {
-                                                name = string.Empty,
-                                                value = string.Empty,
-                                                count = 0
-                                            }
-                                        });
-                                    }
-                                    else
-                                    {
-                                        var itemID = int.Parse(material);
-                                        var itemTarget = items.FirstOrDefault(p => p.Id.m_SteamItemDef == itemID);
-
-                                        if (recipieObject.materials == null)
-                                            recipieObject.materials = new List<ItemDefinitionSettings.ExchangeRecipe.Material>();
-
-                                        recipieObject.materials.Add(new ItemDefinitionSettings.ExchangeRecipe.Material
-                                        {
-                                            item = new ItemDefinitionSettings.ExchangeRecipe.Material.Item_Def_Descriptor
-                                            {
-                                                item = itemTarget.id,
-                                                count = 1
-                                            },
-                                            tag = new ItemDefinitionSettings.ExchangeRecipe.Material.Item_Tag_Descriptor
-                                            {
-                                                name = string.Empty,
-                                                value = string.Empty,
-                                                count = 0
-                                            }
-                                        });
-                                    }
-                                }
-                            }
-
-                            target.item_exchange.recipe.Add(recipieObject);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-#pragma warning disable UNT0008 // Null propagation on Unity objects
-                        Debug.LogError("Failed to parse excahnge schema for " + target?.ToString() + "; schema = " + schema + "; \n Exception = " + ex.Message);
-#pragma warning restore UNT0008 // Null propagation on Unity objects
-                    }
-                }
-
-                if (debugLog)
-                    Debug.Log($"Processing {generators.Count} generators");
-
-                foreach (var keyValuePair in generators)
-                {
-                    var target = keyValuePair.Key;
-                    var schema = keyValuePair.Value;
-
-                    if (schema.Contains(";"))
-                    {
-                        target.item_tag_generators = new List<ItemDefinitionSettings>();
-                        var gens = schema.Split(';');
-                        foreach (var idString in gens)
-                        {
-                            var id = int.Parse(idString);
-                            var targetTagGen = items.FirstOrDefault(p => p.Id.m_SteamItemDef == id);
-                            if (targetTagGen != null)
-                            {
-                                target.item_tag_generators.Add(targetTagGen);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // Only 1
-                        var id = int.Parse(schema);
-                        target.item_tag_generators = new List<ItemDefinitionSettings>();
-                        var targetTagGen = items.FirstOrDefault(p => p.Id.m_SteamItemDef == id);
-                        if (targetTagGen != null)
-                        {
-                            target.item_tag_generators.Add(targetTagGen);
-                        }
-                    }
-                }
                 API.Inventory.Client.GetAllItems(HandleItemResults);
             }
         }
@@ -419,7 +143,7 @@ namespace Heathen.SteamworksIntegration
         {
             Debug.Log("Processing inventory item definition update!");
             UpdateItemDefinitions(true);
-            API.Inventory.Client.OnSteamInventoryDefinitionUpdate.RemoveListener(HandleSettingsInventoryDefinitionUpdate);
+            SteamTools.Events.OnInventoryDefinitionUpdate -= HandleSettingsInventoryDefinitionUpdate;
         }
 #endif
 
@@ -460,23 +184,27 @@ namespace Heathen.SteamworksIntegration
                 var after = newState[item];
 
                 //Was in before is not in after
-                var removed = before.Where(b => !after.Any(a => a.ItemId == b.ItemId));
+                var removed = before.Where(b => after.All(a => a.ItemId != b.ItemId));
 
                 //Is in after was not in before
-                var added = after.Where(a => !before.Any(b => b.ItemId == a.ItemId));
+                var added = after.Where(a => before.All(b => b.ItemId != a.ItemId));
 
                 //Is in both but count doesn't match
                 var bChange = before.Where(b => after.Any(a => a.ItemId == b.ItemId) && after.FirstOrDefault(a => a.ItemId == b.ItemId).Quantity != b.Quantity);
                 var aChange = after.Where(a => before.Any(b => b.ItemId == a.ItemId) && before.FirstOrDefault(b => b.ItemId == a.ItemId).Quantity != a.Quantity);
 
-                if (removed.Count() > 0
-                    || added.Count() > 0
-                    || bChange.Count() > 0)
+                var itemDetails = removed as ItemDetail[] ?? removed.ToArray();
+                var enumerable = added as ItemDetail[] ?? added.ToArray();
+                var details = bChange as ItemDetail[] ?? bChange.ToArray();
+                if (itemDetails.Any()
+                    || enumerable.Any()
+                    || details.Any())
                 {
+                    var change = aChange as ItemDetail[] ?? aChange.ToArray();
                     //We have some change so record it
                     List<ItemInstanceChangeRecord> changeRecords = new List<ItemInstanceChangeRecord>();
 
-                    foreach (var r in removed)
+                    foreach (var r in itemDetails)
                     {
                         changeRecords.Add(new ItemInstanceChangeRecord
                         {
@@ -489,7 +217,7 @@ namespace Heathen.SteamworksIntegration
                         });
                     }
 
-                    foreach (var r in added)
+                    foreach (var r in enumerable)
                     {
                         changeRecords.Add(new ItemInstanceChangeRecord
                         {
@@ -502,9 +230,9 @@ namespace Heathen.SteamworksIntegration
                         });
                     }
 
-                    foreach (var r in bChange)
+                    foreach (var r in details)
                     {
-                        var match = aChange.FirstOrDefault(a => a.ItemId == r.ItemId);
+                        var match = change.FirstOrDefault(a => a.ItemId == r.ItemId);
 
                         changeRecords.Add(new ItemInstanceChangeRecord
                         {

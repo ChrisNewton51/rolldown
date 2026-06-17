@@ -33,7 +33,7 @@ Transform:
   m_GameObject: {fileID: 241532838827486296}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5, y: 85.97999, z: -254.96967}
+  m_LocalPosition: {x: 3, y: 85.97999, z: -254.96967}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -206,7 +206,7 @@ MonoBehaviour:
   <AssetPathHash>k__BackingField: 2092870565765373345
   SceneId: 0
   SerializedTransformProperties:
-    Position: {x: 3, y: 85.97999, z: -254.96967}
+    Position: {x: 5, y: 85.97999, z: -254.96967}
     Rotation: {x: 0, y: 0, z: 0, w: 1}
     Scale: {x: 1, y: 1, z: 1}
     IsValid: 1
@@ -230,7 +230,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584199523988795406
+  _initializedTimestamp: -8584199520973350634
 --- !u!114 &172746011998089268
 MonoBehaviour:
   m_ObjectHideFlags: 0

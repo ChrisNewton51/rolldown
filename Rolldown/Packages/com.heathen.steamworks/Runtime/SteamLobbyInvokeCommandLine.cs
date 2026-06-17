@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using UnityEngine;
 
 namespace Heathen.SteamworksIntegration
@@ -19,55 +19,55 @@ namespace Heathen.SteamworksIntegration
             NotGeneral,
         }
 
-        [SettingsField(header = "Launch Command")]
+        [SettingsField(0,false, "Launch Command")]
         public Rule joinRequestedWhen;
 
-        private SteamLobbyDataEvents m_Events;
-        private LobbyData pendingLobby = 0;
+        private SteamLobbyDataEvents _mEvents;
+        private LobbyData _pendingLobby = 0;
 
         private void Start()
         {
-            m_Events = GetComponent<SteamLobbyDataEvents>();
+            _mEvents = GetComponent<SteamLobbyDataEvents>();
 
-            pendingLobby = API.Matchmaking.Client.GetCommandLineConnectLobby();
-            if (pendingLobby.IsValid)
+            _pendingLobby = API.Matchmaking.Client.GetCommandLineConnectLobby();
+            if (_pendingLobby.IsValid)
             {
-                API.Matchmaking.Client.OnLobbyDataUpdate.AddListener(HandleLobbyDataUpdate);
-                pendingLobby.RequestData();
+                SteamTools.Events.OnLobbyDataUpdate += HandleLobbyDataUpdate;
+                _pendingLobby.RequestData();
             }
         }
 
-        private void HandleLobbyDataUpdate(LobbyDataUpdateEventData arg0)
+        private void HandleLobbyDataUpdate(LobbyData lobby, LobbyMemberData? member)
         {
-            API.Matchmaking.Client.OnLobbyDataUpdate.RemoveListener(HandleLobbyDataUpdate);
+            SteamTools.Events.OnLobbyDataUpdate -= HandleLobbyDataUpdate;
             switch (joinRequestedWhen)
             {
                 case Rule.Any:
-                    m_Events.onLobbyJoinRequest?.Invoke(pendingLobby, UserData.Me);
+                    _mEvents.onLobbyJoinRequest?.Invoke(_pendingLobby, UserData.Me);
                     break;
                 case Rule.GeneralOnly:
-                    if (pendingLobby.IsGeneral)
-                        m_Events.onLobbyJoinRequest?.Invoke(pendingLobby, UserData.Me);
+                    if (_pendingLobby.IsGeneral)
+                        _mEvents.onLobbyJoinRequest?.Invoke(_pendingLobby, UserData.Me);
                     break;
                 case Rule.NotGeneral:
-                    if (!pendingLobby.IsGeneral)
-                        m_Events.onLobbyJoinRequest?.Invoke(pendingLobby, UserData.Me);
+                    if (!_pendingLobby.IsGeneral)
+                        _mEvents.onLobbyJoinRequest?.Invoke(_pendingLobby, UserData.Me);
                     break;
                 case Rule.PartyOnly:
-                    if (pendingLobby.IsParty)
-                        m_Events.onLobbyJoinRequest?.Invoke(pendingLobby, UserData.Me);
+                    if (_pendingLobby.IsParty)
+                        _mEvents.onLobbyJoinRequest?.Invoke(_pendingLobby, UserData.Me);
                     break;
                 case Rule.NotParty:
-                    if (!pendingLobby.IsParty)
-                        m_Events.onLobbyJoinRequest?.Invoke(pendingLobby, UserData.Me);
+                    if (!_pendingLobby.IsParty)
+                        _mEvents.onLobbyJoinRequest?.Invoke(_pendingLobby, UserData.Me);
                     break;
                 case Rule.SessionOnly:
-                    if (pendingLobby.IsSession)
-                        m_Events.onLobbyJoinRequest?.Invoke(pendingLobby, UserData.Me);
+                    if (_pendingLobby.IsSession)
+                        _mEvents.onLobbyJoinRequest?.Invoke(_pendingLobby, UserData.Me);
                     break;
                 case Rule.NotSession:
-                    if (!pendingLobby.IsSession)
-                        m_Events.onLobbyJoinRequest?.Invoke(pendingLobby, UserData.Me);
+                    if (!_pendingLobby.IsSession)
+                        _mEvents.onLobbyJoinRequest?.Invoke(_pendingLobby, UserData.Me);
                     break;
             }
         }

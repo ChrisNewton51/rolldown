@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using System.Collections.Generic;
@@ -15,28 +15,28 @@ namespace Heathen.SteamworksIntegration
         { }
 
         public AppData App { get; private set; } = AppId_t.Invalid;
-        public UserData User { get => currentUser; set => Apply(value); }
+        public UserData User { get => _currentUser; set => Apply(value); }
         public Dictionary<string, string> Values { get; private set; } = new Dictionary<string, string>();
 
         public RichPresenceReaderUpdatedEvent evtUpdate;
 
-        private UserData currentUser = CSteamID.Nil;
+        private UserData _currentUser = CSteamID.Nil;
 
         private void OnEnable()
         {
-            Friends.Client.OnFriendRichPresenceUpdate.AddListener(HandleChange);
+            SteamTools.Events.OnFriendRichPresenceUpdate += HandleChange;
         }
 
         private void OnDisable()
         {
-            Friends.Client.OnFriendRichPresenceUpdate.RemoveListener(HandleChange);
+            SteamTools.Events.OnFriendRichPresenceUpdate -= HandleChange;
         }
 
         public void Apply(UserData user)
         {
-            currentUser = user;
+            _currentUser = user;
 
-            if(user.GetGamePlayed(out FriendGameInfo gameInfo))
+            if(user.GetGamePlayed(out var gameInfo))
             {
                 App = gameInfo.Game;
                 Values = Friends.Client.GetFriendRichPresence(user);
@@ -50,14 +50,12 @@ namespace Heathen.SteamworksIntegration
             }
         }
 
-        private void HandleChange(FriendRichPresenceUpdate param)
+        private void HandleChange(UserData friend, AppData app)
         {
-            if (param.Friend == currentUser)
-            {
-                App = param.App;
-                Values = Friends.Client.GetFriendRichPresence(param.Friend);
-                evtUpdate.Invoke(this);
-            }
+            if (friend != _currentUser) return;
+            App = app;
+            Values = Friends.Client.GetFriendRichPresence(friend);
+            evtUpdate.Invoke(this);
         }
     }
 }

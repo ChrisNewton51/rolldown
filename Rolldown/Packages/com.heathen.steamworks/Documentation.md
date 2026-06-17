@@ -1,4 +1,4 @@
-All documentation is housed online at https://kb.heathen.group/
+All documentation is housed online at https://heathen.group/
 
 
 

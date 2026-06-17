@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS && STEAM_INSTALLED
 using System;
 using UnityEngine;
 
@@ -7,68 +7,54 @@ namespace Heathen.SteamworksIntegration
     public interface IModularField
     {
         int Priority { get; }
-        bool Synchronized { get; }
+        bool Synchronised { get; }
         string Header { get; }
     }
 
-    [AttributeUsage(System.AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Field)]
     public class SettingsFieldAttribute : PropertyAttribute, IModularField
     {
-        public int priority;
-        public bool synchronized;
-        public string header;
+        public int Priority { get; }
+        public bool Synchronised { get; }
+        public string Header { get; }
 
-        public SettingsFieldAttribute(int priority = 0, bool synchronized = false, string header = null)
+        public SettingsFieldAttribute(int priority = 0, bool synchronised = false, string header = null)
         {
-            this.priority = priority;
-            this.synchronized = synchronized;
-            this.header = header;
+            Priority = priority;
+            Synchronised = synchronised;
+            Header = header;
         }
-
-        public int Priority => priority;
-
-        public bool Synchronized => synchronized;
-
-        public string Header => header;
     }
 
-    [AttributeUsage(System.AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Field)]
     public class ElementFieldAttribute : PropertyAttribute, IModularField
     {
-        public string header;
-        public int priority; // lower = drawn first
+        public string Header { get; }
+        public int Priority { get; }
+        public bool Synchronised => false;
+
         public ElementFieldAttribute(string header = null, int priority = 0)
         {
-            this.header = header;
-            this.priority = priority;
+            Header = header;
+            Priority = priority;
         }
-
-        public int Priority => priority;
-
-        public bool Synchronized => false;
-
-        public string Header => header;
     }
 
-    [AttributeUsage(System.AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Field)]
     public class TemplateFieldAttribute : PropertyAttribute, IModularField
     {
-        public string header;
-        public int priority; // lower = drawn first
+        public string Header { get; }
+        public int Priority { get; }
+        public bool Synchronised => false;
+
         public TemplateFieldAttribute(string header = null, int priority = 0)
         {
-            this.header = header;
-            this.priority = priority;
+            Header = header;
+            Priority = priority;
         }
-
-        public int Priority => priority;
-
-        public bool Synchronized => false;
-
-        public string Header => header;
     }
 
-    [AttributeUsage(System.AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Field)]
     public class EventFieldAttribute : PropertyAttribute
     {
     }

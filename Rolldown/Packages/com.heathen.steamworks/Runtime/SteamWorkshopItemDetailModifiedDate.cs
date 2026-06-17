@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using System;
 using UnityEngine;
 
@@ -19,15 +19,15 @@ namespace Heathen.SteamworksIntegration
 
         public Settings settings;
 
-        private SteamWorkshopItemDetailData m_Inspector;
-        private SteamWorkshopItemDetailDataEvents m_Events;
+        private SteamWorkshopItemDetailData _mInspector;
+        private SteamWorkshopItemDetailDataEvents _mEvents;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamWorkshopItemDetailData>();
-            m_Events = GetComponent<SteamWorkshopItemDetailDataEvents>();
+            _mInspector = GetComponent<SteamWorkshopItemDetailData>();
+            _mEvents = GetComponent<SteamWorkshopItemDetailDataEvents>();
 
-            m_Events.onChange.AddListener(HandleChanged);
+            _mEvents.onChange.AddListener(HandleChanged);
             HandleChanged();
         }
 
@@ -35,8 +35,8 @@ namespace Heathen.SteamworksIntegration
         {
             if (settings.label != null)
             {
-                if (m_Inspector.Data != null)
-                    settings.label.text = m_Inspector.Data.TimeUpdated.ToString(settings.format);
+                if (_mInspector.Data != null)
+                    settings.label.text = _mInspector.Data.TimeUpdated.ToString(settings.format);
                 else
                     settings.label.text = string.Empty;
             }

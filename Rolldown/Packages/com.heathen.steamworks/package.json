@@ -1,14 +1,14 @@
 {
   "name": "com.heathen.steamworks",
   "displayName": "Toolkit for Steamworks 2026",
-  "version": "5.0.5",
+  "version": "5.1.15",
   "unity": "6000.0",
   "author": {
     "name": "Heathen Group",
     "email": "support@heathen.group",
     "url": "https://heathen.group"
   },
-  "documentationUrl": "https://kb.heathen.group/steam",
+  "documentationUrl": "https://heathen.group/kb/steam-welcome/",
   "keywords": [],
   "description": "A powerful toolkit consisting of ready-made systems, quality of life features, API extensions and editor extensions to make your integration with the Steamworks SDK easier, faster, and more robust. Make the most of Steam for your game!",
   "license": "LICENSE.md",

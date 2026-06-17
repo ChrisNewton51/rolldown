@@ -1,10 +1,11 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Heathen.SteamworksIntegration
 {
@@ -23,183 +24,68 @@ namespace Heathen.SteamworksIntegration
         /// <summary>
         /// The type of the item
         /// </summary>
-        [SerializeField]
-        public InventoryItemType item_type;
-        /// <summary>
-        /// The type of the item
-        /// </summary>
-        [SerializeField]
-        public bool item_game_only;
+        [FormerlySerializedAs("item_type")] [SerializeField]
+        public InventoryItemType itemType;
+        
         /// <summary>
         /// The name of the item
         /// </summary>
-        [SerializeField]
-        public LanguageVariantNode item_name = new LanguageVariantNode { node = "name" };
+        [FormerlySerializedAs("item_name")] [SerializeField]
+        public LanguageVariantNode itemName = new LanguageVariantNode { node = "name" };
         /// <summary>
         /// The description of the item
         /// </summary>
-        [SerializeField]
-        public LanguageVariantNode item_description = new LanguageVariantNode { node = "description" };
+        [FormerlySerializedAs("item_description")] [SerializeField]
+        public LanguageVariantNode itemDescription = new LanguageVariantNode { node = "description" };
         /// <summary>
         /// The display type for the item
         /// </summary>
-        [SerializeField]
-        public LanguageVariantNode item_display_type = new LanguageVariantNode { node = "display_type" };
+        [FormerlySerializedAs("item_display_type")] [SerializeField]
+        public LanguageVariantNode itemDisplayType = new LanguageVariantNode { node = "display_type" };
+
         /// <summary>
-        /// The bundle information of the item
+        /// The items background colour
         /// </summary>
-        [SerializeField]
-        public Bundle item_bundle = new Bundle();
+        [FormerlySerializedAs("itemBackgroundColor")] [FormerlySerializedAs("item_background_color")] [SerializeField]
+        public Colour itemBackgroundColour;
         /// <summary>
-        /// The promo information for the item
+        /// The item's name's colour
         /// </summary>
-        [SerializeField]
-        public PromoRule item_promo = new PromoRule();
-        /// <summary>
-        /// The drop start time of the item
-        /// </summary>
-        [SerializeField]
-        public string item_drop_start_time;
-        /// <summary>
-        /// The item exchange recipes
-        /// </summary>
-        [SerializeField]
-        public ExchangeCollection item_exchange = new ExchangeCollection();
-        /// <summary>
-        /// The items price information
-        /// </summary>
-        [SerializeField]
-        public Price item_price = new Price();
-        /// <summary>
-        /// The items background color
-        /// </summary>
-        [SerializeField]
-        public Color item_background_color = new Color();
-        /// <summary>
-        /// The item's name's color
-        /// </summary>
-        [SerializeField]
-        public Color item_name_color = new Color();
+        [FormerlySerializedAs("itemNameColor")] [FormerlySerializedAs("item_name_color")] [SerializeField]
+        public Colour itemNameColour;
         /// <summary>
         /// A URL for the items main icon
         /// </summary>
-        [SerializeField]
-        public string item_icon_url;
+        [FormerlySerializedAs("item_icon_url")] [SerializeField]
+        public string itemIconURL;
         /// <summary>
         /// A large variant of the items icon
         /// </summary>
-        [SerializeField]
-        public string item_icon_url_large;
-        
-        [SerializeField]
-        public string item_accessory_tag;
-        [SerializeField]
-        public int item_accessory_limit;
-        [SerializeField]
-        public string item_allowed_tags_from_tools;
-        [SerializeField]
-        public LanguageVariantNode item_accessory_description = new LanguageVariantNode { node = "accessory_description" };
+        [FormerlySerializedAs("item_icon_url_large")] [SerializeField]
+        public string itemIconURLLarge;
 
         /// <summary>
         /// Is the item marketable
         /// </summary>
-        [SerializeField]
-        public bool item_marketable;
+        [FormerlySerializedAs("item_marketable")] [SerializeField]
+        public bool itemMarketable;
         /// <summary>
         /// Is the item tradable among players
         /// </summary>
-        [SerializeField]
-        public bool item_tradable;
-        /// <summary>
-        /// A collection of tags for the item
-        /// </summary>
-        [SerializeField]
-        public TagCollection item_tags = new TagCollection();
-        /// <summary>
-        /// A collection of tag generators related to the object
-        /// </summary>
-        [SerializeField]
-        public List<ItemDefinitionSettings> item_tag_generators = new List<ItemDefinitionSettings>();
-        /// <summary>
-        /// The tag generator name of the object
-        /// </summary>
-        [SerializeField]
-        public string item_tag_generator_name;
-        /// <summary>
-        /// The tag generator values of the object
-        /// </summary>
-        [SerializeField]
-        public TagGeneratorValues item_tag_generator_values = new TagGeneratorValues();
+        [FormerlySerializedAs("item_tradable")] [SerializeField]
+        public bool itemTradable;
+
         /// <summary>
         /// Tags for use in the item store
         /// </summary>
-        [SerializeField]
-        public List<string> item_store_tags = new List<string>();
+        [FormerlySerializedAs("item_store_tags")] [SerializeField]
+        public List<string> itemStoreTags = new();
         /// <summary>
         /// Additional item store images
         /// </summary>
-        [SerializeField]
-        public List<string> item_store_images = new List<string>();
-        /// <summary>
-        /// Is the item hidden to the user
-        /// </summary>
-        [SerializeField]
-        public bool item_hidden;
-        /// <summary>
-        /// Is the item hidden to the store
-        /// </summary>
-        [SerializeField]
-        public bool item_store_hidden;
-        /// <summary>
-        /// Does the item have a drop limit
-        /// </summary>
-        [SerializeField]
-        public bool item_use_drop_limit;
-        /// <summary>
-        /// If the item has a drop limit what is the drop limit
-        /// </summary>
-        [SerializeField]
-        public uint item_drop_limit;
-        /// <summary>
-        /// The time between drops
-        /// </summary>
-        [SerializeField]
-        public uint item_drop_interval;
-        /// <summary>
-        /// Does the item use a drop window
-        /// </summary>
-        [SerializeField]
-        public bool item_use_drop_window;
-        /// <summary>
-        /// What is the items drop window
-        /// </summary>
-        [SerializeField]
-        public uint item_drop_window;
-        /// <summary>
-        /// How many drops can this item have per window
-        /// </summary>
-        [SerializeField]
-        public uint item_drop_max_per_window;
-        /// <summary>
-        /// Is this item a promotion that is granted manually
-        /// </summary>
-        [SerializeField]
-        public bool item_granted_manually;
-        /// <summary>
-        /// Does this item use bundle pricing
-        /// </summary>
-        [SerializeField]
-        public bool item_use_bundle_price;
-        /// <summary>
-        /// Does this item automatically stack
-        /// </summary>
-        [SerializeField]
-        public bool item_auto_stack;
-        /// <summary>
-        /// Extended item schema values for the item
-        /// </summary>
-        [SerializeField]
-        public ExtendedSchema item_extendedSchema = new ExtendedSchema();
+        [FormerlySerializedAs("item_store_images")] [SerializeField]
+        public List<string> itemStoreImages = new();
+
         /// <summary>
         /// The items internal <see cref="ItemData"/>
         /// </summary>
@@ -218,10 +104,10 @@ namespace Heathen.SteamworksIntegration
         public long TotalQuantity => Data.GetTotalQuantity();
         /// <summary>
         /// This is only useful after calling API.Inventory.Client.LoadItemDefinitions.
-        /// This will return the localized name of the item if definitions have been loaded.
+        /// This will return the localised name of the item if definitions have been loaded.
         /// </summary>
         /// <remarks>
-        /// In general you shouldn't need to use this as you know what items your game has at development time.
+        /// In general, you shouldn't need to use this as you know what items your game has at development time.
         /// It is more performant to hard code the items name than to load it at run time so unless you support adding/changing items without deploying a patch this should never be needed.
         /// </remarks>
         public string DisplayName => Data.Name;
@@ -252,13 +138,12 @@ namespace Heathen.SteamworksIntegration
         {
             get
             {
-                if (eventChanged == null)
-                    eventChanged = new ItemChangedEvent();
+                _eventChanged ??= new ItemChangedEvent();
 
-                return eventChanged;
+                return _eventChanged;
             }
         }
-        private ItemChangedEvent eventChanged = new ItemChangedEvent();
+        private ItemChangedEvent _eventChanged = new ItemChangedEvent();
 
         #region Internals
         /// <summary>
@@ -269,14 +154,6 @@ namespace Heathen.SteamworksIntegration
         {
             public LanguageCodes language;
             public string value;
-
-            public bool Valid
-            {
-                get
-                {
-                    return !string.IsNullOrEmpty(language.ToString()) && !string.IsNullOrEmpty(value.Trim());
-                }
-            }
         }
         /// <summary>
         /// A collection of <see cref="LanguageVariant"/> entries
@@ -364,7 +241,7 @@ namespace Heathen.SteamworksIntegration
                             return false;
                         if (item == null)
                             return false;
-                        if (item.item_type == InventoryItemType.tag_generator)
+                        if (item.itemType == InventoryItemType.TagGenerator)
                             return false;
 
                         return true;
@@ -394,7 +271,7 @@ namespace Heathen.SteamworksIntegration
                     if (entries.Count < 1)
                         return false;
 
-                    return !entries.Any(p => !p.Valid);
+                    return entries.All(p => p.Valid);
                 }
             }
 
@@ -405,12 +282,12 @@ namespace Heathen.SteamworksIntegration
                 else
                 {
                     StringBuilder sb = new StringBuilder();
-                    for (int i = 0; i < entries.Count; i++)
+                    foreach (var t in entries)
                     {
                         if (sb.Length > 0)
                             sb.Append(";");
 
-                        sb.Append(entries[i].ToString());
+                        sb.Append(t.ToString());
                     }
 
                     return sb.ToString();
@@ -433,7 +310,7 @@ namespace Heathen.SteamworksIntegration
             public List<AppId_t> owns = new List<AppId_t>();
             public List<string> achievements = new List<string>();
             public List<PlayedEntry> played = new List<PlayedEntry>();
-            public bool manual = false;
+            public bool manual;
 
             public bool Valid
             {
@@ -464,12 +341,12 @@ namespace Heathen.SteamworksIntegration
                     sb.Append("owns:" + owns[i].m_AppId.ToString());
                 }
 
-                for (int i = 0; i < achievements.Count; i++)
+                foreach (var t in achievements)
                 {
                     if (sb.Length > 0)
                         sb.Append(";");
 
-                    sb.Append("ach:" + achievements[i]);
+                    sb.Append("ach:" + t);
                 }
 
                 for (int i = 0; i < played.Count; i++)
@@ -538,7 +415,7 @@ namespace Heathen.SteamworksIntegration
             public struct Material
             {
                 [Serializable]
-                public struct Item_Def_Descriptor
+                public struct ItemDefDescriptor
                 {
                     public int item;
                     public uint count;
@@ -554,7 +431,7 @@ namespace Heathen.SteamworksIntegration
                     }
                 }
                 [Serializable]
-                public struct Item_Tag_Descriptor
+                public struct ItemTagDescriptor
                 {
                     public string name;
                     public string value;
@@ -571,8 +448,8 @@ namespace Heathen.SteamworksIntegration
                     }
                 }
 
-                public Item_Def_Descriptor item;
-                public Item_Tag_Descriptor tag;
+                public ItemDefDescriptor item;
+                public ItemTagDescriptor tag;
 
                 public override string ToString()
                 {
@@ -594,7 +471,7 @@ namespace Heathen.SteamworksIntegration
                         //If an item is referenced
                         if (item.item > 0)
                         {
-                            //Make sure we dont define a tag
+                            //Make sure we don't define a tag
                             if (!string.IsNullOrEmpty(tag.name) || !string.IsNullOrEmpty(tag.value) || tag.count != 0)
                             {
                                 return false;
@@ -622,7 +499,7 @@ namespace Heathen.SteamworksIntegration
 
             public List<Material> materials;
 
-            public bool Valid => materials != null && !materials.Any(p => !p.Valid);
+            public bool Valid => materials != null && materials.All(p => p.Valid);
 
             public string GetSchema()
             {
@@ -714,10 +591,10 @@ namespace Heathen.SteamworksIntegration
                     {
                         get
                         {
-                            if (values != null && values.Length < 1)
+                            if (values is { Length: < 1 })
                                 return false;
 
-                            return !values.Any(p => !p.Valid);
+                            return values != null && values.All(p => p.Valid);
                         }
                     }
 
@@ -728,12 +605,12 @@ namespace Heathen.SteamworksIntegration
 
                         StringBuilder sb = new();
 
-                        for (int i = 0; i < values.Length; i++)
+                        foreach (var t in values)
                         {
                             if (sb.Length > 0)
                                 sb.Append(",");
 
-                            sb.Append(values[i].ToString());
+                            sb.Append(t.ToString());
                         }
 
                         return sb.ToString();
@@ -747,18 +624,7 @@ namespace Heathen.SteamworksIntegration
                     public string untilDate;
                     public PriceCollection prices;
 
-                    public bool Valid
-                    {
-                        get
-                        {
-                            if (!Valid)
-                                return false;
-                            if (string.IsNullOrEmpty(fromDate.Trim()) || string.IsNullOrEmpty(untilDate.Trim()))
-                                return false;
-
-                            return true;
-                        }
-                    }
+                    public bool Valid => !string.IsNullOrEmpty(fromDate.Trim()) && !string.IsNullOrEmpty(untilDate.Trim());
 
                     public override string ToString()
                     {
@@ -772,10 +638,7 @@ namespace Heathen.SteamworksIntegration
                 public PriceCollection original;
                 public ChangeCollection[] changes;
 
-                public bool Valid
-                {
-                    get => original.Valid && (changes == null || !changes.Any(p => !p.Valid));
-                }
+                public bool Valid => original.Valid && (changes == null || changes.All(p => p.Valid));
 
                 public override string ToString()
                 {
@@ -787,10 +650,10 @@ namespace Heathen.SteamworksIntegration
 
                     if (changes != null)
                     {
-                        for (int i = 0; i < changes.Length; i++)
+                        foreach (var t in changes)
                         {
                             sb.Append(";");
-                            sb.Append(changes[i]);
+                            sb.Append(t);
                         }
                     }
 
@@ -852,7 +715,7 @@ namespace Heathen.SteamworksIntegration
                     {
                         usePricing = true;
                         useCategory = false;
-                        category = ValvePriceCategories.VLV100;
+                        category = ValvePriceCategories.Vlv100;
                         priceList = new PriceList();
 
                         var entries = result.Split(';');
@@ -902,24 +765,24 @@ namespace Heathen.SteamworksIntegration
                     {
                         usePricing = false;
                         useCategory = false;
-                        category = ValvePriceCategories.VLV100;
+                        category = ValvePriceCategories.Vlv100;
                         priceList = new PriceList();
                     }
                 }
             }
         }
         /// <summary>
-        /// An internal class representing the color related to an item
+        /// An internal class representing the colour related to an item
         /// </summary>
         [Serializable]
-        public struct Color
+        public struct Colour
         {
             public bool use;
-            public UnityEngine.Color color;
+            public Color color;
 
             public override string ToString()
             {
-                return UnityEngine.ColorUtility.ToHtmlStringRGB(color);
+                return ColorUtility.ToHtmlStringRGB(color);
             }
         }
         /// <summary>
@@ -957,9 +820,9 @@ namespace Heathen.SteamworksIntegration
                 {
                     var split1 = result.Split(';');
 
-                    for (int i = 0; i < split1.Length; i++)
+                    foreach (var t in split1)
                     {
-                        var tag = split1[i].Split(':');
+                        var tag = t.Split(':');
                         tags.Add(new ItemTag { category = tag[0], tag = tag[1] });
                     }
                 }
@@ -974,13 +837,7 @@ namespace Heathen.SteamworksIntegration
             public string value;
             public uint weight;
 
-            public bool Valid
-            {
-                get
-                {
-                    return !string.IsNullOrEmpty(value.Trim());
-                }
-            }
+            public bool Valid => !string.IsNullOrEmpty(value.Trim());
 
             public override string ToString()
             {
@@ -999,7 +856,7 @@ namespace Heathen.SteamworksIntegration
             {
                 get
                 {
-                    return values.Count > 0 && !values.Any(p => !p.Valid);
+                    return values.Count > 0 && values.All(p => p.Valid);
                 }
             }
 
@@ -1007,12 +864,12 @@ namespace Heathen.SteamworksIntegration
             {
                 StringBuilder sb = new StringBuilder();
 
-                for (int i = 0; i < values.Count; i++)
+                foreach (var t in values)
                 {
                     if (sb.Length > 0)
                         sb.Append(";");
 
-                    sb.Append(values[i].ToString());
+                    sb.Append(t.ToString());
                 }
 
                 return sb.ToString();
@@ -1027,9 +884,9 @@ namespace Heathen.SteamworksIntegration
                 {
                     var split1 = result.Split(';');
 
-                    for (int i = 0; i < split1.Length; i++)
+                    foreach (var t in split1)
                     {
-                        var tagId = split1[i].Split(':');
+                        var tagId = t.Split(':');
                         values.Add(new TagGeneratorValue { value = tagId[0], weight = uint.Parse(tagId[1]) });
                     }
                 }
@@ -1061,11 +918,11 @@ namespace Heathen.SteamworksIntegration
                     return string.Empty;
 
                 StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < entries.Count; i++)
+                foreach (var t in entries)
                 {
                     if (sb.Length > 0)
                         sb.Append(",\n\t\t");
-                    sb.Append(entries[i].ToString());
+                    sb.Append(t.ToString());
                 }
 
                 return sb.ToString();
@@ -1074,23 +931,23 @@ namespace Heathen.SteamworksIntegration
         /// <summary>
         /// The inventory item type
         /// </summary>
-        public InventoryItemType Type => item_type;        
+        public InventoryItemType Type => itemType;        
         /// <summary>
         /// The name of the item
         /// </summary>
         public string Name
         {
-            get => item_name.GetSimpleValue();
-            set => item_name.value = value;
+            get => itemName.GetSimpleValue();
+            set => itemName.value = value;
         }      
         /// <summary>
         /// The description of the item
         /// </summary>
-        public string Description => item_description.GetSimpleValue();        
+        public string Description => itemDescription.GetSimpleValue();        
         /// <summary>
         /// The display type of the item
         /// </summary>
-        public string DisplayType => item_display_type.GetSimpleValue();
+        public string DisplayType => itemDisplayType.GetSimpleValue();
         /// <summary>
         /// The item's ID
         /// </summary>
@@ -1099,749 +956,43 @@ namespace Heathen.SteamworksIntegration
             get => Data;
 
             set => Data = value;
-        }
+        }       
         /// <summary>
-        /// The collection of Bundle entry items
+        /// The background colour
         /// </summary>
-        public Bundle.Entry[] BundleEntries => item_bundle.entries.ToArray();       
+        public Colour BackgroundColour => itemBackgroundColour;        
         /// <summary>
-        /// The set of apps the promotion rule checks for ownership
+        /// The name colour
         /// </summary>
-        public AppId_t[] PromoRuleOwns => item_promo.owns.ToArray();
-        /// <summary>
-        /// The promotion rule achievements related to the item
-        /// </summary>
-        public string[] PromoRuleAchievements => item_promo.achievements.ToArray();
-        /// <summary>
-        /// The promotion rule played app entries
-        /// </summary>
-        public PromoRule.PlayedEntry[] PromoRulePlayed => item_promo.played.ToArray();        
-        /// <summary>
-        /// The drop start time
-        /// </summary>
-        public string DropStartTime => item_drop_start_time;        
-        /// <summary>
-        /// The list of exchange recipes
-        /// </summary>
-        public ExchangeRecipe[] Recipes => item_exchange?.recipe?.ToArray();
-        /// <summary>
-        /// The background color
-        /// </summary>
-        public Color BackgroundColor => item_background_color;        
-        /// <summary>
-        /// The name color
-        /// </summary>
-        public Color NameColor => item_name_color;        
+        public Colour NameColour => itemNameColour;        
         /// <summary>
         /// The Icon URL
         /// </summary>
-        public string IconUrl => item_icon_url;        
+        public string IconUrl => itemIconURL;        
         /// <summary>
         /// The large icon URL
         /// </summary>
-        public string IconUrlLarge => item_icon_url_large;        
+        public string IconUrlLarge => itemIconURLLarge;        
         /// <summary>
         /// Is the item marketable
         /// </summary>
-        public bool Marketable => item_marketable;        
+        public bool Marketable => itemMarketable;        
         /// <summary>
         /// Is the item tradable between players
         /// </summary>
-        public bool Tradable => item_tradable;        
-        /// <summary>
-        /// The item tags
-        /// </summary>
-        public ItemTag[] Tags => item_tags.tags.ToArray();        
-        /// <summary>
-        /// The related tag generators
-        /// </summary>
-        public ItemDefinitionSettings[] TagGenerators => item_tag_generators.ToArray();        
-        /// <summary>
-        /// The tag generator name
-        /// </summary>
-        public string TagGeneratorName => item_tag_generator_name;        
-        /// <summary>
-        /// Tag generator values
-        /// </summary>
-        public TagGeneratorValue[] TagGeneratorValueArray => item_tag_generator_values.values.ToArray();        
+        public bool Tradable => itemTradable;        
+                       
         /// <summary>
         /// Store tags for the item
         /// </summary>
-        public string[] StoreTags => item_store_tags.ToArray();        
+        public string[] StoreTags => itemStoreTags.ToArray();        
         /// <summary>
         /// Additional store images
         /// </summary>
-        public string[] StoreImages => item_store_images.ToArray();        
-        /// <summary>
-        /// Is this item hidden from the player
-        /// </summary>
-        public bool Hidden => item_hidden;    
-        /// <summary>
-        /// Is this item hidden from the store
-        /// </summary>
-        public bool StoreHidden => item_store_hidden;      
-        /// <summary>
-        /// Does this item use drop limit
-        /// </summary>
-        public bool UseDropLimit => item_use_drop_limit;        
-        /// <summary>
-        /// If using a drop limit what is its value
-        /// </summary>
-        public uint DropLimit => item_drop_limit;  
-        /// <summary>
-        /// What is the drop interval
-        /// </summary>
-        public uint DropInterval => item_drop_interval;        
-        /// <summary>
-        /// Does this item use a drop window
-        /// </summary>
-        public bool UseDropWindow => item_use_drop_window;        
-        /// <summary>
-        /// If using a drop window what is the window
-        /// </summary>
-        public uint DropWindow => item_drop_window;
-        /// <summary>
-        /// Max drops per window
-        /// </summary>
-        public uint DropMaxPerWindow => item_drop_max_per_window;
-        /// <summary>
-        /// Is this item a promo item that can be granted manually
-        /// </summary>
-        public bool GrantedManually => item_granted_manually;
-        /// <summary>
-        /// Does this item use bundle pricing
-        /// </summary>
-        public bool UseBundlePrice => item_use_bundle_price;
-        /// <summary>
-        /// Does this item automatically stack
-        /// </summary>
-        public bool AutoStack => item_auto_stack;
-        /// <summary>
-        /// List of extended schema entries
-        /// </summary>
-        public ExtendedSchema.Entry[] ExtendedSchemaEntries => item_extendedSchema.entries.ToArray();
+        public string[] StoreImages => itemStoreImages.ToArray();        
+        
         #endregion
-        /// <summary>
-        /// Is the item valid, this examens the item name, id and type information to check for required fields. It is an estimate not an absolute
-        /// </summary>
-        public bool Valid
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(item_name.ToString().Trim()))
-                {
-                    UnityEngine.Debug.LogError(Name + " ItemDefinition: Name field must be populated");
-                    return false;
-                }
-                if (id >= 1000000)
-                {
-                    UnityEngine.Debug.LogError(Name + " ItemDefinition: ID field must be less than 1,000,000");
-                    return false;
-                }
 
-                switch (item_type)
-                {
-                    case InventoryItemType.item:
-                        break;
-                    case InventoryItemType.bundle:
-                        break;
-                    case InventoryItemType.generator:
-                        break;
-                    case InventoryItemType.playtimegenerator:
-                        break;
-                    case InventoryItemType.tag_generator:
-                        if (string.IsNullOrEmpty(item_tag_generator_name.Trim()))
-                        {
-                            UnityEngine.Debug.LogError(Name + " ItemDefinition: Tag Generators must define a tag_generator_name");
-                            return false;
-                        }
-                        if (!item_tag_generator_values.Valid)
-                        {
-                            UnityEngine.Debug.LogError(Name + " ItemDefinition: Tag Generators must have valid tag_generator_values");
-                            return false;
-                        }
-                        break;
-                    default:
-                        return false;
-                }
-
-                return true;
-            }
-        }
-        /// <summary>
-        /// Get the JSON ItemDefinition of this item as it is currently configured
-        /// </summary>
-        /// <returns></returns>
-        public string ToJson()
-        {
-            switch (item_type)
-            {
-                case InventoryItemType.item:
-                    return ItemString();
-                case InventoryItemType.bundle:
-                    return BundleString();
-                case InventoryItemType.generator:
-                    return GeneratorString();
-                case InventoryItemType.playtimegenerator:
-                    return PlaytimeGeneratorString();
-                default:
-                    return TagGeneratorString();
-            }
-        }
-        private string ItemString()
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.Append("\t{");
-
-            sb.Append("\n\t\t\"itemdefid\": " + id.ToString());
-            sb.Append(",\n\t\t\"type\": \"item\"");
-            sb.Append(",\n" + item_name.ToString());
-            sb.Append(",\n" + item_description.ToString());
-            sb.Append(",\n" + item_display_type.ToString());
-
-            var promo = item_promo.ToString();
-            if (!string.IsNullOrEmpty(promo))
-                sb.Append(",\n\t\t\"promo\": \"" + promo + "\"");
-
-            if (!string.IsNullOrEmpty(item_drop_start_time))
-                sb.Append(",\n\t\t\"drop_start_time\": \"" + item_drop_start_time + "\"");
-
-            var exchange = item_exchange.ToString();
-            if (!string.IsNullOrEmpty(exchange))
-                sb.Append(",\n\t\t\"exchange\": \"" + exchange + "\"");
-
-            if (item_price.usePricing || item_price.useCategory)
-            {
-                var price = item_price.ToString();
-                if (!string.IsNullOrEmpty(price))
-                    sb.Append(",\n\t\t\"" + item_price.Node + "\": \"" + price + "\"");
-            }
-
-            if (item_background_color.use)
-            {
-                var bgColor = item_background_color.ToString();
-                if (!string.IsNullOrEmpty(bgColor))
-                    sb.Append(",\n\t\t\"background_color\": \"" + bgColor + "\"");
-            }
-
-            if (item_name_color.use)
-            {
-                var nColor = item_name_color.ToString();
-                if (!string.IsNullOrEmpty(nColor))
-                    sb.Append(",\n\t\t\"name_color\": \"" + nColor + "\"");
-            }
-
-            if (!string.IsNullOrEmpty(item_icon_url))
-                sb.Append(",\n\t\t\"icon_url\": \"" + item_icon_url + "\"");
-
-            if (!string.IsNullOrEmpty(item_icon_url_large))
-                sb.Append(",\n\t\t\"icon_url_large\": \"" + item_icon_url_large + "\"");
-
-            sb.Append(",\n\t\t\"marketable\": " + item_marketable.ToString().ToLower());
-            sb.Append(",\n\t\t\"tradable\": " + item_tradable.ToString().ToLower());
-
-            var tags = item_tags.ToString();
-            if (!string.IsNullOrEmpty(tags))
-                sb.Append(",\n\t\t\"tags\": \"" + tags + "\"");
-
-            if (item_tag_generators.Count > 0)
-            {
-                StringBuilder tg = new StringBuilder();
-
-                for (int i = 0; i < item_tag_generators.Count; i++)
-                {
-                    if (tg.Length > 0)
-                        tg.Append(";");
-
-                    tg.Append(item_tag_generators[i].id);
-                }
-
-                sb.Append(",\n\t\t\"tag_generators\": \"" + tg.ToString() + "\"");
-            }
-
-            if (item_store_tags.Count > 0)
-            {
-                StringBuilder tg = new StringBuilder();
-
-                for (int i = 0; i < item_store_tags.Count; i++)
-                {
-                    if (tg.Length > 0)
-                        tg.Append(";");
-
-                    tg.Append(item_store_tags[i]);
-                }
-
-                sb.Append(",\n\t\t\"store_tags\": \"" + tg.ToString() + "\"");
-            }
-
-            if (item_store_images.Count > 0)
-            {
-                StringBuilder tg = new StringBuilder();
-
-                for (int i = 0; i < item_store_images.Count; i++)
-                {
-                    if (tg.Length > 0)
-                        tg.Append(";");
-
-                    tg.Append(item_store_images[i]);
-                }
-
-                sb.Append(",\n\t\t\"store_images\": \"" + tg.ToString() + "\"");
-            }
-
-            sb.Append(",\n\t\t\"hidden\": " + item_hidden.ToString().ToLower());
-            sb.Append(",\n\t\t\"store_hidden\": " + item_store_hidden.ToString().ToLower());
-            sb.Append(",\n\t\t\"granted_manually\": " + item_granted_manually.ToString().ToLower());
-            sb.Append(",\n\t\t\"auto_stack\": " + item_auto_stack.ToString().ToLower());
-            sb.Append(",\n\t\t\"game_only\": " + item_game_only.ToString().ToLower());
-
-            var extn = item_extendedSchema.ToString();
-            if (!string.IsNullOrEmpty(extn))
-                sb.Append(",\n\t\t" + extn);
-
-            sb.Append("\n\t}");
-
-            return sb.ToString();
-        }
-        private string BundleString()
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.Append("\t{");
-
-            sb.Append("\n\t\t\"itemdefid\": " + id.ToString());
-            sb.Append(",\n\t\t\"type\": \"bundle\"");
-
-            var bundle = item_bundle.ToString();
-            if (!string.IsNullOrEmpty(bundle))
-                sb.Append(",\n\t\t\"bundle\": \"" + bundle + "\"");
-
-            sb.Append(",\n" + item_name.ToString());
-            sb.Append(",\n" + item_description.ToString());
-            sb.Append(",\n" + item_display_type.ToString());
-
-            var promo = item_promo.ToString();
-            if (!string.IsNullOrEmpty(promo))
-                sb.Append(",\n\t\t\"promo\": \"" + promo + "\"");
-
-            if (!string.IsNullOrEmpty(item_drop_start_time))
-                sb.Append(",\n\t\t\"drop_start_time\": \"" + item_drop_start_time + "\"");
-
-            var exchange = item_exchange.ToString();
-            if (!string.IsNullOrEmpty(exchange))
-                sb.Append(",\n\t\t\"exchange\": \"" + exchange + "\"");
-
-            if (item_price.usePricing)
-            {
-                var price = item_price.ToString();
-                if (!string.IsNullOrEmpty(price))
-                    sb.Append(",\n\t\t\"" + item_price.Node + "\": \"" + price + "\"");
-            }
-
-            if (item_background_color.use)
-            {
-                var bgColor = item_background_color.ToString();
-                if (!string.IsNullOrEmpty(bgColor))
-                    sb.Append(",\n\t\t\"background_color\": \"" + bgColor + "\"");
-            }
-
-            if (item_name_color.use)
-            {
-                var nColor = item_name_color.ToString();
-                if (!string.IsNullOrEmpty(nColor))
-                    sb.Append(",\n\t\t\"name_color\": \"" + nColor + "\"");
-            }
-
-            if (!string.IsNullOrEmpty(item_icon_url))
-                sb.Append(",\n\t\t\"icon_url\": \"" + item_icon_url + "\"");
-
-            if (!string.IsNullOrEmpty(item_icon_url_large))
-                sb.Append(",\n\t\t\"icon_url_large\": \"" + item_icon_url_large + "\"");
-
-            if (item_store_tags.Count > 0)
-            {
-                StringBuilder tg = new StringBuilder();
-
-                for (int i = 0; i < item_store_tags.Count; i++)
-                {
-                    if (tg.Length > 0)
-                        tg.Append(";");
-
-                    tg.Append(item_store_tags[i]);
-                }
-
-                sb.Append(",\n\t\t\"store_tags\": \"" + tg.ToString() + "\"");
-            }
-
-            if (item_store_images.Count > 0)
-            {
-                StringBuilder tg = new StringBuilder();
-
-                for (int i = 0; i < item_store_images.Count; i++)
-                {
-                    if (tg.Length > 0)
-                        tg.Append(";");
-
-                    tg.Append(item_store_images[i]);
-                }
-
-                sb.Append(",\n\t\t\"store_images\": \"" + tg.ToString() + "\"");
-            }
-
-            sb.Append(",\n\t\t\"hidden\": " + item_hidden.ToString().ToLower());
-            sb.Append(",\n\t\t\"store_hidden\": " + item_store_hidden.ToString().ToLower());
-            sb.Append(",\n\t\t\"granted_manually\": " + item_granted_manually.ToString().ToLower());
-            sb.Append(",\n\t\t\"use_bundle_price\": " + item_use_bundle_price.ToString().ToLower());
-
-            var extn = item_extendedSchema.ToString();
-            if (!string.IsNullOrEmpty(extn))
-                sb.Append(",\n\t\t" + extn);
-
-            sb.Append("\n\t}");
-
-            return sb.ToString();
-        }
-        private string GeneratorString()
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.Append("\t{");
-
-            sb.Append("\n\t\t\"itemdefid\": " + id.ToString());
-            sb.Append(",\n\t\t\"type\": \"generator\"");
-
-            var bundle = item_bundle.ToString();
-            if (!string.IsNullOrEmpty(bundle))
-                sb.Append(",\n\t\t\"bundle\": \"" + bundle + "\"");
-            {
-                Debug.LogWarning("The Bundle node is empty for generator '" + this.Name + "'; Valve deliberately omits this content when importing items from the Steam API. As such the bundle node is erased every time you import item definitions meaning you will need to manually update this field for every Item Generator every time you Copy the JSON data for upload to Steam.");
-            }
-
-            sb.Append(",\n" + item_name.ToString());
-
-            var promo = item_promo.ToString();
-            if (!string.IsNullOrEmpty(promo))
-                sb.Append(",\n\t\t\"promo\": \"" + promo + "\"");
-
-            if (!string.IsNullOrEmpty(item_drop_start_time))
-                sb.Append(",\n\t\t\"drop_start_time\": \"" + item_drop_start_time + "\"");
-
-            var exchange = item_exchange.ToString();
-            if (!string.IsNullOrEmpty(exchange))
-                sb.Append(",\n\t\t\"exchange\": \"" + exchange + "\"");
-
-            sb.Append(",\n\t\t\"granted_manually\": " + item_granted_manually.ToString().ToLower());
-
-            var extn = item_extendedSchema.ToString();
-            if (!string.IsNullOrEmpty(extn))
-                sb.Append(",\n\t\t" + extn);
-
-            sb.Append("\n\t}");
-
-            return sb.ToString();
-        }
-        private string PlaytimeGeneratorString()
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.Append("\t{");
-
-            sb.Append("\n\t\t\"itemdefid\": " + id.ToString());
-            sb.Append(",\n\t\t\"type\": \"playtimegenerator\"");
-
-            var bundle = item_bundle.ToString();
-            if (!string.IsNullOrEmpty(bundle))
-                sb.Append(",\n\t\t\"bundle\": \"" + bundle + "\"");
-
-            sb.Append(",\n" + item_name.ToString());
-
-            var promo = item_promo.ToString();
-            if (!string.IsNullOrEmpty(promo))
-                sb.Append(",\n\t\t\"promo\": \"" + promo + "\"");
-
-            if (!string.IsNullOrEmpty(item_drop_start_time))
-                sb.Append(",\n\t\t\"drop_start_time\": \"" + item_drop_start_time + "\"");
-
-            sb.Append(",\n\t\t\"use_drop_limit\": " + item_use_drop_limit.ToString().ToLower());
-            sb.Append(",\n\t\t\"drop_limit\": " + item_use_drop_limit.ToString().ToLower());
-            sb.Append(",\n\t\t\"drop_interval\": " + item_use_drop_limit.ToString().ToLower());
-            sb.Append(",\n\t\t\"use_drop_window\": " + item_use_drop_limit.ToString().ToLower());
-            sb.Append(",\n\t\t\"drop_max_per_window\": " + item_use_drop_limit.ToString().ToLower());
-
-            sb.Append(",\n\t\t\"granted_manually\": " + item_granted_manually.ToString().ToLower());
-
-            var extn = item_extendedSchema.ToString();
-            if (!string.IsNullOrEmpty(extn))
-                sb.Append(",\n\t\t" + extn);
-
-            sb.Append("\n\t}");
-
-            return sb.ToString();
-        }
-        private string TagGeneratorString()
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.Append("\t{");
-
-            sb.Append("\n\t\t\"itemdefid\": " + id.ToString());
-            sb.Append(",\n\t\t\"type\": \"tag_generator\"");
-
-            sb.Append(",\n" + item_name.ToString());
-
-            if (!string.IsNullOrEmpty(item_tag_generator_name))
-                sb.Append(",\n\t\t\"tag_generator_name\": \"" + item_tag_generator_name + "\"");
-
-            var values = item_tag_generator_values.ToString();
-            if (!string.IsNullOrEmpty(values))
-                sb.Append(",\n\t\t\"tag_generator_values\": \"" + values + "\"");
-
-            sb.Append(",\n\t\t\"granted_manually\": " + item_granted_manually.ToString().ToLower());
-
-            var extn = item_extendedSchema.ToString();
-            if (!string.IsNullOrEmpty(extn))
-                sb.Append(",\n\t\t" + extn);
-
-            sb.Append("\n\t}");
-
-            return sb.ToString();
-        }
     }
-
-//#if UNITY_EDITOR
-//    [UnityEditor.CustomEditor(typeof(ItemDefinitionSettings))]
-//    public class ItemDefinitionEditor : UnityEditor.Editor
-//    {
-//        private UnityEditor.SerializedProperty item_type;
-//        private UnityEditor.SerializedProperty item_name;
-//        private UnityEditor.SerializedProperty item_description;
-//        private UnityEditor.SerializedProperty item_display_type;
-//        private UnityEditor.SerializedProperty id;
-//        private UnityEditor.SerializedProperty item_bundle;
-//        private UnityEditor.SerializedProperty item_promo;
-//        private UnityEditor.SerializedProperty item_drop_start_time;
-//        private UnityEditor.SerializedProperty item_exchange;
-//        private UnityEditor.SerializedProperty item_price;
-//        private UnityEditor.SerializedProperty item_background_color;
-//        private UnityEditor.SerializedProperty item_name_color;
-//        private UnityEditor.SerializedProperty item_icon_url;
-//        private UnityEditor.SerializedProperty item_icon_url_large;
-//        private UnityEditor.SerializedProperty item_marketable;
-//        private UnityEditor.SerializedProperty item_tradable;
-//        private UnityEditor.SerializedProperty item_tags;
-//        private UnityEditor.SerializedProperty item_tag_generators;
-//        private UnityEditor.SerializedProperty item_tag_generator_name;
-//        private UnityEditor.SerializedProperty item_tag_generator_values;
-//        private UnityEditor.SerializedProperty item_store_tags;
-//        private UnityEditor.SerializedProperty item_store_images;
-//        private UnityEditor.SerializedProperty item_hidden;
-//        private UnityEditor.SerializedProperty item_store_hidden;
-//        private UnityEditor.SerializedProperty item_use_drop_limit;
-//        private UnityEditor.SerializedProperty item_drop_limit;
-//        private UnityEditor.SerializedProperty item_drop_interval;
-//        private UnityEditor.SerializedProperty item_use_drop_window;
-//        private UnityEditor.SerializedProperty item_drop_window;
-//        private UnityEditor.SerializedProperty item_drop_max_per_window;
-//        private UnityEditor.SerializedProperty item_granted_manually;
-//        private UnityEditor.SerializedProperty item_use_bundle_price;
-//        private UnityEditor.SerializedProperty item_auto_stack;
-//        private UnityEditor.SerializedProperty item_game_only;
-
-//        private UnityEditor.SerializedProperty item_accessory_tag;
-//        private UnityEditor.SerializedProperty item_accessory_limit;
-//        private UnityEditor.SerializedProperty item_allowed_tags_from_tools;
-//        private UnityEditor.SerializedProperty item_accessory_description;
-//        //[SerializeField]
-//        //internal string item_accessory_tag;
-//        //[SerializeField]
-//        //internal int item_accessory_limit;
-//        //[SerializeField]
-//        //internal string item_allowed_tags_from_tools;
-//        //[SerializeField]
-//        //internal LanguageVariantNode item_accessory_description = new LanguageVariantNode { node = "accessory_description" };
-
-//        private UnityEditor.SerializedProperty item_extendedSchema;
-
-//        private void OnEnable()
-//        {
-//            item_type = serializedObject.FindProperty("item_type");
-//            item_name = serializedObject.FindProperty("item_name");
-//            item_description = serializedObject.FindProperty("item_description");
-//            item_display_type = serializedObject.FindProperty("item_display_type");
-//            id = serializedObject.FindProperty("id");
-//            item_bundle = serializedObject.FindProperty("item_bundle");
-//            item_promo = serializedObject.FindProperty("item_promo");
-//            item_drop_start_time = serializedObject.FindProperty("item_drop_start_time");
-//            item_exchange = serializedObject.FindProperty("item_exchange");
-//            item_price = serializedObject.FindProperty("item_price");
-//            item_background_color = serializedObject.FindProperty("item_background_color");
-//            item_name_color = serializedObject.FindProperty("item_name_color");
-//            item_icon_url = serializedObject.FindProperty("item_icon_url");
-//            item_icon_url_large = serializedObject.FindProperty("item_icon_url_large");
-//            item_marketable = serializedObject.FindProperty("item_marketable");
-//            item_tradable = serializedObject.FindProperty("item_tradable");
-//            item_tags = serializedObject.FindProperty("item_tags");
-//            item_tag_generators = serializedObject.FindProperty("item_tag_generators");
-//            item_tag_generator_name = serializedObject.FindProperty("item_tag_generator_name");
-//            item_tag_generator_values = serializedObject.FindProperty("item_tag_generator_values");
-//            item_store_tags = serializedObject.FindProperty("item_store_tags");
-//            item_store_images = serializedObject.FindProperty("item_store_images");
-//            item_hidden = serializedObject.FindProperty("item_hidden");
-//            item_store_hidden = serializedObject.FindProperty("item_store_hidden");
-//            item_use_drop_limit = serializedObject.FindProperty("item_use_drop_limit");
-//            item_drop_limit = serializedObject.FindProperty("item_drop_limit");
-//            item_drop_interval = serializedObject.FindProperty("item_drop_interval");
-//            item_use_drop_window = serializedObject.FindProperty("item_use_drop_window");
-//            item_drop_window = serializedObject.FindProperty("item_drop_window");
-//            item_drop_max_per_window = serializedObject.FindProperty("item_drop_max_per_window");
-//            item_granted_manually = serializedObject.FindProperty("item_granted_manually");
-//            item_use_bundle_price = serializedObject.FindProperty("item_use_bundle_price");
-//            item_auto_stack = serializedObject.FindProperty("item_auto_stack");
-//            item_game_only = serializedObject.FindProperty("item_game_only");
-
-//            item_accessory_tag = serializedObject.FindProperty("item_accessory_tag");
-//            item_accessory_limit = serializedObject.FindProperty("item_accessory_limit");
-//            item_allowed_tags_from_tools = serializedObject.FindProperty("item_allowed_tags_from_tools");
-//            item_accessory_description = serializedObject.FindProperty("item_accessory_description");
-
-//            item_extendedSchema = serializedObject.FindProperty("item_extendedSchema");
-//        }
-
-//        //public override void OnInspectorGUI()
-//        //{
-//        //    var itemRef = target as ItemDefinitionSettings;
-
-//        //    UnityEditor.EditorGUILayout.BeginHorizontal();
-//        //    if (GUILayout.Button("Copy JSON", UnityEditor.EditorStyles.toolbarButton, GUILayout.Width(100)))
-//        //    {
-//        //        GUI.FocusControl(null);
-
-//        //        StringBuilder sb = new StringBuilder();
-//        //        sb.Append("{");
-//        //        sb.Append("\t\"appid\": " + SteamSettings.current?.applicationId.ToString());
-//        //        sb.Append(",\n\t\"items\": [");
-//        //        sb.Append("\n" + itemRef.ToJson());
-//        //        sb.Append("\n\t]\n}");
-
-//        //        var n = new TextEditor();
-//        //        n.text = sb.ToString();
-//        //        n.SelectAll();
-//        //        n.Copy();
-
-//        //        Debug.Log("Output copied to clipboard:\n\n" + sb.ToString());
-//        //    }
-//        //    if (GUILayout.Button("Copy Add Item (Web API URL)", UnityEditor.EditorStyles.toolbarButton, GUILayout.Width(200)))
-//        //    {
-//        //        GUI.FocusControl(null);
-//        //        StringBuilder sb = new StringBuilder();
-//        //        var thisObj = target as ItemDefinitionSettings;
-//        //        sb.Append($"https://partner.steam-api.com/IInventoryService/AddItem/v1/?key=<Go to steamcommunity.com/dev/apikey>&appid={SteamSettings.current?.applicationId}&itemdefid[0]={thisObj.Id}&steamid=<User id to give it to>");
-
-//        //        var n = new TextEditor();
-//        //        n.text = sb.ToString();
-//        //        n.SelectAll();
-//        //        n.Copy();
-
-//        //        Debug.Log($"Copied to clipboard:{sb}");
-//        //    }
-//        //    UnityEditor.EditorGUILayout.EndHorizontal();
-
-//        //    var objName = "[Inv] " + itemRef.Id.ToString() + " " + itemRef.item_name.GetSimpleValue();
-//        //    if (itemRef.name != objName)
-//        //    {
-//        //        itemRef.name = objName;
-//        //        UnityEditor.EditorUtility.SetDirty(itemRef);
-
-//        //        UnityEditor.AssetDatabase.ImportAsset(UnityEditor.AssetDatabase.GetAssetPath(itemRef));
-
-//        //        UnityEditor.EditorGUIUtility.PingObject(itemRef);
-                
-//        //    }
-
-//        //    UnityEditor.EditorGUILayout.LabelField("Required Settings", UnityEditor.EditorStyles.boldLabel);
-//        //    UnityEditor.EditorGUILayout.PropertyField(item_type, new GUIContent("Type", "The type item this should represent"), true);
-//        //    UnityEditor.EditorGUILayout.PropertyField(item_name, new GUIContent("Name", "The English name of your item. You can provide localized versions of the name as required"), true);
-//        //    UnityEditor.EditorGUILayout.PropertyField(id, new GUIContent("Id", "The ID of this itemdef. This must be lower than 1,000,000 for non-workshop items."), true);
-
-//        //    UnityEditor.EditorGUILayout.Space();
-//        //    UnityEditor.EditorGUILayout.LabelField("Configuration Settings", UnityEditor.EditorStyles.boldLabel);
-//        //    if (itemRef.item_type != InventoryItemType.tag_generator)
-//        //    {
-//        //        if (itemRef.item_type == InventoryItemType.bundle)
-//        //            UnityEditor.EditorGUILayout.PropertyField(item_bundle, new GUIContent("Bundle", "The items to include in the bundle"), true);
-//        //        else if (itemRef.item_type == InventoryItemType.generator || itemRef.item_type == InventoryItemType.playtimegenerator)
-//        //        {
-//        //            UnityEditor.EditorGUILayout.HelpBox("Valve deliberately omits this content when importing items from the Steam API. As such this will be erased every time you import item definitions meaning you will need to manually update this field for every Item Generator every time you Copy the JSON data for upload to Steam.", UnityEditor.MessageType.Warning, true);
-//        //            UnityEditor.EditorGUILayout.PropertyField(item_bundle, new GUIContent("Items", "The items to be generated"), true);
-//        //        }
-
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_description, new GUIContent("Description", "The English description of your item. You can provide localized versions of the description as required"), true);
-
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_display_type, new GUIContent("Display Type", "The English description of item's 'type'. You can provide localized versions of the type as required"), true);
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_background_color, new GUIContent("Background Color", "The color to display in the inventory background"), true);
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_name_color, new GUIContent("Name Color", "The color to display the name in the inventory"), true);
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_icon_url, new GUIContent("Icon URL", "The URL to the item's small icon. The URL should be publicly accessible because the Steam servers will download and cache. Recommended size is 200x200."), true);
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_icon_url_large, new GUIContent("Large Icon URL", "The URL to the item's large image. The URL should be publicly accessible because the Steam servers will download and cache. Recommended size is 2048x2048."), true);
-
-                
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_drop_start_time, new GUIContent("Drop Start Time", "UTC timestamp - prevent promo grants before this time, only applicable when promo = manual"), true);
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_exchange, new GUIContent("Exchange", "The recipes of materials that be exchanged for this item"), true);
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_tags, new GUIContent("Tags", "The tags assigned to the item"), true);
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_tag_generators, new GUIContent("Tag Generators", "Set of tag generators to apply to this item"), true);
-
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_marketable, new GUIContent("Marketable", "Whether this item can be sold to other users in the Steam Community Market."), true);
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_tradable, new GUIContent("Tradeable", "Whether this item can be traded to other users using Steam Trading."), true);
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_auto_stack, new GUIContent("Auto Stack?", "If true, item grants will automatically be added to a single stack of the given type. Grants will be visible in inventory callbacks as quantity changes."), true);
-
-//        //        if (itemRef.item_type == InventoryItemType.item)
-//        //        {
-//        //            UnityEditor.EditorGUILayout.PropertyField(item_game_only, new GUIContent("Game Only?", "If true, then items will not be shown in the user's Steam Backpack, including new item notifications. Common uses for this area items that you grant, that are immediately consumed."), true);
-//        //        }
-
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_hidden, new GUIContent("Hidden?", "If true, the item definition will not be shown to clients. Use this to hide unused, or under-development, itemdefs."), true);
-
-//        //        UnityEditor.EditorGUILayout.Space();
-//        //        UnityEditor.EditorGUILayout.LabelField("Promotion Features", UnityEditor.EditorStyles.boldLabel);
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_promo, new GUIContent("Promo", "Promotional items can be granted to players based on defined criteria"), true);
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_use_drop_limit, new GUIContent("Use Drop Limit?", "If true, then we rely on drop_limit to limit the items grant"), true);
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_drop_limit, new GUIContent("Drop Limit", "Limits for a specific user the number of times this item will be dropped"), true);
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_drop_interval, new GUIContent("Drop Interval", "Playtime in minutes before the item can be granted to the user."), true);
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_use_drop_window, new GUIContent("Use Drop Window?", "If true, we will use the 'drop_window' for this itemdef."), true);
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_drop_window, new GUIContent("Drop Window", "Elapsed time in minutes of a cool-down window before we will grant an item."), true);
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_drop_max_per_window, new GUIContent("Drop Max per-Window", "Numbers of grants within the window permitted before Cool-down applies. "), true);
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_granted_manually, new GUIContent("Granted Manually?", "If true, will only be granted when AddPromoItem() or AddPromoItems() are called with the explicit item definition id. Otherwise, it may be granted via the GrantPromoItems() call."), true);
-
-//        //        if (itemRef.item_type == InventoryItemType.item)
-//        //        {
-//        //            UnityEditor.EditorGUILayout.Space();
-//        //            UnityEditor.EditorGUILayout.LabelField("Accessory Settings", UnityEditor.EditorStyles.boldLabel);
-//        //            UnityEditor.EditorGUILayout.PropertyField(item_accessory_tag, new GUIContent("Tag", "To mark an item as being customizable, update the ItemDef with the property \"accessory_tag\" whose value is a per-item tag category token."), true);
-//        //            UnityEditor.EditorGUILayout.PropertyField(item_accessory_limit, new GUIContent("Limit", "You can limit the number of accessories on a single item with the property \"accessory_limit\""), true);
-//        //            UnityEditor.EditorGUILayout.PropertyField(item_allowed_tags_from_tools, new GUIContent("Allowed Tags from Tools", ""), true);
-//        //            UnityEditor.EditorGUILayout.PropertyField(item_accessory_description, new GUIContent("Accessory Description", ""), true);
-//        //        }
-
-//        //        if (itemRef.item_type == InventoryItemType.item || itemRef.item_type == InventoryItemType.bundle)
-//        //        {
-//        //            UnityEditor.EditorGUILayout.Space();
-//        //            UnityEditor.EditorGUILayout.LabelField("Store Settings", UnityEditor.EditorStyles.boldLabel);
-//        //            UnityEditor.EditorGUILayout.HelpBox("Price is only required for items you wish to sale.\nYou can use Price **or** Price Category but never both.", UnityEditor.MessageType.Warning, true);
-//        //            UnityEditor.EditorGUILayout.PropertyField(item_use_bundle_price, new GUIContent("Use Bundle Price?", "If true the automatic bundle pricing will be overridden with the provided price"), true);
-//        //            UnityEditor.EditorGUILayout.PropertyField(item_price, new GUIContent("Price", "Defines the price of the item"), true);
-//        //            UnityEditor.EditorGUILayout.PropertyField(item_store_tags, new GUIContent("Store Tags", "These tags will be used to categorize/filter items in the Steam item store for your app."), true);
-//        //            UnityEditor.EditorGUILayout.PropertyField(item_store_images, new GUIContent("Store Images", "These images will be proxied and used on the detail page of the Steam item store for your app."), true);
-//        //            UnityEditor.EditorGUILayout.PropertyField(item_store_hidden, new GUIContent("Store Hidden?", "If true, this item will be hidden in the Steam Item Store for your app. By default, any items with a price will be shown in the store."), true);
-//        //        }
-//        //        else if (itemRef.item_type == InventoryItemType.tag_tool)
-//        //        {
-//        //            UnityEditor.EditorGUILayout.PropertyField(item_store_tags, new GUIContent("Tags", "These tags will be used to categorize/filter items in the Steam item store for your app."), true);
-//        //        }
-//        //    }
-//        //    else if (itemRef.item_type == InventoryItemType.tag_generator)
-//        //    {
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_tag_generator_name, new GUIContent("Tag Generator Name", "The name of the tag category token"), true);
-//        //        UnityEditor.EditorGUILayout.PropertyField(item_tag_generator_values, new GUIContent("Tag Generator Values", "The values and the chance that they will be picked"), true);
-//        //    }
-
-//        //    serializedObject.ApplyModifiedProperties();
-//        //}
-//    }
-//#endif
 }
 #endif

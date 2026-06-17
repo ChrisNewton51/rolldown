@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using UnityEngine;
 using System.Collections.Generic;
 using System;
@@ -19,32 +19,32 @@ namespace Heathen.SteamworksIntegration.UI
             ForceUpdate
         }
 
-        [SettingsField(header = "Upload")]
+        [SettingsField(0,false,"Upload")]
         public Mode mode = Mode.KeepBest;
-        [SettingsField(header = "Upload")]
+        [SettingsField(0,false, "Upload")]
         public int score = 0;
-        [SettingsField(header = "Upload")]
+        [SettingsField(0,false, "Upload")]
         public List<int> details = new();
 
-        private SteamLeaderboardData m_Inspector;
-        private SteamLeaderboardDataEvents m_Events;
+        private SteamLeaderboardData _mInspector;
+        private SteamLeaderboardDataEvents _mEvents;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamLeaderboardData>();
-            m_Events = GetComponent<SteamLeaderboardDataEvents>();
+            _mInspector = GetComponent<SteamLeaderboardData>();
+            _mEvents = GetComponent<SteamLeaderboardDataEvents>();
         }
 
         public void Upload()
         {
-            if(m_Inspector.Data.IsValid)
+            if(_mInspector.Data.IsValid)
             {
-                if (m_Events == null)
+                if (_mEvents == null)
                 {
                     if (mode == Mode.KeepBest)
-                        m_Inspector.Data.UploadScoreKeepBest(score, details.ToArray());
+                        _mInspector.Data.UploadScoreKeepBest(score, details.ToArray());
                     else
-                        m_Inspector.Data.UploadScoreForceUpdate(score, details.ToArray());
+                        _mInspector.Data.UploadScoreForceUpdate(score, details.ToArray());
                 }
             }
         }
@@ -54,12 +54,12 @@ namespace Heathen.SteamworksIntegration.UI
             if (!typeof(T).IsSerializable)
                 throw new InvalidOperationException($"{typeof(T)} must be [Serializable]");
 
-            if (m_Inspector.Data.IsValid)
+            if (_mInspector.Data.IsValid)
             {
                 if (mode == Mode.KeepBest)
-                    m_Inspector.Data.UploadScoreKeepBest(score, details.ToArray());
+                    _mInspector.Data.UploadScoreKeepBest(score, details.ToArray());
                 else
-                    m_Inspector.Data.UploadScoreForceUpdate(score, details.ToArray());
+                    _mInspector.Data.UploadScoreForceUpdate(score, details.ToArray());
             }
         }
     }

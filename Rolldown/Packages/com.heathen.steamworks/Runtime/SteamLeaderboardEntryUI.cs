@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using UnityEngine;
 
 namespace Heathen.SteamworksIntegration
@@ -15,7 +15,7 @@ namespace Heathen.SteamworksIntegration
         /// </summary>
         public LeaderboardEntry Entry
         {
-            get => m_Entry;
+            get => _entry;
             set => SetEntry(value);
         }
 
@@ -24,24 +24,24 @@ namespace Heathen.SteamworksIntegration
         [SerializeField]
         private TMPro.TextMeshProUGUI rank;
 
-        private SteamUserData m_UserData;
-        private LeaderboardEntry m_Entry;
+        private SteamUserData _userData;
+        private LeaderboardEntry _entry;
 
         private void Awake()
         {
-            m_UserData = GetComponent<SteamUserData>();
+            _userData = GetComponent<SteamUserData>();
         }
 
         private void SetEntry(LeaderboardEntry entry)
         {
-            m_UserData.Data = entry.User;
+            _userData.Data = entry.User;
 
             if (score != null)
                 score.text = entry.Score.ToString();
             if (rank != null)
                 rank.text = entry.Rank.ToString();
 
-            m_Entry = entry;
+            _entry = entry;
         }
     }
 

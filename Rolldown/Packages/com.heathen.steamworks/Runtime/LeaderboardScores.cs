@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using System.Collections.Generic;
@@ -10,7 +10,7 @@ namespace Heathen.SteamworksIntegration
     {
         public bool bIOFailure;
         public bool playerIncluded;
-        public List<LeaderboardEntry> scoreData;
+        public List<LeaderboardEntry> ScoreData;
     }
 }
 #endif

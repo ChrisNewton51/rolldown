@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using System;
 
 namespace Heathen.SteamworksIntegration
@@ -11,7 +11,7 @@ namespace Heathen.SteamworksIntegration
     {
         public string name;
         public int score;
-        public TimeSpan timePlayed;
+        public TimeSpan TimePlayed;
     }
 }
 #endif

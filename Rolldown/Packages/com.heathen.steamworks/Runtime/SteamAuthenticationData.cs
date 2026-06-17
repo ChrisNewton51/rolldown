@@ -1,54 +1,85 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 #if UNITY_EDITOR
 using System.Linq;
 using UnityEditor;
 #endif
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Heathen.SteamworksIntegration
 {
+    /// <summary>
+    /// Holds and manages authentication data and events.
+    /// </summary>
     [AddComponentMenu("Steamworks/Authentication")]
     [HelpURL("https://kb.heathen.group/steam/features/authentication")]
     public class SteamAuthenticationData : MonoBehaviour
     {
+        /// <summary>
+        /// Defines the types of authentication events that can be managed.
+        /// </summary>
         public enum ManagedEvents
         {
+            /// <summary>
+            /// Occurs when the ticket data has changed.
+            /// </summary>
             Changed,
+            /// <summary>
+            /// Occurs when a ticket request has failed.
+            /// </summary>
             TicketRequestErred,
+            /// <summary>
+            /// Occurs when an RPC has been invoked.
+            /// </summary>
             RPCInvoked,
+            /// <summary>
+            /// Occurs when an invalid ticket is received.
+            /// </summary>
             InvalidTicketReceived,
+            /// <summary>
+            /// Occurs when an invalid session is requested.
+            /// </summary>
             InvalidSessionRequested,
+            /// <summary>
+            /// Occurs when a session has started.
+            /// </summary>
             SessionStarted,
         }
 
+        /// <summary>
+        /// Gets or sets the current authentication ticket.
+        /// </summary>
         public AuthenticationTicket Data
         {
-            get => m_Data; 
+            get => _mData; 
             set
             {
-                m_Data = value;
-                if(m_Events != null) 
-                    m_Events.onChange?.Invoke(m_Data);
+                _mData = value;
+                if(_mEvents != null) 
+                    _mEvents.onChange?.Invoke(_mData);
             }
         }
 
-        private AuthenticationTicket m_Data;
-        private SteamAuthenticationEvents m_Events;
-        [SerializeField]
-        private System.Collections.Generic.List<ManagedEvents> m_Delegates;
+        private AuthenticationTicket _mData;
+        private SteamAuthenticationEvents _mEvents;
+        [FormerlySerializedAs("m_Delegates")] [SerializeField]
+        private System.Collections.Generic.List<ManagedEvents> mDelegates;
 
         private void Awake()
         {
-            m_Events = GetComponent<SteamAuthenticationEvents>();
+            _mEvents = GetComponent<SteamAuthenticationEvents>();
         }
     }
 
 #if UNITY_EDITOR
+    /// <summary>
+    /// Custom editor for <see cref="SteamAuthenticationData"/>.
+    /// </summary>
     [CustomEditor(typeof(SteamAuthenticationData), true)]
     public class SteamAuthenticationDataEditor : Editor
     {
-        private SteamToolsSettings settings;
-        private static readonly string[] _settingsOptions =
+        private SteamToolsSettings _settings;
+        private static readonly string[] SettingsOptions =
         {
             "Sessions",
             "Get Ticket",
@@ -56,6 +87,7 @@ namespace Heathen.SteamworksIntegration
             "General Events"
         };
 
+        // ReSharper disable UnusedMember.Local
         [System.Flags]
         private enum SettingsMask
         {
@@ -65,14 +97,19 @@ namespace Heathen.SteamworksIntegration
             SendRpc = 1 << 2,
             GeneralEvents = 1 << 3
         }
+        // ReSharper restore UnusedMember.Local
 
         private SettingsMask _settingsMask = SettingsMask.None;
 
         private void OnEnable()
         {
-            settings = SteamToolsSettings.GetOrCreate();
+            _settings = SteamToolsSettings.GetOrCreate();
         }
 
+        // ReSharper disable Unity.PerformanceCriticalCodeInvocation
+        /// <summary>
+        /// Draws the inspector GUI.
+        /// </summary>
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
@@ -81,7 +118,9 @@ namespace Heathen.SteamworksIntegration
             if (EditorGUILayout.LinkButton("Settings"))
                 SettingsService.OpenProjectSettings("Project/Player/Steamworks");
             if (EditorGUILayout.LinkButton("Portal"))
-                Application.OpenURL("https://partner.steamgames.com/apps/landing/" + settings.Get(settings.ActiveApp.Value).applicationId.ToString());
+                if (_settings.ActiveApp != null)
+                    Application.OpenURL("https://partner.steamgames.com/apps/landing/" +
+                                        _settings.Get(_settings.ActiveApp.Value).applicationId.ToString());
             if (EditorGUILayout.LinkButton("Guide"))
                 Application.OpenURL("https://kb.heathen.group/steam/features/friends");
             if (EditorGUILayout.LinkButton("Support"))
@@ -89,6 +128,7 @@ namespace Heathen.SteamworksIntegration
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.Space();
 
+            
             DrawFunctionSettings();
             DrawFunctionEvents();
             serializedObject.ApplyModifiedProperties();
@@ -117,9 +157,8 @@ namespace Heathen.SteamworksIntegration
                 var field = so.targetObject.GetType().GetField(prop.name,
                     System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
                 if (field == null) continue;
-                var attr = System.Attribute.GetCustomAttribute(field, typeof(T)) as SettingsFieldAttribute;
-                if (attr != null)
-                    yield return (so.FindProperty(prop.name), attr.header);
+                if (System.Attribute.GetCustomAttribute(field, typeof(T)) is SettingsFieldAttribute attr)
+                    yield return (so.FindProperty(prop.name), attr.Header);
             }
         }
 
@@ -129,10 +168,10 @@ namespace Heathen.SteamworksIntegration
             var go = data.gameObject;
             // Refresh mask
             _settingsMask = SettingsMask.None;
-            for (int i = 0; i < _settingsOptions.Length; i++)
+            for (int i = 0; i < SettingsOptions.Length; i++)
             {
-                var type = GetTypeForFeature(_settingsOptions[i]);
-                if (type != null && go.GetComponent(type) != null)
+                var type = GetTypeForFeature(SettingsOptions[i]);
+                if (type != null && go.GetComponent(type))
                     _settingsMask |= (SettingsMask)(1 << i);
             }
 
@@ -140,12 +179,12 @@ namespace Heathen.SteamworksIntegration
             _settingsMask = (SettingsMask)EditorGUILayout.EnumFlagsField("Settings", _settingsMask);
             if (EditorGUI.EndChangeCheck())
             {
-                for (int i = 0; i < _settingsOptions.Length; i++)
+                for (int i = 0; i < SettingsOptions.Length; i++)
                 {
-                    var type = GetTypeForFeature(_settingsOptions[i]);
+                    var type = GetTypeForFeature(SettingsOptions[i]);
                     if (type == null) continue;
 
-                    bool hasComp = go.GetComponent(type) != null;
+                    bool hasComp = go.GetComponent(type);
                     bool shouldHave = (_settingsMask & (SettingsMask)(1 << i)) != 0;
 
                     if (shouldHave && !hasComp)
@@ -156,11 +195,11 @@ namespace Heathen.SteamworksIntegration
             }
             EditorGUI.indentLevel++;
             // Draw configuration for active settings
-            foreach (var featureName in _settingsOptions)
+            foreach (var featureName in SettingsOptions)
             {
                 var type = GetTypeForFeature(featureName);
                 var comp = go.GetComponent(type);
-                if (comp == null) continue;
+                if (!comp) continue;
 
                 var so = new SerializedObject(comp);
                 so.Update();
@@ -169,6 +208,7 @@ namespace Heathen.SteamworksIntegration
                 if (targetProperties.Count > 0)
                 {
                     EditorGUILayout.BeginVertical("box");
+                    // ReSharper disable once UnusedVariable
                     foreach (var (prop, header) in GetPropertiesWithAttribute<SettingsFieldAttribute>(so))
                         EditorGUILayout.PropertyField(prop, new GUIContent(ObjectNames.NicifyVariableName(prop.name)));
                     EditorGUILayout.EndVertical();
@@ -190,45 +230,44 @@ namespace Heathen.SteamworksIntegration
 
             var dataEvents = data.GetComponent<SteamAuthenticationEvents>();
 
-            if (dataEvents == null)
+            if (!dataEvents)
                 return;
 
-            if (dataEvents != null)
+            if (dataEvents)
                 dataEvents.hideFlags = HideFlags.HideInInspector;
 
-            SerializedObject soEvents = dataEvents ? new SerializedObject(dataEvents) : null;
+            var soEvents = dataEvents ? new SerializedObject(dataEvents) : null;
 
             EditorGUILayout.LabelField("Events", EditorStyles.boldLabel);
             EditorGUI.indentLevel++;
 
-            int removeIndex = -1;
-            Vector2 removeButtonSize = GUIStyle.none.CalcSize(EditorGUIUtility.IconContent("Toolbar Minus"));
+            var removeIndex = -1;
 
-            for (int i = 0; i < delegatesProp.arraySize; i++)
+            for (var i = 0; i < delegatesProp.arraySize; i++)
             {
                 var delegateProp = delegatesProp.GetArrayElementAtIndex(i);
                 var evt = (SteamAuthenticationData.ManagedEvents)delegateProp.enumValueIndex;
 
-                GUIContent label = new GUIContent(ObjectNames.NicifyVariableName(evt.ToString()));
-                SerializedProperty propToDraw = null;
+                var label = new GUIContent(ObjectNames.NicifyVariableName(evt.ToString()));
 
                 // --- Match enum to actual event SerializedProperty ---
-                switch (evt)
+                var propToDraw = evt switch
                 {
                     // === SteamLobbyDataEvents ===
-                    case SteamAuthenticationData.ManagedEvents.Changed:
-                        propToDraw = soEvents?.FindProperty(nameof(SteamAuthenticationEvents.onChange)); break;
-                    case SteamAuthenticationData.ManagedEvents.RPCInvoked:
-                        propToDraw = soEvents?.FindProperty(nameof(SteamAuthenticationEvents.onRpcInvoke)); break;
-                    case SteamAuthenticationData.ManagedEvents.TicketRequestErred:
-                        propToDraw = soEvents?.FindProperty(nameof(SteamAuthenticationEvents.onError)); break;
-                    case SteamAuthenticationData.ManagedEvents.InvalidTicketReceived:
-                        propToDraw = soEvents?.FindProperty(nameof(SteamAuthenticationEvents.onInvalidTicket)); break;
-                    case SteamAuthenticationData.ManagedEvents.InvalidSessionRequested:
-                        propToDraw = soEvents?.FindProperty(nameof(SteamAuthenticationEvents.onInvalidSession)); break;
-                    case SteamAuthenticationData.ManagedEvents.SessionStarted:
-                        propToDraw = soEvents?.FindProperty(nameof(SteamAuthenticationEvents.onSessionStart)); break;
-                }
+                    SteamAuthenticationData.ManagedEvents.Changed => soEvents?.FindProperty(
+                        nameof(SteamAuthenticationEvents.onChange)),
+                    SteamAuthenticationData.ManagedEvents.RPCInvoked => soEvents?.FindProperty(
+                        nameof(SteamAuthenticationEvents.onRpcInvoke)),
+                    SteamAuthenticationData.ManagedEvents.TicketRequestErred => soEvents?.FindProperty(
+                        nameof(SteamAuthenticationEvents.onError)),
+                    SteamAuthenticationData.ManagedEvents.InvalidTicketReceived => soEvents?.FindProperty(
+                        nameof(SteamAuthenticationEvents.onInvalidTicket)),
+                    SteamAuthenticationData.ManagedEvents.InvalidSessionRequested => soEvents?.FindProperty(
+                        nameof(SteamAuthenticationEvents.onInvalidSession)),
+                    SteamAuthenticationData.ManagedEvents.SessionStarted => soEvents?.FindProperty(
+                        nameof(SteamAuthenticationEvents.onSessionStart)),
+                    _ => null
+                };
 
                 if (propToDraw != null)
                 {
@@ -253,18 +292,17 @@ namespace Heathen.SteamworksIntegration
             // === Add New Event Menu ===
             if (GUILayout.Button("Add New Event Type"))
             {
-                GenericMenu menu = new GenericMenu();
+                var menu = new GenericMenu();
 
                 foreach (SteamAuthenticationData.ManagedEvents evt in System.Enum.GetValues(typeof(SteamAuthenticationData.ManagedEvents)))
                 {
-                    bool alreadyAdded = false;
-                    for (int i = 0; i < delegatesProp.arraySize; i++)
+                    var alreadyAdded = false;
+                    for (var i = 0; i < delegatesProp.arraySize; i++)
                     {
-                        if ((SteamAuthenticationData.ManagedEvents)delegatesProp.GetArrayElementAtIndex(i).enumValueIndex == evt)
-                        {
-                            alreadyAdded = true;
-                            break;
-                        }
+                        if ((SteamAuthenticationData.ManagedEvents)delegatesProp.GetArrayElementAtIndex(i)
+                                .enumValueIndex != evt) continue;
+                        alreadyAdded = true;
+                        break;
                     }
 
                     if (alreadyAdded)

@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -6,6 +6,7 @@ using UnityEngine;
 using Steamworks;
 using System;
 using System.Collections.Generic;
+using UnityEngine.Serialization;
 
 namespace Heathen.SteamworksIntegration
 {
@@ -15,24 +16,24 @@ namespace Heathen.SteamworksIntegration
     {
         public WorkshopItemDetails Data
         {
-            get => m_Data;
+            get => _mData;
             set
             {
-                m_Data = value;
-                if(m_Events != null)
-                    m_Events.onChange?.Invoke();
+                _mData = value;
+                if(_mEvents != null)
+                    _mEvents.onChange?.Invoke();
             }
         }
 
-        private WorkshopItemDetails m_Data;
-        private SteamWorkshopItemDetailDataEvents m_Events;
+        private WorkshopItemDetails _mData;
+        private SteamWorkshopItemDetailDataEvents _mEvents;
 
-        [SerializeField]
-        private List<string> m_Delegates = new();
+        [FormerlySerializedAs("m_Delegates")] [SerializeField]
+        private List<string> mDelegates = new();
 
         private void Awake()
         {
-            m_Events = GetComponent<SteamWorkshopItemDetailDataEvents>();
+            _mEvents = GetComponent<SteamWorkshopItemDetailDataEvents>();
         }
 
         public void Get(PublishedFileId_t fileId)
@@ -42,86 +43,86 @@ namespace Heathen.SteamworksIntegration
 
         public void LoadPreview()
         {
-            if(m_Events != null
-                && m_Data != null
-                && m_Data.SourceItemDetails.m_nPreviewFileSize > 0)
+            if(_mEvents != null
+                && _mData != null
+                && _mData.SourceItemDetails.m_nPreviewFileSize > 0)
             {
-                m_Data.GetPreviewImage((name, data) =>
+                _mData.GetPreviewImage((name, data) =>
                 {
-                    m_Events.onPreviewImageLoaded?.Invoke(data);
+                    _mEvents.onPreviewImageLoaded?.Invoke(data);
                 });
             }
         }
 
         public void Subscribe()
         {
-            if (m_Data != null)
+            if (_mData != null)
             {
-                m_Data.Subscribe(HandleSubscribed);
+                _mData.Subscribe(HandleSubscribed);
             }
         }
 
         public void Unsubscribe()
         {
-            if (m_Data != null)
+            if (_mData != null)
             {
-                m_Data.Unsubscribe(HandleUnsubscribe);
+                _mData.Unsubscribe(HandleUnsubscribe);
             }
         }
 
         public void DownloadItem()
         {
-            if (m_Data != null)
+            if (_mData != null)
             {
-                m_Data.DownloadItem(false);
+                _mData.DownloadItem(false);
             }
         }
 
         public void DownloadItemHighPriority()
         {
-            if (m_Data != null)
+            if (_mData != null)
             {
-                m_Data.DownloadItem(true);
+                _mData.DownloadItem(true);
             }
         }
 
         public void Delete()
         {
-            if (m_Data != null)
+            if (_mData != null)
             {
-                m_Data.DeleteItem(HandleItemDelete);
+                _mData.DeleteItem(HandleItemDelete);
             }
         }
 
         public void UpVote()
         {
-            if (m_Data != null)
+            if (_mData != null)
             {
-                m_Data.SetVote(true, HandleVoteSet);
+                _mData.SetVote(true, HandleVoteSet);
             }
         }
 
         public void DownVote()
         {
-            if (m_Data != null)
+            if (_mData != null)
             {
-                m_Data.SetVote(false, HandleVoteSet);
+                _mData.SetVote(false, HandleVoteSet);
             }
         }
 
         public void StartPlaytime()
         {
-            if (m_Data != null)
+            if (_mData != null)
             {
-                m_Data.StartPlayTime(HandleStartPlaytime);
+                _mData.StartPlayTime(HandleStartPlaytime);
             }
         }
 
         public void StopPlaytime()
         {
-            if (m_Data != null)
+            if (_mData != null)
             {
-                m_Data.StartPlayTime(HandleEndPlaytime);
+                _mData.StartPlayTime(HandleEndPlaytime);
             }
         }
 
@@ -132,67 +133,67 @@ namespace Heathen.SteamworksIntegration
 
         private void HandleStartPlaytime(StartPlaytimeTrackingResult_t t, bool arg2)
         {
-            if (m_Events != null)
+            if (_mEvents != null)
             {
                 if (arg2 || t.m_eResult != EResult.k_EResultOK)
-                    m_Events.onPlayStartedFailed?.Invoke(t.m_eResult);
+                    _mEvents.onPlayStartedFailed?.Invoke(t.m_eResult);
                 else
-                    m_Events.onPlayStarted?.Invoke(m_Data.FileId);
+                    _mEvents.onPlayStarted?.Invoke(_mData.FileId);
             }
         }
 
         private void HandleEndPlaytime(StartPlaytimeTrackingResult_t t, bool arg2)
         {
-            if (m_Events != null)
+            if (_mEvents != null)
             {
                 if (arg2 || t.m_eResult != EResult.k_EResultOK)
-                    m_Events.onPlayEndedFailed?.Invoke(t.m_eResult);
+                    _mEvents.onPlayEndedFailed?.Invoke(t.m_eResult);
                 else
-                    m_Events.onPlayEnded?.Invoke(m_Data.FileId);
+                    _mEvents.onPlayEnded?.Invoke(_mData.FileId);
             }
         }
 
         private void HandleVoteSet(SetUserItemVoteResult_t t, bool arg2)
         {
-            if (m_Events != null)
+            if (_mEvents != null)
             {
                 if (arg2 || t.m_eResult != EResult.k_EResultOK)
-                    m_Events.onVoteSetFailed?.Invoke(t.m_eResult);
+                    _mEvents.onVoteSetFailed?.Invoke(t.m_eResult);
                 else
-                    m_Events.onVoteSet?.Invoke(t.m_nPublishedFileId);
+                    _mEvents.onVoteSet?.Invoke(t.m_nPublishedFileId);
             }
         }
 
         private void HandleItemDelete(DeleteItemResult_t t, bool arg2)
         {
-            if (m_Events != null)
+            if (_mEvents != null)
             {
                 if (arg2 || t.m_eResult != EResult.k_EResultOK)
-                    m_Events.onDeleteFailed?.Invoke(t.m_eResult);
+                    _mEvents.onDeleteFailed?.Invoke(t.m_eResult);
                 else
-                    m_Events.onDelete?.Invoke(t.m_nPublishedFileId);
+                    _mEvents.onDelete?.Invoke(t.m_nPublishedFileId);
             }
         }
 
         private void HandleUnsubscribe(RemoteStorageUnsubscribePublishedFileResult_t t, bool arg2)
         {
-            if (m_Events != null)
+            if (_mEvents != null)
             {
                 if (arg2 || t.m_eResult != EResult.k_EResultOK)
-                    m_Events.onUnsubscribeFailed?.Invoke(t.m_eResult);
+                    _mEvents.onUnsubscribeFailed?.Invoke(t.m_eResult);
                 else
-                    m_Events.onUnsubscribed?.Invoke(t.m_nPublishedFileId);
+                    _mEvents.onUnsubscribed?.Invoke(t.m_nPublishedFileId);
             }
         }
 
         private void HandleSubscribed(RemoteStorageSubscribePublishedFileResult_t t, bool arg2)
         {
-            if (m_Events != null)
+            if (_mEvents != null)
             {
                 if (arg2 || t.m_eResult != EResult.k_EResultOK)
-                    m_Events.onSubscribeFailed?.Invoke(t.m_eResult);
+                    _mEvents.onSubscribeFailed?.Invoke(t.m_eResult);
                 else
-                    m_Events.onSubscribed?.Invoke(t.m_nPublishedFileId);
+                    _mEvents.onSubscribed?.Invoke(t.m_nPublishedFileId);
             }
         }
     }
@@ -201,13 +202,17 @@ namespace Heathen.SteamworksIntegration
     [CustomEditor(typeof(SteamWorkshopItemDetailData), true)]
     public class SteamWorkshopItemDetailDataEditor : ModularEditor
     {
-        private SteamToolsSettings settings;
+        private SteamToolsSettings _settings;
 
         // --- Allowed types for this editor ---
         protected override Type[] AllowedTypes => new Type[]
         {
             typeof(SteamWorkshopItemDetailTitle),
             typeof(SteamWorkshopItemDetailDescription),
+            // Preview Image isn't advisable because Unity cant handle the range of 
+            // preview images Steam supports
+            // Instead we provide WorkshopItemDetail.GetPreviewImage the dev needs to use a 3rd party image loader
+            // to handle gif, bmp, etc.
             typeof(SteamWorkshopItemDetailRatingFill),
             typeof(SteamWorkshopItemDetailUpVoteLabel),
             typeof(SteamWorkshopItemDetailDownVoteLabel),
@@ -220,7 +225,7 @@ namespace Heathen.SteamworksIntegration
 
         private void OnEnable()
         {
-            settings = SteamToolsSettings.GetOrCreate();
+            _settings = SteamToolsSettings.GetOrCreate();
         }
 
         public override void OnInspectorGUI()
@@ -229,7 +234,7 @@ namespace Heathen.SteamworksIntegration
 
             DrawDefault(
                 "Project/Player/Steamworks"
-                , $"https://partner.steamgames.com/apps/landing/{settings.Get(settings.ActiveApp.Value).applicationId}"
+                , $"https://partner.steamgames.com/apps/landing/{_settings.Get(_settings.ActiveApp.Value).applicationId}"
                 , "https://kb.heathen.group/steam/features/workshop"
                 , "https://discord.gg/heathen-group-463483739612381204"
                 , null);

@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using UnityEngine;
 
 namespace Heathen.SteamworksIntegration
@@ -11,24 +11,21 @@ namespace Heathen.SteamworksIntegration
     [RequireComponent(typeof(SteamInputActionData))]
     public class SteamInputActionName : MonoBehaviour
     {
+        /// <summary>
+        /// The label used to display the name of the action
+        /// </summary>
         public TMPro.TextMeshProUGUI label;
 
-        private SteamInputActionData m_Inspector;
+        private SteamInputActionData _mInspector;
 
         private void Start()
         {
-            m_Inspector = GetComponent<SteamInputActionData>();
-
-            if (!API.App.Initialized)
-                API.App.onSteamInitialized.AddListener(HandleInitialization);
-            else
-                HandleInitialization();
+            _mInspector = GetComponent<SteamInputActionData>();
+            SteamTools.Interface.WhenReady(HandleInitialization);
         }
 
         private void HandleInitialization()
         {
-            API.App.onSteamInitialized.RemoveListener(HandleInitialization);
-
             RefreshName();
         }
 
@@ -37,26 +34,29 @@ namespace Heathen.SteamworksIntegration
             RefreshName();
         }
 
+        /// <summary>
+        /// Refreshes the display name of the action based on the current controller and action state.
+        /// </summary>
         public void RefreshName()
         {
-            if (m_Inspector != null && !string.IsNullOrEmpty(m_Inspector.Action.Name) && label != null)
+            if (_mInspector != null && !string.IsNullOrEmpty(_mInspector.Action.Name) && label != null)
             {
-                if (m_Inspector.Set.Handle > 0)
+                if (_mInspector.Set.Handle > 0)
                 {
-                    if (API.Input.Client.connectedControllers.Count > 0)
+                    if (API.Input.Client.ConnectedControllers.Count > 0)
                     {
-                        var names = m_Inspector.Action.GetInputNames(API.Input.Client.connectedControllers[0], m_Inspector.Set);
+                        var names = _mInspector.Action.GetInputNames(API.Input.Client.ConnectedControllers[0], _mInspector.Set);
                         if (names.Length > 0)
                         {
                             label.text = names[0];
                         }
                     }
                 }
-                else if (!string.IsNullOrEmpty(m_Inspector.Layer.layerName))
+                else if (!string.IsNullOrEmpty(_mInspector.Layer.LayerName))
                 {
-                    if (API.Input.Client.connectedControllers.Count > 0)
+                    if (API.Input.Client.ConnectedControllers.Count > 0)
                     {
-                        var names = m_Inspector.Action.GetInputNames(API.Input.Client.connectedControllers[0], m_Inspector.Layer);
+                        var names = _mInspector.Action.GetInputNames(API.Input.Client.ConnectedControllers[0], _mInspector.Layer);
                         if (names.Length > 0)
                         {
                             label.text = names[0];

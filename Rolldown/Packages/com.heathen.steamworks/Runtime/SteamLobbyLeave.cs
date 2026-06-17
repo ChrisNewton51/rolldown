@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using UnityEngine;
 
@@ -9,19 +9,19 @@ namespace Heathen.SteamworksIntegration
     [RequireComponent(typeof(SteamLobbyData))]
     public class SteamLobbyLeave : MonoBehaviour
     {
-        private SteamLobbyData m_Inspector;
+        private SteamLobbyData _mInspector;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamLobbyData>();
+            _mInspector = GetComponent<SteamLobbyData>();
         }
 
         public void Leave()
         {
-            if (m_Inspector.Data.IsValid)
+            if (_mInspector.Data.IsValid)
             {
-                m_Inspector.Data.Leave();
-                m_Inspector.Data = CSteamID.Nil;
+                _mInspector.Data.Leave();
+                _mInspector.Data = CSteamID.Nil;
             }
         }
     }

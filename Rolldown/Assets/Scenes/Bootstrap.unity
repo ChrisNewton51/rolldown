@@ -304,27 +304,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26b716c41e9b56b4baafaf13a523ba2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <IsNested>k__BackingField: 0
-  WasActiveDuringEdit: 1
-  WasActiveDuringEdit_Set1: 1
-  <ComponentIndex>k__BackingField: 0
-  <PredictedSpawn>k__BackingField: {fileID: 0}
-  <PredictedOwner>k__BackingField: {fileID: 0}
-  NetworkBehaviours: []
-  InitializedParentNetworkBehaviour: {fileID: 0}
-  InitializedNestedNetworkObjects: []
-  RuntimeParentNetworkBehaviour: {fileID: 0}
-  RuntimeChildNetworkBehaviours: []
-  _isNetworked: 1
-  _isSpawnable: 1
-  _isGlobal: 0
-  _initializeOrder: 0
-  _preventDespawnOnDisconnect: 0
-  _defaultDespawnType: 0
-  _initializedTimestamp: 0
+  _localLevelOfDetailCalculationType: 0
+  _useLevelOfDetail: 0
+  _useRootLevelOfDetail: 1
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
+  _localReconcileCorrectionType: 2
   _graphicalObject: {fileID: 0}
   _detachGraphicalObject: 0
   _enableStateForwarding: 1
@@ -345,6 +331,24 @@ MonoBehaviour:
     Rotation: {x: 0, y: 0, z: 0, w: 1}
     Scale: {x: 0, y: 0, z: 0}
     IsValid: 0
+  <IsNested>k__BackingField: 0
+  WasActiveDuringEdit: 1
+  WasActiveDuringEdit_Set1: 1
+  <ComponentIndex>k__BackingField: 0
+  <PredictedSpawn>k__BackingField: {fileID: 0}
+  <PredictedOwner>k__BackingField: {fileID: 0}
+  NetworkBehaviours: []
+  InitializedParentNetworkBehaviour: {fileID: 0}
+  InitializedNestedNetworkObjects: []
+  RuntimeParentNetworkBehaviour: {fileID: 0}
+  RuntimeChildNetworkBehaviours: []
+  _isNetworked: 1
+  _isSpawnable: 1
+  _isGlobal: 0
+  _initializeOrder: 0
+  _preventDespawnOnDisconnect: 0
+  _defaultDespawnType: 0
+  _initializedTimestamp: 0
 --- !u!114 &903868869
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -407,8 +411,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d8bec688d1a48f4486cb4197b1f651b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lobbyManager: {fileID: 0}
   menuName: MainMenu
+  bootstrapNetworkManager: {fileID: 903868869}
+  lobbyMaxSlots: 4
+  lobbyType: 1
 --- !u!114 &1169188513
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -433,6 +439,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d331f979d46e8e4a9fc90070c596d44, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _useLevelOfDetail: 0
+  _maximumLevelOfDetailInterval: 2
+  _levelOfDetailUpdateDuration: 1
+  _levelOfDetailDistances: []
   _updateHostVisibility: 1
   _maximumTimedObserversDuration: 10
   _defaultConditions:
@@ -600,7 +610,6 @@ GameObject:
   - component: {fileID: 6406726008088544480}
   - component: {fileID: 4784849132868737574}
   - component: {fileID: 7206590778558908863}
-  - component: {fileID: 7206590778558908864}
   m_Layer: 0
   m_Name: LobbyManager
   m_TagString: Untagged
@@ -965,140 +974,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc8b75e6337cfa54e98ce1e43bcea88c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lobbyManager: {fileID: 7206590778558908864}
-  bootstrapNetworkManager: {fileID: 903868869}
---- !u!114 &7206590778558908864
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4104052368523602415}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 18447b16fab2424499532c23559e1e37, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Delegates: 030000000a0000000600000007000000
-  searchArguments:
-    slots: -1
-    distance: 1
-    nearValues: []
-    numericFilters: []
-    stringFilters: []
-  createArguments:
-    usageHint: 1
-    name: 
-    slots: 4
-    type: 1
-    metadata: []
-    richPresenceFields: []
-  richPresenceFields: []
-  evtLobbyInvite:
-    m_PersistentCalls:
-      m_Calls: []
-  evtChatMsgReceived:
-    m_PersistentCalls:
-      m_Calls: []
-  evtFound:
-    m_PersistentCalls:
-      m_Calls: []
-  evtEnterSuccess:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 7206590778558908863}
-        m_TargetAssemblyTypeName: SteamLobby, Assembly-CSharp
-        m_MethodName: OnLobbyJoined
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  evtEnterFailed:
-    m_PersistentCalls:
-      m_Calls: []
-  evtCreated:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 7206590778558908863}
-        m_TargetAssemblyTypeName: SteamLobby, Assembly-CSharp
-        m_MethodName: OnLobbyCreated
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  evtCreateFailed:
-    m_PersistentCalls:
-      m_Calls: []
-  evtQuickMatchFailed:
-    m_PersistentCalls:
-      m_Calls: []
-  evtDataUpdated:
-    m_PersistentCalls:
-      m_Calls: []
-  evtLeave:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 7206590778558908863}
-        m_TargetAssemblyTypeName: SteamLobby, Assembly-CSharp
-        m_MethodName: LobbyLeave
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  evtAskedToLeave:
-    m_PersistentCalls:
-      m_Calls: []
-  evtGameCreated:
-    m_PersistentCalls:
-      m_Calls: []
-  evtUserJoined:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 7206590778558908863}
-        m_TargetAssemblyTypeName: SteamLobby, Assembly-CSharp
-        m_MethodName: OtherUserJoin
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  evtUserLeft:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 11500000, guid: dc8b75e6337cfa54e98ce1e43bcea88c, type: 3}
-        m_TargetAssemblyTypeName: 
-        m_MethodName: 
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  evtAuthenticationSessionResult:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!114 &7443408887301174052
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1111,13 +986,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d2c95dfde7d73b54dbbdc23155d35d36, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _logging: {fileID: 0}
+  _spawnablePrefabs: {fileID: 11400000, guid: b7d0029ca8fd1304188ff5a8630853ba, type: 2}
   _refreshDefaultPrefabs: 0
   _runInBackground: 1
   _dontDestroyOnLoad: 1
   _objectPool: {fileID: 0}
   _persistence: 0
-  _logging: {fileID: 0}
-  _spawnablePrefabs: {fileID: 11400000, guid: b7d0029ca8fd1304188ff5a8630853ba, type: 2}
 --- !u!1 &7443408887301174053
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,73 +1,88 @@
-﻿#if !DISABLESTEAMWORKS && (STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS && (STEAM_161 || STEAM_162 || STEAM_163)
 using Steamworks;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
 
 namespace Heathen.SteamworksIntegration.API
 {
+    /// <summary>
+    /// Provides a static set of methods and properties to manage and interact with the Steam Timeline API.
+    /// The Timeline class serves as an integration point for creating, updating, and managing timeline events and game phases
+    /// within the Steamworks framework.
+    /// </summary>
     public static class Timeline
     {
         /// <summary>
-        /// See the SteamTimeline native documentation for more help
-        /// In particular the diagram is useful to sort out where and what each element is
-        /// https://partner.steamgames.com/doc/api/ISteamTimeline#functions:~:text=game%20is%20restarted.-,Diagrams,-Steamworks%20is%20the
+        /// Provides a set of static methods and properties to create, manage, and interact with timeline events and game phases
+        /// through the Steamworks Timeline API. The Client class enables operations such as adding and updating timeline events,
+        /// managing game phases, and integrating with the Steam overlay for timeline and game phase visualisation.
         /// </summary>
         public static class Client
         {
             [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
             static void RunTimeInit()
             {
-                timelineEvents.Clear();
-                m_TimelineEventDataArguments.Clear();
-                m_SteamTimelineEventRecordingExists_t = null;
-                m_SteamTimelineGamePhaseRecordingExists_t = null;
+                TimelineEvents.Clear();
+                MTimelineEventDataArguments.Clear();
+                _mSteamTimelineEventRecordingExistsT = null;
+                _mSteamTimelineGamePhaseRecordingExistsT = null;
             }
 
-            public static List<TimelineEventData> timelineEvents = new();
+            /// <summary>
+            /// A static readonly list that holds all timeline events currently registered within the system.
+            /// Each element represents an event stored as <see cref="TimelineEventData"/>
+            /// and provides details such as the event's title, description, icon, priority, start time, and duration.
+            /// </summary>
+            public static readonly List<TimelineEventData> TimelineEvents = new();
 
-            private static readonly Dictionary<ulong, TimelineEventDataArguments> m_TimelineEventDataArguments = new();
+            private static readonly Dictionary<ulong, TimelineEventDataArguments> MTimelineEventDataArguments = new();
 
-            private static CallResult<SteamTimelineEventRecordingExists_t> m_SteamTimelineEventRecordingExists_t = null;
-            private static CallResult<SteamTimelineGamePhaseRecordingExists_t> m_SteamTimelineGamePhaseRecordingExists_t = null;
+            private static CallResult<SteamTimelineEventRecordingExists_t> _mSteamTimelineEventRecordingExistsT;
+            private static CallResult<SteamTimelineGamePhaseRecordingExists_t> _mSteamTimelineGamePhaseRecordingExistsT;
 
+            /// <summary>
+            /// Retrieves the arguments associated with the specified timeline event.
+            /// </summary>
+            /// <param name="timelineEvent">The timeline event for which arguments need to be retrieved.</param>
+            /// <returns>The arguments associated with the specified timeline event, or null if no arguments are available.</returns>
             public static TimelineEventDataArguments GetArguments(TimelineEventData timelineEvent)
             {
-                if (m_TimelineEventDataArguments.TryGetValue(timelineEvent, out var args))
-                    return args;
-                else
-                    return default;
+                return MTimelineEventDataArguments.GetValueOrDefault(timelineEvent);
             }
-            /// <summary>
-            /// Sets a description (B) for the current game state in the timeline. These help the user to find specific moments in the timeline when saving clips. Setting a new state description replaces any previous description.
-            /// </summary>
-            /// <param name="description"></param>
-            /// <param name="timeDelta">The time offset in seconds to apply to this state change. Negative times indicate an event that happened in the past.</param>
-            public static void SetTimelineTooltip(string description, float timeDelta) => SteamTimeline.SetTimelineTooltip(description, timeDelta);
 
             /// <summary>
-            /// Clears the previous set game state in the timeline.
+            /// Sets a tooltip description for the timeline, providing context or additional information about the current game state.
+            /// This helps users reference specific moments in a timeline when reviewing or saving clips.
             /// </summary>
-            /// <param name="timeDelta">The time offset in seconds to apply to this state change. Negative times indicate an event that happened in the past.</param>
+            /// <param name="description">The textual description to be displayed as a tooltip for the timeline event.</param>
+            /// <param name="timeDelta">The time offset, in seconds, to associate with this state. Negative values indicate a past event relative to the current time.</param>
+            public static void SetTimelineTooltip(string description, float timeDelta) =>
+                SteamTimeline.SetTimelineTooltip(description, timeDelta);
+
+            /// <summary>
+            /// Clears the tooltip information previously set in the timeline.
+            /// </summary>
+            /// <param name="timeDelta">The time offset in seconds to associate with the tooltip clearance. Negative values represent past events relative to the current timeline state.</param>
             public static void ClearTimelineTooltip(float timeDelta) => SteamTimeline.ClearTimelineTooltip(timeDelta);
 
             /// <summary>
-            /// Use this to mark an event (A) on the Timeline. This event will be instantaneous. (See AddRangeTimelineEvent to add events that happened over time.)
+            /// Adds an instantaneous timeline event with the specified details.
             /// </summary>
-            /// <param name="title"></param>
-            /// <param name="description"></param>
-            /// <param name="icon">The name of the icon to show at the timeline at this point. This can be one of the icons uploaded through the Steamworks partner Site for your title, or one of the provided icons that start with steam_. The Steam Timelines overview includes a list of available icons.</param>
-            /// <param name="priority">Provide the priority to use when the UI is deciding which icons to display in crowded parts of the timeline. Events with larger priority values will be displayed more prominently than events with smaller priority values. This value must be between 0 and k_unMaxTimelinePriority.</param>
-            /// <param name="startOffsetSeconds">The time offset in seconds to apply to the start of the event. Negative times indicate an event that happened in the past.
-            /// <para>One use of this parameter is to handle events whose significance is not clear until after the fact. For instance if the player starts a damage over time effect on another player, which kills them 3.5 seconds later, the game could pass -3.5 as the start offset and cause the event to appear in the timeline where the effect started.</para></param>
-            /// <param name="possibleClip">Allows the game to describe events that should be suggested to the user as possible video clips.</param>
-            /// <returns></returns>
-            public static TimelineEventData AddInstantaneousTimelineEvent(string title, string description, string icon, uint priority, float startOffsetSeconds, ETimelineEventClipPriority possibleClip)
+            /// <param name="title">The title of the timeline event.</param>
+            /// <param name="description">A brief description of the timeline event.</param>
+            /// <param name="icon">The icon representing the timeline event.</param>
+            /// <param name="priority">The priority level of the timeline event.</param>
+            /// <param name="startOffsetSeconds">The offset in seconds before the event starts relative to the current time.</param>
+            /// <param name="possibleClip">The clip priority indicating possible overlap handling for this timeline event.</param>
+            /// <returns>A <see cref="TimelineEventData"/> object representing the added timeline event.</returns>
+            public static TimelineEventData AddInstantaneousTimelineEvent(string title, string description, string icon,
+                uint priority, float startOffsetSeconds, ETimelineEventClipPriority possibleClip)
             {
-                var handle = SteamTimeline.AddInstantaneousTimelineEvent(title, description, icon, priority, startOffsetSeconds, possibleClip);
-                timelineEvents.Add(handle);
-                m_TimelineEventDataArguments.TryAdd(handle.m_TimelineEventHandle, new()
+                var handle = SteamTimeline.AddInstantaneousTimelineEvent(title, description, icon, priority,
+                    startOffsetSeconds, possibleClip);
+                TimelineEvents.Add(handle);
+                MTimelineEventDataArguments.TryAdd(handle.m_TimelineEventHandle, new()
                 {
                     title = title,
                     description = description,
@@ -81,22 +96,23 @@ namespace Heathen.SteamworksIntegration.API
             }
 
             /// <summary>
-            /// Use this to mark an event (A) on the Timeline that takes some amount of time to complete.
+            /// Adds a new timeline event with the specified parameters to the Steam timeline.
             /// </summary>
-            /// <param name="title"></param>
-            /// <param name="description"></param>
-            /// <param name="icon">The name of the icon to show at the timeline at this point. This can be one of the icons uploaded through the Steamworks partner Site for your title, or one of the provided icons that start with steam_. The Steam Timelines overview includes a list of available icons.</param>
-            /// <param name="priority">Provide the priority to use when the UI is deciding which icons to display in crowded parts of the timeline. Events with larger priority values will be displayed more prominently than events with smaller priority values. This value must be between 0 and k_unMaxTimelinePriority.</param>
-            /// <param name="startOffsetSeconds">The time offset in seconds to apply to the start of the event. Negative times indicate an event that happened in the past.
-            /// <para>One use of this parameter is to handle events whose significance is not clear until after the fact. For instance if the player starts a damage over time effect on another player, which kills them 3.5 seconds later, the game could pass -3.5 as the start offset and cause the event to appear in the timeline where the effect started.</para></param>
-            /// <param name="durationSeconds">The duration of the event, in seconds. Pass 0 for instantaneous events.</param>
-            /// <param name="possibleClip">Allows the game to describe events that should be suggested to the user as possible video clips.</param>
-            /// <returns></returns>
-            public static TimelineEventData AddRangeTimelineEvent(string title, string description, string icon, uint priority, float startOffsetSeconds, float durationSeconds, ETimelineEventClipPriority possibleClip)
+            /// <param name="title">The title of the timeline event.</param>
+            /// <param name="description">A detailed description of the timeline event.</param>
+            /// <param name="icon">The icon associated with the timeline event.</param>
+            /// <param name="priority">The priority of the timeline event.</param>
+            /// <param name="startOffsetSeconds">The time offset in seconds from the current time when the event starts.</param>
+            /// <param name="durationSeconds">The duration of the event in seconds.</param>
+            /// <param name="possibleClip">The clip priority associated with the timeline event.</param>
+            /// <returns>An object representing the timeline event data created with the specified parameters.</returns>
+            public static TimelineEventData AddRangeTimelineEvent(string title, string description, string icon,
+                uint priority, float startOffsetSeconds, float durationSeconds, ETimelineEventClipPriority possibleClip)
             {
-                var handle = SteamTimeline.AddRangeTimelineEvent(title, description, icon, priority, startOffsetSeconds, durationSeconds, possibleClip);
-                timelineEvents.Add(handle);
-                m_TimelineEventDataArguments.TryAdd(handle.m_TimelineEventHandle, new()
+                var handle = SteamTimeline.AddRangeTimelineEvent(title, description, icon, priority, startOffsetSeconds,
+                    durationSeconds, possibleClip);
+                TimelineEvents.Add(handle);
+                MTimelineEventDataArguments.TryAdd(handle.m_TimelineEventHandle, new()
                 {
                     title = title,
                     description = description,
@@ -110,21 +126,22 @@ namespace Heathen.SteamworksIntegration.API
             }
 
             /// <summary>
-            /// Use this to mark the start of an event (A) on the Timeline that takes some amount of time to complete. The duration of the event is determined by a matching call to EndRangeTimelineEvent. If the game wants to cancel an event in progress, they can do that with a call to RemoveTimelineEvent.
+            /// Starts a range-based timeline event with the specified parameters.
             /// </summary>
-            /// <param name="title"></param>
-            /// <param name="description"></param>
-            /// <param name="icon">The name of the icon to show at the timeline at this point. This can be one of the icons uploaded through the Steamworks partner Site for your title, or one of the provided icons that start with steam_. The Steam Timelines overview includes a list of available icons.</param>
-            /// <param name="priority">Provide the priority to use when the UI is deciding which icons to display in crowded parts of the timeline. Events with larger priority values will be displayed more prominently than events with smaller priority values. This value must be between 0 and k_unMaxTimelinePriority.</param>
-            /// <param name="startOffsetSeconds">The time offset in seconds to apply to the start of the event. Negative times indicate an event that happened in the past.
-            /// <para>One use of this parameter is to handle events whose significance is not clear until after the fact. For instance if the player starts a damage over time effect on another player, which kills them 3.5 seconds later, the game could pass -3.5 as the start offset and cause the event to appear in the timeline where the effect started.</para></param>
-            /// <param name="possibleClip">Allows the game to describe events that should be suggested to the user as possible video clips.</param>
-            /// <returns></returns>
-            public static TimelineEventData StartRangeTimelineEvent( string title, string description, string icon, uint priority, float startOffsetSeconds, ETimelineEventClipPriority possibleClip )
+            /// <param name="title">The title of the timeline event.</param>
+            /// <param name="description">The description of the timeline event.</param>
+            /// <param name="icon">The icon associated with the timeline event.</param>
+            /// <param name="priority">The priority level of the timeline event.</param>
+            /// <param name="startOffsetSeconds">The offset in seconds from the current time at which the event starts.</param>
+            /// <param name="possibleClip">The clip priority level indicating how the event interacts with potential timeline overlaps.</param>
+            /// <returns>The timeline event data representing the newly created event.</returns>
+            public static TimelineEventData StartRangeTimelineEvent(string title, string description, string icon,
+                uint priority, float startOffsetSeconds, ETimelineEventClipPriority possibleClip)
             {
-                var handle = SteamTimeline.StartRangeTimelineEvent(title, description, icon, priority, startOffsetSeconds, possibleClip);
-                timelineEvents.Add(handle);
-                m_TimelineEventDataArguments.TryAdd(handle.m_TimelineEventHandle, new()
+                var handle = SteamTimeline.StartRangeTimelineEvent(title, description, icon, priority,
+                    startOffsetSeconds, possibleClip);
+                TimelineEvents.Add(handle);
+                MTimelineEventDataArguments.TryAdd(handle.m_TimelineEventHandle, new()
                 {
                     title = title,
                     description = description,
@@ -138,137 +155,154 @@ namespace Heathen.SteamworksIntegration.API
             }
 
             /// <summary>
-            /// Use this to update the details of an event that was started with <see cref="StartRangeTimelineEvent"/>.
+            /// Updates the details of an existing timeline event, such as its title, description, icon, priority, and possible video clip suggestion.
             /// </summary>
-            /// <param name="title"></param>
-            /// <param name="description"></param>
-            /// <param name="icon">The name of the icon to show at the timeline at this point. This can be one of the icons uploaded through the Steamworks partner Site for your title, or one of the provided icons that start with steam_. The Steam Timelines overview includes a list of available icons.</param>
-            /// <param name="priority">Provide the priority to use when the UI is deciding which icons to display in crowded parts of the timeline. Events with larger priority values will be displayed more prominently than events with smaller priority values. This value must be between 0 and k_unMaxTimelinePriority.</param>
-            /// <param name="possibleClip">Allows the game to describe events that should be suggested to the user as possible video clips.</param>
-            public static void UpdateRangeTimelineEvent(TimelineEventData timelineEvent, string title, string description, string icon, uint priority, ETimelineEventClipPriority possibleClip)
+            /// <param name="timelineEvent">The timeline event to update.</param>
+            /// <param name="title">The new title to display for the timeline event.</param>
+            /// <param name="description">The updated description to associate with the timeline event.</param>
+            /// <param name="icon">The name of the icon to display for the timeline event. It can be a custom or standard Steam-provided icon.</param>
+            /// <param name="priority">The priority value that determines the prominence of the event's icon on the timeline. Higher values indicate greater prominence.</param>
+            /// <param name="possibleClip">Specifies whether this event should be suggested to the user as a potential video clip.</param>
+            public static void UpdateRangeTimelineEvent(TimelineEventData timelineEvent, string title,
+                string description, string icon, uint priority, ETimelineEventClipPriority possibleClip)
             {
                 SteamTimeline.UpdateRangeTimelineEvent(timelineEvent, title, description, icon, priority, possibleClip);
 
-                if (m_TimelineEventDataArguments.TryGetValue(timelineEvent, out var handle))
-                {
-                    handle.title = title;
-                    handle.description = description;
-                    handle.icon = icon;
-                    handle.priority = priority;
-                    handle.possibleClip = possibleClip;
-                    m_TimelineEventDataArguments[timelineEvent] = handle;
-                }
+                if (!MTimelineEventDataArguments.TryGetValue(timelineEvent, out var handle)) return;
+                handle.title = title;
+                handle.description = description;
+                handle.icon = icon;
+                handle.priority = priority;
+                handle.possibleClip = possibleClip;
+                MTimelineEventDataArguments[timelineEvent] = handle;
             }
 
             /// <summary>
-            /// Use this to end an event (A) of the timeline that was started with <see cref="StartRangeTimelineEvent"/>.
+            /// Marks the conclusion of a range timeline event that was initiated using the corresponding start method.
             /// </summary>
-            /// <param name="timelineEvent"></param>
-            /// <param name="endOffsetSeconds">The time offset in seconds to apply to the end of the event. Negative times indicate an event that happened in the past.</param>
+            /// <param name="timelineEvent">The timeline event to be ended.</param>
+            /// <param name="endOffsetSeconds">The time offset in seconds to be applied to the end of the event. A negative value indicates that the event ended in the past.</param>
             public static void EndRangeTimelineEvent(TimelineEventData timelineEvent, float endOffsetSeconds)
             {
                 SteamTimeline.EndRangeTimelineEvent(timelineEvent, endOffsetSeconds);
-                if(m_TimelineEventDataArguments.TryGetValue(timelineEvent, out var handle))
+                if (MTimelineEventDataArguments.TryGetValue(timelineEvent, out var handle))
                 {
                     var endTime = Time.time + endOffsetSeconds;
                     handle.durationSeconds = endTime - handle.startSeconds;
-                    m_TimelineEventDataArguments[timelineEvent] = handle;
+                    MTimelineEventDataArguments[timelineEvent] = handle;
                 }
             }
 
             /// <summary>
-            /// Use this to remove an event that was added with <see cref="AddInstantaneousTimelineEvent"/> or <see cref="AddRangeTimelineEvent"/> or an event that is in progress and was started with <see cref="StartRangeTimelineEvent"/>.
+            /// Removes a specified timeline event from the timeline, including its arguments and associated data.
             /// </summary>
-            /// <param name="timelineEvent"></param>
+            /// <param name="timelineEvent">The timeline event to be removed.</param>
             public static void RemoveTimelineEvent(TimelineEventData timelineEvent)
             {
-                timelineEvents.Remove(timelineEvent);
-                m_TimelineEventDataArguments.Remove(timelineEvent);
+                TimelineEvents.Remove(timelineEvent);
+                MTimelineEventDataArguments.Remove(timelineEvent);
                 SteamTimeline.RemoveTimelineEvent(timelineEvent);
             }
 
             /// <summary>
-            /// Use this to determine if video recordings exist for the specified event.
+            /// Determines whether a video recording exists for the specified timeline event.
             /// </summary>
-            /// <param name="timelineEvent"></param>
-            /// <param name="callback">Invoked when Steam responds with the result</param>
+            /// <param name="timelineEvent">The event data for which to check the existence of a video recording.</param>
+            /// <param name="callback">The callback to invoke with the result of the check. The boolean parameter indicates whether the recording exists.</param>
             public static void DoesEventRecordingExist(TimelineEventData timelineEvent, Action<bool> callback)
-            {
-                if(callback == null)
-                    return;
-
-                m_SteamTimelineEventRecordingExists_t ??= CallResult<SteamTimelineEventRecordingExists_t>.Create();
-
-                var handle = SteamTimeline.DoesEventRecordingExist(timelineEvent);
-                m_SteamTimelineEventRecordingExists_t.Set(handle, (r, e) => { callback.Invoke(r.m_bRecordingExists); });
-            }
-
-            /// <summary>
-            /// Use this to start a game phase. Game phases allow the user to navigate their background recordings and clips. Exactly what a game phase means will vary game to game, but the game phase should be a section of gameplay that is usually between 10 minutes and a few hours in length, and should be the main way a user would think to divide up the game. These are presented to the user in a UI that shows the date the game was played, with one row per game slice. Game phases should be used to mark sections of gameplay that the user might be interested in watching.
-            /// </summary>
-            public static void StartGamePhase() => SteamTimeline.StartGamePhase();
-
-            /// <summary>
-            /// Use this to end a game phase
-            /// </summary>
-            public static void EndGamePhase() => SteamTimeline.EndGamePhase();
-
-            /// <summary>
-            /// The phase ID is used to let the game identify which phase it is referring to
-            /// </summary>
-            /// <param name="id"></param>
-            public static void SetGamePhaseId(string id) => SteamTimeline.SetGamePhaseID(id);
-
-            /// <summary>
-            /// Use this to determine if video recordings exist for the specified game phase. Steam will sent a SteamTimelineGamePhaseRecordingExists_t callback with the result. This can be useful when the game needs to decide whether or not to show a control that will call OpenOverlayToGamePhase.
-            /// </summary>
-            /// <param name="id"></param>
-            /// <param name="callback">Invoked when Steam responds with the results</param>
-            public static void DoesGamePhaseRecordingExist(string id, Action<SteamTimelineGamePhaseRecordingExists_t> callback)
             {
                 if (callback == null)
                     return;
 
-                m_SteamTimelineGamePhaseRecordingExists_t ??= CallResult<SteamTimelineGamePhaseRecordingExists_t>.Create();
+                _mSteamTimelineEventRecordingExistsT ??= CallResult<SteamTimelineEventRecordingExists_t>.Create();
 
-                var handle = SteamTimeline.DoesGamePhaseRecordingExist(id);
-                m_SteamTimelineGamePhaseRecordingExists_t.Set(handle, (r, e) => { callback.Invoke(r); });
+                var handle = SteamTimeline.DoesEventRecordingExist(timelineEvent);
+                _mSteamTimelineEventRecordingExistsT.Set(handle, (r, _) => { callback.Invoke(r.m_bRecordingExists); });
             }
 
             /// <summary>
-            /// Use this to add a game phase tag (F). Phase tags represent data with a well defined set of options, which could be data such as match resolution, hero played, game mode, etc. Tags can have an icon in addition to a text name. Multiple tags within the same group may be added per phase and all will be remembered. For example, AddGamePhaseTag may be called multiple times for a "Bosses Defeated" group, with different names and icons for each boss defeated during the phase, all of which will be shown to the user.
+            /// Starts a game phase to define a section of gameplay for background recordings and clips.
+            /// Game phases are segments of gameplay that help users organise and navigate their recordings, typically spanning
+            /// between 10 minutes to a few hours, depending on the game's structure. These segments are shown in a user interface
+            /// grouped by the date the game was played, allowing users to easily revisit specific parts of their gameplay.
+            /// This feature is useful for marking key points in a user's gaming session that might be of interest for future viewing.
             /// </summary>
-            /// <param name="tagName">Title-provided localized string in the language returned by SteamUtils()->GetSteamUILanguage().</param>
-            /// <param name="tagIcon">The name of the icon to show when the tag is shown in the UI. This can be one of the icons uploaded through the Steamworks partner Site for your title, or one of the provided icons that start with steam_. The Steam Timelines overview includes a list of available icons.</param>
-            /// <param name="tagGroup">Title-provided localized string in the language returned by SteamUtils()->GetSteamUILanguage(). Tags within the same group will be shown together in the UI.</param>
-            /// <param name="priority">Provide the priority to use when the UI is deciding which icons to display. Tags with larger priority values will be displayed more prominently than tags with smaller priority values. This value must be between 0 and k_unMaxTimelinePriority.</param>
-            public static void AddGamePhaseTag( string tagName, string tagIcon, string tagGroup, uint priority) => SteamTimeline.AddGamePhaseTag(tagName, tagIcon, tagGroup, priority);
+            public static void StartGamePhase() => SteamTimeline.StartGamePhase();
 
             /// <summary>
-            /// Use this to add a game phase attribute (E). Phase attributes represent generic text fields that can be updated throughout the duration of the phase. They are meant to be used for phase metadata that is not part of a well defined set of options. For example, a KDA attribute that starts with the value "0/0/0" and updates as the phase progresses, or something like a player-entered character name. Attributes can be set as many times as the game likes with SetGamePhaseAttribute, and only the last value will be shown to the user.
+            /// Ends the current game phase and finalises any ongoing timeline activities related to it.
+            /// This method should be used to signal the completion of a game phase in the Steam Timeline system.
             /// </summary>
-            /// <param name="attributeGroup"></param>
-            /// <param name="attributeValue"></param>
-            /// <param name="priority"></param>
-            public static void SetGamePhaseAttribute(string attributeGroup, string attributeValue, uint priority) => SteamTimeline.SetGamePhaseAttribute(attributeGroup, attributeValue, priority);
+            public static void EndGamePhase() => SteamTimeline.EndGamePhase();
 
             /// <summary>
-            /// Changes the color of the timeline bar (C). See ETimelineGameMode for how to use each value.
+            /// Sets the identifier for the current game phase.
             /// </summary>
-            /// <param name="mode"></param>
+            /// <param name="id">The unique identifier for the game phase to set.</param>
+            public static void SetGamePhaseId(string id) => SteamTimeline.SetGamePhaseID(id);
+
+            /// <summary>
+            /// Checks if video recordings exist for the specified game phase.
+            /// Steam will provide the result through a SteamTimelineGamePhaseRecordingExists_t callback.
+            /// This method is useful for determining whether to display controls
+            /// that interact with game phase recordings, such as calling OpenOverlayToGamePhase.
+            /// </summary>
+            /// <param name="id">The identifier for the game phase to check.</param>
+            /// <param name="callback">The callback invoked with the results from Steam.</param>
+            public static void DoesGamePhaseRecordingExist(string id,
+                Action<SteamTimelineGamePhaseRecordingExists_t> callback)
+            {
+                if (callback == null)
+                    return;
+
+                _mSteamTimelineGamePhaseRecordingExistsT ??=
+                    CallResult<SteamTimelineGamePhaseRecordingExists_t>.Create();
+
+                var handle = SteamTimeline.DoesGamePhaseRecordingExist(id);
+                _mSteamTimelineGamePhaseRecordingExistsT.Set(handle, (r, _) => { callback.Invoke(r); });
+            }
+
+            /// <summary>
+            /// Adds a new game phase tag to the timeline with the specified parameters.
+            /// </summary>
+            /// <param name="tagName">The name of the tag to add.</param>
+            /// <param name="tagIcon">The icon associated with the tag.</param>
+            /// <param name="tagGroup">The group to which the tag belongs.</param>
+            /// <param name="priority">The priority level of the tag.</param>
+            public static void AddGamePhaseTag(string tagName, string tagIcon, string tagGroup, uint priority) =>
+                SteamTimeline.AddGamePhaseTag(tagName, tagIcon, tagGroup, priority);
+
+            /// <summary>
+            /// Adds or updates a game phase attribute, which represents generic text-based metadata for a game phase.
+            /// Attributes can be updated multiple times, with only the latest value being displayed to the user.
+            /// This feature can be used for metadata such as a KDA (Kills/Deaths/Assists) score
+            /// or other dynamic information that changes throughout the phase.
+            /// </summary>
+            /// <param name="attributeGroup">The identifier for the attribute group being updated, such as "KDA" or "CharacterName".</param>
+            /// <param name="attributeValue">The current value of the attribute to display, such as "0/0/0" or a character name.</param>
+            /// <param name="priority">The priority level of the attribute, determining its importance during display.</param>
+            public static void SetGamePhaseAttribute(string attributeGroup, string attributeValue, uint priority) =>
+                SteamTimeline.SetGamePhaseAttribute(attributeGroup, attributeValue, priority);
+
+            /// <summary>
+            /// Sets the game mode for the timeline, which determines the colour of the timeline bar segments.
+            /// </summary>
+            /// <param name="mode">The game mode to set, represented by the <see cref="ETimelineGameMode"/> enumeration.</param>
             public static void SetTimelineGameMode(ETimelineGameMode mode) => SteamTimeline.SetTimelineGameMode(mode);
 
             /// <summary>
-            /// Opens the Steam overlay to the section of the timeline represented by the game phase.
+            /// Opens the Steam overlay to the section of the timeline associated with the specified game phase.
             /// </summary>
-            /// <param name="phaseId"></param>
+            /// <param name="phaseId">The unique identifier of the game phase to open in the Steam overlay.</param>
             public static void OpenOverlayToGamePhase(string phaseId) => SteamTimeline.OpenOverlayToGamePhase(phaseId);
 
             /// <summary>
-            /// Opens the Steam overlay to the section of the timeline represented by the timeline event. This event must be in the current game session, since TimelineEvent values are not valid for future runs of the game.
+            /// Opens the Steam overlay to the section of the timeline associated with the specified timeline event.
+            /// The timeline event must belong to the current game session, as timeline event data cannot be reused across different game sessions.
             /// </summary>
-            /// <param name="timelineEvent"></param>
-            public static void OpenOverlayToTimelineEvent(TimelineEventData timelineEvent) => SteamTimeline.OpenOverlayToTimelineEvent(timelineEvent);
+            /// <param name="timelineEvent">The timeline event for which the overlay should be opened.</param>
+            public static void OpenOverlayToTimelineEvent(TimelineEventData timelineEvent) =>
+                SteamTimeline.OpenOverlayToTimelineEvent(timelineEvent);
         }
     }
 }

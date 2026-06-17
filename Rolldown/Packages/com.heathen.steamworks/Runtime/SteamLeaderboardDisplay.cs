@@ -1,4 +1,6 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
+using System;
+using System.Linq;
 using UnityEngine;
 using System.Collections.Generic;
 using Steamworks;
@@ -13,6 +15,8 @@ namespace Heathen.SteamworksIntegration.UI
     [RequireComponent(typeof(SteamLeaderboardData))]
     public class SteamLeaderboardDisplay : MonoBehaviour
     {
+        [ElementField("Display")]
+        public bool alwaysIncludePlayer;
         /// <summary>
         /// This will be the parent of any records instantiated by the tool. Most often you would set this to be the Content GameObject of a ScrollRect or similar.
         /// </summary>
@@ -24,42 +28,62 @@ namespace Heathen.SteamworksIntegration.UI
         [TemplateField("Display")]
         public GameObject entryTemplate;
 
-        private SteamLeaderboardData m_Inspector;
-        private readonly List<GameObject> createdRecords = new();
+        private SteamLeaderboardData _mInspector;
+        private readonly List<GameObject> _createdRecords = new();
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamLeaderboardData>();
+            _mInspector = GetComponent<SteamLeaderboardData>();
         }
 
         public void GetTopEntries(int count)
         {
-            if(m_Inspector.Data.IsValid)
+            if(_mInspector.Data.IsValid)
             {
-                m_Inspector.Data.GetTopEntries(count, 0, HandleBoardResults);
+                _mInspector.Data.GetTopEntries(count, 0, HandleBoardResults);
             }
         }
 
         public void GetNearByEntries(int count)
         {
-            if (m_Inspector.Data.IsValid)
+            if (_mInspector.Data.IsValid)
             {
-                m_Inspector.Data.GetEntries(Steamworks.ELeaderboardDataRequest.k_ELeaderboardDataRequestGlobalAroundUser, -count / 2, count / 2, 0, HandleBoardResults);
+                _mInspector.Data.GetEntries(ELeaderboardDataRequest.k_ELeaderboardDataRequestGlobalAroundUser, -count / 2, count / 2, 0, HandleBoardResults);
             }
         }
 
         public void GetEntries(ELeaderboardDataRequest request, int start, int end, int maxDetailEntries)
         {
-            if (m_Inspector.Data.IsValid)
+            if (_mInspector.Data.IsValid)
             {
-                m_Inspector.Data.GetEntries(request, start, end, maxDetailEntries, HandleBoardResults);
+                _mInspector.Data.GetEntries(request, start, end, maxDetailEntries, HandleBoardResults);
             }
         }
 
         private void HandleBoardResults(LeaderboardEntry[] entries, bool ioError)
         {
-            if(!ioError)
+            if (ioError)
+            {
+                Debug.LogError("Leaderboard Display IO Error");
+                return;
+            }
+
+            if (!alwaysIncludePlayer || entries.Any(e => e.User.IsMe))
+            {
                 Display(entries);
+                return;
+            }
+
+            _mInspector.Data.GetUserEntry(0, (userEntry, userError) =>
+            {
+                if (!userError && userEntry != null)
+                {
+                    var entriesList = new List<LeaderboardEntry>(entries) { userEntry };
+                    entries = entriesList.ToArray();
+                }
+
+                Display(entries);
+            });
         }
 
         /// <summary>
@@ -73,16 +97,16 @@ namespace Heathen.SteamworksIntegration.UI
         /// <param name="entries"></param>
         public void Display(LeaderboardEntry[] entries)
         {
-            foreach(var entry in createdRecords)
+            foreach(var entry in _createdRecords)
             {
                 Destroy(entry);
             }
-            createdRecords.Clear();
+            _createdRecords.Clear();
 
             foreach(var entry in entries)
             {
                 var go = Instantiate(entryTemplate, collectionRoot);
-                createdRecords.Add(go);
+                _createdRecords.Add(go);
 
                 var display = go.GetComponent<ILeaderboardEntryDisplay>();
                 if (display != null)

@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS && STEAM_INSTALLED
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -6,25 +6,28 @@ using UnityEngine;
 
 namespace Heathen.SteamworksIntegration
 {
-    [AddComponentMenu("Steamworks/Initialize Steam")]
+    [AddComponentMenu("Steamworks/Initialise Steam")]
     [HelpURL("https://kb.heathen.group/steamworks/initialization/unity-initialization#component")]
     [DisallowMultipleComponent]
     public class InitializeSteamworks : MonoBehaviour
     {
         private void Start()
         {
-            SteamTools.Interface.Initialize();
+            #if UNITY_EDITOR
+                SteamTools.Interface.IsDebugging = true;
+            #endif
+            SteamTools.Interface.Initialise();
         }
 
 #if UNITY_EDITOR
-        [UnityEditor.CustomEditor(typeof(InitializeSteamworks), true)]
-        public class InitializeSteamworksEditor : UnityEditor.Editor
+        [CustomEditor(typeof(InitializeSteamworks), true)]
+        public class InitializeSteamworksEditor : Editor
         {
-            private SteamToolsSettings settings;
+            private SteamToolsSettings _settings;
 
             private void OnEnable()
             {
-                settings = SteamToolsSettings.GetOrCreate();
+                _settings = SteamToolsSettings.GetOrCreate();
             }
 
             public override void OnInspectorGUI()
@@ -34,7 +37,7 @@ namespace Heathen.SteamworksIntegration
                 if (EditorGUILayout.LinkButton("Settings"))
                     SettingsService.OpenProjectSettings("Project/Player/Steamworks");
                 if (EditorGUILayout.LinkButton("Portal"))
-                    Application.OpenURL("https://partner.steamgames.com/apps/landing/" + settings.Get(settings.ActiveApp.Value).applicationId);
+                    Application.OpenURL("https://partner.steamgames.com/apps/landing/" + _settings.Get(_settings.ActiveApp.Value).applicationId);
                 if (EditorGUILayout.LinkButton("Guide"))
                     Application.OpenURL("https://kb.heathen.group/steam");
                 if (EditorGUILayout.LinkButton("Support"))

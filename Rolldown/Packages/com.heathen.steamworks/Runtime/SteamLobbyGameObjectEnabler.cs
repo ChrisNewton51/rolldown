@@ -1,10 +1,11 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 using Steamworks;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Heathen.SteamworksIntegration
 {
@@ -30,14 +31,14 @@ namespace Heathen.SteamworksIntegration
 
         public enum ConditionMode
         {
-            OR = 1 << 0,
-            AND = 1 << 1
+            Or = 1 << 0,
+            And = 1 << 1
         }
 
         [System.Serializable]
         public struct Condition
         {
-            public string Note;
+            [FormerlySerializedAs("Note")] public string note;
 
             [Tooltip("The rules that will be evaluated together.")]
             public EnableWhenRule[] rules;
@@ -89,12 +90,12 @@ namespace Heathen.SteamworksIntegration
             if (condition.rules == null || condition.rules.Length == 0)
                 return true;
 
-            bool result = condition.mode == ConditionMode.AND;
+            bool result = condition.mode == ConditionMode.And;
 
             foreach (var rule in condition.rules)
             {
                 bool ruleResult = CheckRule(rule);
-                if (condition.mode == ConditionMode.OR)
+                if (condition.mode == ConditionMode.Or)
                     result |= ruleResult;
                 else
                     result &= ruleResult;
@@ -125,8 +126,8 @@ namespace Heathen.SteamworksIntegration
     }
 
 #if UNITY_EDITOR
-    [UnityEditor.CustomEditor(typeof(SteamLobbyGameObjectEnabler), true)]
-    public class SteamLobbyGameObjectEnablerEditor : UnityEditor.Editor
+    [CustomEditor(typeof(SteamLobbyGameObjectEnabler), true)]
+    public class SteamLobbyGameObjectEnablerEditor : Editor
     {
         public override void OnInspectorGUI()
         {

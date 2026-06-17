@@ -1,8 +1,6 @@
 using Heathen.SteamworksIntegration;
-using Heathen.SteamworksIntegration.API;
 using UnityEngine;
 using System.Collections.Generic;
-using Steamworks;
 
 namespace SteamTools
 {
@@ -20,7 +18,7 @@ namespace SteamTools
         // Default server configuration
         public static SteamGameServerConfiguration ServerConfiguration = new()
         {
-            autoInitialize = false,
+            autoInitialise = false,
             autoLogon = false,
             ip = 0,
             gamePort = 0,
@@ -48,12 +46,12 @@ namespace SteamTools
         public static void ServerConfigFromIni(string iniData) => ServerConfiguration = SteamGameServerConfiguration.ParseIniString(iniData);
         public static void ServerConfigFromJson(string jsonData) => ServerConfiguration = JsonUtility.FromJson<SteamGameServerConfiguration>(jsonData);
 
-        public static void Initialize()
+        public static void Initialise()
         {
-              Debug.Log($"Initializing for app {AppId}");
-             Heathen.SteamworksIntegration.API.App.onSteamInitialized.AddListener(HandleInitialized);
+              Debug.Log($"Initialising for app {AppId}");
+              SteamTools.Events.OnSteamInitialised += HandleInitialised;
 #if UNITY_SERVER
-             Heathen.SteamworksIntegration.API.App.Server.Initialize(AppId, ServerConfiguration);
+              Heathen.SteamworksIntegration.API.App.Server.Initialise(AppId, ServerConfiguration);
 #else
              List<InputActionData> actions = new();
 
@@ -74,13 +72,13 @@ namespace SteamTools
 #elif APP0
 #endif
 
-             Heathen.SteamworksIntegration.API.App.Client.Initialize(AppId, actions.ToArray());
+             Heathen.SteamworksIntegration.API.App.Client.Initialise(AppId, actions.ToArray());
 #endif
         }
 
-        private static void HandleInitialized()
+        private static void HandleInitialised()
         {
-            Inputs.Sets.Initialize();
+            Inputs.Sets.Initialise();
 #if APP3031470
             int boardCount = 1;
             int returnedBoards = 0;
@@ -132,6 +130,17 @@ namespace SteamTools
             public static StatData NumWins;
             public static StatData Unused2;
 #endif
+
+            public static Dictionary<string, StatData> GetMap() => new()
+            {
+                { "AverageSpeed", AverageSpeed },
+                { "FeetTraveled", FeetTraveled },
+                { "MaxFeetTraveled", MaxFeetTraveled },
+                { "NumGames", NumGames },
+                { "NumLosses", NumLosses },
+                { "NumWins", NumWins },
+                { "Unused2", Unused2 },
+            };
         }
 
         public static class Achievements
@@ -155,19 +164,25 @@ namespace SteamTools
             public static AchievementData ACH_WIN_ONE_GAME;
             public static AchievementData NEW_ACHIEVEMENT_0_4;
 #endif
+
+            public static Dictionary<string, AchievementData> GetMap() => new()
+            {
+                { "ACH_TRAVEL_FAR_ACCUM", ACH_TRAVEL_FAR_ACCUM },
+                { "ACH_TRAVEL_FAR_SINGLE", ACH_TRAVEL_FAR_SINGLE },
+                { "ACH_WIN_100_GAMES", ACH_WIN_100_GAMES },
+                { "ACH_WIN_ONE_GAME", ACH_WIN_ONE_GAME },
+                { "NEW_ACHIEVEMENT_0_4", NEW_ACHIEVEMENT_0_4 },
+            };
         }
 
         public static class Leaderboards
         {
             public static LeaderboardData Feet_Traveled;
 
-            public static Dictionary<string, LeaderboardData> GetMap()
+            public static Dictionary<string, LeaderboardData> GetMap() => new()
             {
-                var map = new Dictionary<string, LeaderboardData>();
-                map.Add("Feet Traveled", Feet_Traveled);
-                return map;
-            }
-
+                { "Feet Traveled", Feet_Traveled },
+            };
         }
 
         public static class Inputs
@@ -175,22 +190,23 @@ namespace SteamTools
             public static class Sets
             {
 
-            public static Dictionary<string, InputActionSetData> GetMap()
-            {
-                var map = new Dictionary<string, InputActionSetData>();
-                map.Add("menu_controls", menu_controls);
-                map.Add("ship_controls", ship_controls);
-                return map;
-            }
+                public static Dictionary<string, InputActionSetData> GetMap() => new()
+                {
+                    { "menu_controls", menu_controls },
+                    { "ship_controls", ship_controls },
+                };
 
-            public static void Initialize()
-            {
+                public static void Initialise()
+                {
+#if UNITY_SERVER
+                    return;
+#endif
 #if APP3031470
-                menu_controls = InputActionSetData.Get("menu_controls");
-                ship_controls = InputActionSetData.Get("ship_controls");
+                    menu_controls = InputActionSetData.Get("menu_controls");
+                    ship_controls = InputActionSetData.Get("ship_controls");
 #elif APP0
 #endif
-            }
+                }
                 public static InputActionSetData menu_controls;
                 public static InputActionSetData ship_controls;
             }
@@ -198,31 +214,36 @@ namespace SteamTools
             public static class Layers
             {
 #if APP3031470
-                public static InputActionSetLayerData thrust_action_layer = new(){ layerName = "thrust_action_layer" };
+                public static InputActionSetLayerData thrust_action_layer = new() { LayerName = "thrust_action_layer" };
 #elif APP0
                 public static InputActionSetLayerData thrust_action_layer;
 #else
                 public static InputActionSetLayerData thrust_action_layer;
 #endif
+
+                public static Dictionary<string, InputActionSetLayerData> GetMap() => new()
+                {
+                    { "thrust_action_layer", thrust_action_layer },
+                };
             }
 
             public static class Actions
             {
 
 #if APP3031470
-                public static InputActionData analog_controls = new InputActionData("analog_controls", InputActionType.Analog);
-                public static InputActionData backward_thrust = new InputActionData("backward_thrust", InputActionType.Digital);
-                public static InputActionData fire_lasers = new InputActionData("fire_lasers", InputActionType.Digital);
-                public static InputActionData forward_thrust = new InputActionData("forward_thrust", InputActionType.Digital);
-                public static InputActionData menu_cancel = new InputActionData("menu_cancel", InputActionType.Digital);
-                public static InputActionData menu_down = new InputActionData("menu_down", InputActionType.Digital);
-                public static InputActionData menu_left = new InputActionData("menu_left", InputActionType.Digital);
-                public static InputActionData menu_right = new InputActionData("menu_right", InputActionType.Digital);
-                public static InputActionData menu_select = new InputActionData("menu_select", InputActionType.Digital);
-                public static InputActionData menu_up = new InputActionData("menu_up", InputActionType.Digital);
-                public static InputActionData pause_menu = new InputActionData("pause_menu", InputActionType.Digital);
-                public static InputActionData turn_left = new InputActionData("turn_left", InputActionType.Digital);
-                public static InputActionData turn_right = new InputActionData("turn_right", InputActionType.Digital);
+                public static InputActionData analog_controls = new("analog_controls", InputActionType.Analog);
+                public static InputActionData backward_thrust = new("backward_thrust", InputActionType.Digital);
+                public static InputActionData fire_lasers = new("fire_lasers", InputActionType.Digital);
+                public static InputActionData forward_thrust = new("forward_thrust", InputActionType.Digital);
+                public static InputActionData menu_cancel = new("menu_cancel", InputActionType.Digital);
+                public static InputActionData menu_down = new("menu_down", InputActionType.Digital);
+                public static InputActionData menu_left = new("menu_left", InputActionType.Digital);
+                public static InputActionData menu_right = new("menu_right", InputActionType.Digital);
+                public static InputActionData menu_select = new("menu_select", InputActionType.Digital);
+                public static InputActionData menu_up = new("menu_up", InputActionType.Digital);
+                public static InputActionData pause_menu = new("pause_menu", InputActionType.Digital);
+                public static InputActionData turn_left = new("turn_left", InputActionType.Digital);
+                public static InputActionData turn_right = new("turn_right", InputActionType.Digital);
 #elif APP0
                 public static InputActionData analog_controls;
                 public static InputActionData backward_thrust;
@@ -253,24 +274,22 @@ namespace SteamTools
                 public static InputActionData turn_right;
 #endif
 
-                public static Dictionary<string, InputActionData> GetMap()
+                public static Dictionary<string, InputActionData> GetMap() => new()
                 {
-                    var map = new Dictionary<string, InputActionData>();
-                    map.Add("analog_controls", analog_controls);
-                    map.Add("backward_thrust", backward_thrust);
-                    map.Add("fire_lasers", fire_lasers);
-                    map.Add("forward_thrust", forward_thrust);
-                    map.Add("menu_cancel", menu_cancel);
-                    map.Add("menu_down", menu_down);
-                    map.Add("menu_left", menu_left);
-                    map.Add("menu_right", menu_right);
-                    map.Add("menu_select", menu_select);
-                    map.Add("menu_up", menu_up);
-                    map.Add("pause_menu", pause_menu);
-                    map.Add("turn_left", turn_left);
-                    map.Add("turn_right", turn_right);
-                return map;
-                }
+                    { "analog_controls", analog_controls },
+                    { "backward_thrust", backward_thrust },
+                    { "fire_lasers", fire_lasers },
+                    { "forward_thrust", forward_thrust },
+                    { "menu_cancel", menu_cancel },
+                    { "menu_down", menu_down },
+                    { "menu_left", menu_left },
+                    { "menu_right", menu_right },
+                    { "menu_select", menu_select },
+                    { "menu_up", menu_up },
+                    { "pause_menu", pause_menu },
+                    { "turn_left", turn_left },
+                    { "turn_right", turn_right },
+                };
             }
 
         }

@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Heathen.SteamworksIntegration.API;
 using Steamworks;
 using UnityEngine;
@@ -28,7 +28,7 @@ namespace Heathen.SteamworksIntegration
         [EventField]
         public UnityEvent<bool> onLobbySetIsNotMember;
         [EventField]
-        public LobbyInviteEvent onLobbyInvite;
+        public UnityEvent<UserData, LobbyData, GameData> onLobbyInvite;
         [EventField]
         public GameLobbyJoinRequestedEvent onLobbyJoinRequest;
         [EventField]
@@ -64,7 +64,7 @@ namespace Heathen.SteamworksIntegration
         /// Occurs when any data is updated on the lobby be that lobby metadata or a members metadata
         /// </summary>
         [EventField]
-        public LobbyDataUpdateEvent onDataUpdate;
+        public UnityEvent<LobbyData, LobbyMemberData?> onDataUpdate;
         /// <summary>
         /// Occurs when the local user leaves the managed lobby
         /// </summary>
@@ -96,32 +96,35 @@ namespace Heathen.SteamworksIntegration
         [EventField]
         public LobbyAuthenticaitonSessionEvent onAuthenticationSessionResult;
 
-        private SteamLobbyData m_Inspector;
+        private SteamLobbyData _mInspector;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamLobbyData>();
-            m_Inspector.onChanged.AddListener(HandleOnChange);
-
-            API.Matchmaking.Client.OnLobbyAskedToLeave.AddListener(HandleAskedToLeave);
-            API.Matchmaking.Client.OnLobbyDataUpdate.AddListener(HandleLobbyDataUpdate);
-            API.Matchmaking.Client.OnLobbyLeave.AddListener(HandleLobbyLeave);
-            API.Matchmaking.Client.OnLobbyGameCreated.AddListener(HandleGameServerSet);
-            API.Matchmaking.Client.OnLobbyChatUpdate.AddListener(HandleChatUpdate);
-            API.Matchmaking.Client.OnLobbyAuthenticationRequest.AddListener(HandleAuthRequest);
-            API.Matchmaking.Client.OnLobbyChatMsg.AddListener(HandleChatMessage);
-            API.Matchmaking.Client.OnLobbyInvite.AddListener(onLobbyInvite.Invoke);
-            API.Overlay.Client.OnGameLobbyJoinRequested.AddListener(onLobbyJoinRequest.Invoke);
+            _mInspector = GetComponent<SteamLobbyData>();
+            _mInspector.onChanged.AddListener(HandleOnChange);
+            
+            SteamTools.Events.OnAskedToLeaveLobby += HandleAskedToLeave;
+            SteamTools.Events.OnLobbyDataUpdate += HandleLobbyDataUpdate;
+            SteamTools.Events.OnLobbyLeave += HandleLobbyLeave;
+            SteamTools.Events.OnLobbyGameServer += HandleGameServerSet;
+            SteamTools.Events.OnLobbyChatUpdate += HandleChatUpdate;
+            SteamTools.Events.OnLobbyAuthentication += HandleAuthRequest;
+            SteamTools.Events.OnLobbyChatMsg += HandleChatMessage;
+            SteamTools.Events.OnLobbyInvite += onLobbyInvite.Invoke;
+            SteamTools.Events.OnLobbyJoinRequested += onLobbyJoinRequest.Invoke;
         }
 
         private void OnDestroy()
         {
-            API.Matchmaking.Client.OnLobbyGameCreated.RemoveListener(HandleGameServerSet);
-            API.Matchmaking.Client.OnLobbyChatUpdate.RemoveListener(HandleChatUpdate);
-            API.Matchmaking.Client.OnLobbyAuthenticationRequest.RemoveListener(HandleAuthRequest);
-            API.Matchmaking.Client.OnLobbyChatMsg.RemoveListener(HandleChatMessage);
-            API.Matchmaking.Client.OnLobbyInvite.RemoveListener(onLobbyInvite.Invoke);
-            API.Overlay.Client.OnGameLobbyJoinRequested.RemoveListener(onLobbyJoinRequest.Invoke);
+            SteamTools.Events.OnAskedToLeaveLobby -= HandleAskedToLeave;
+            SteamTools.Events.OnLobbyDataUpdate -= HandleLobbyDataUpdate;
+            SteamTools.Events.OnLobbyLeave -= HandleLobbyLeave;
+            SteamTools.Events.OnLobbyGameServer -= HandleGameServerSet;
+            SteamTools.Events.OnLobbyChatUpdate -= HandleChatUpdate;
+            SteamTools.Events.OnLobbyAuthentication -= HandleAuthRequest;
+            SteamTools.Events.OnLobbyChatMsg -= HandleChatMessage;
+            SteamTools.Events.OnLobbyInvite -= onLobbyInvite.Invoke;
+            SteamTools.Events.OnLobbyJoinRequested -= onLobbyJoinRequest.Invoke;
         }
 
         private void HandleOnChange(LobbyData arg0)
@@ -142,7 +145,7 @@ namespace Heathen.SteamworksIntegration
 
         private void HandleChatMessage(LobbyChatMsg message)
         {
-            if (message.lobby == m_Inspector.Data)
+            if (message.lobby == _mInspector.Data)
             {
                 onChatMessage.Invoke(message);
             }
@@ -150,7 +153,7 @@ namespace Heathen.SteamworksIntegration
 
         private void HandleAuthRequest(LobbyData lobby, UserData sender, byte[] ticket, byte[] inventory)
         {
-            if (lobby == m_Inspector.Data)
+            if (lobby == _mInspector.Data)
             {
                 Authentication.BeginAuthSession(ticket, sender, (session) =>
                 {
@@ -159,43 +162,44 @@ namespace Heathen.SteamworksIntegration
             }
         }
 
-        private void HandleChatUpdate(LobbyChatUpdate_t arg0)
+        private void HandleChatUpdate(LobbyData lobby, UserData user, EChatMemberStateChange state)
         {
-            if (arg0.m_ulSteamIDLobby == m_Inspector.Data)
+            if (lobby == _mInspector.Data)
             {
-                var state = (EChatMemberStateChange)arg0.m_rgfChatMemberStateChange;
                 if (state == EChatMemberStateChange.k_EChatMemberStateChangeEntered)
-                    onOtherUserJoined?.Invoke(arg0.m_ulSteamIDUserChanged);
+                    onOtherUserJoined?.Invoke(user);
                 else
-                    onOtherUserLeft?.Invoke(new UserLobbyLeaveData { user = arg0.m_ulSteamIDUserChanged, state = state });
+                    onOtherUserLeft?.Invoke(new UserLobbyLeaveData { user = user, state = state });
             }
         }
 
-        private void HandleGameServerSet(LobbyGameCreated_t arg0)
+        private void HandleGameServerSet(LobbyData lobby, CSteamID serverId, string ip, ushort port)
         {
-            if (arg0.m_ulSteamIDLobby == m_Inspector.Data)
-                onGameCreate.Invoke(m_Inspector.Data.GameServer);
+            if (lobby == _mInspector.Data)
+                onGameCreate.Invoke(_mInspector.Data.GameServer);
         }
 
         private void HandleLobbyLeave(LobbyData arg0)
         {
-            if (arg0 == m_Inspector.Data)
+            if (arg0 == _mInspector.Data)
             {
-                m_Inspector.Data = default;
+                _mInspector.Data = default;
                 onUserLeft.Invoke();
             }
         }
 
         private void HandleAskedToLeave(LobbyData arg0)
         {
-            if (arg0 == m_Inspector.Data)
+            if (arg0 == _mInspector.Data)
                 onAskedToLeave.Invoke();
         }
 
-        private void HandleLobbyDataUpdate(LobbyDataUpdateEventData arg0)
+        private void HandleLobbyDataUpdate(LobbyData lobby, LobbyMemberData? member)
         {
-            if (arg0.lobby == m_Inspector.Data)
-                onDataUpdate.Invoke(arg0);
+            if (lobby == _mInspector.Data)
+            {
+                onDataUpdate.Invoke(lobby, member);
+            }
         }
     }
 }

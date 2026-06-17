@@ -30,7 +30,7 @@ namespace MyProperlyFormedNamespaceName
 
             //With an ItemData you can now work with this item with simple calls
 
-            //The localized name of the item as seen by this user if any
+            //The localised name of the item as seen by this user if any
             var theName = thisItem.Name;
 
             //The following functions all demonstrate specific parts of Steamworks Inventory check the function listings to find 

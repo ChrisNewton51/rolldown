@@ -1,47 +1,48 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 
 namespace Heathen.SteamworksIntegration
 {
+    /// <summary>
+    /// Represents the various dialogue types that can be opened in the Steam Overlay.
+    /// </summary>
     public enum FriendDialog
     {
         /// <summary>
         /// Opens the overlay web browser to the specified user or groups profile.
         /// </summary>
-        steamid,
+        Steamid,
         /// <summary>
-        /// Opens a chat window to the specified user, or joins the group chat.
+        /// Opens a chat window to the specified user or joins the group chat.
         /// </summary>
-        chat,
+        Chat,
         /// <summary>
         /// Opens a window to a Steam Trading session that was started with the ISteamEconomy/StartTrade Web API.
         /// </summary>
-        jointrade,
+        Jointrade,
         /// <summary>
         /// Opens the overlay web browser to the specified user's stats.
         /// </summary>
-        stats,
+        Stats,
         /// <summary>
         /// Opens the overlay web browser to the specified user's achievements.
         /// </summary>
-        achievements,
+        Achievements,
         /// <summary>
-        /// Opens the overlay in minimal mode prompting the user to add the target user as a friend.
+        /// Opens the overlay in minimal mode, prompting the user to add the target user as a friend.
         /// </summary>
-        friendadd,
+        Friendadd,
         /// <summary>
-        /// Opens the overlay in minimal mode prompting the user to remove the target friend.
+        /// Opens the overlay in minimal mode, prompting the user to remove the target friend.
         /// </summary>
-        friendremove,
+        Friendremove,
         /// <summary>
-        /// Opens the overlay in minimal mode prompting the user to accept an incoming friend invite.
+        /// Opens the overlay in minimal mode, prompting the user to accept an incoming friend invite.
         /// </summary>
-        friendrequestaccept,
+        Friendrequestaccept,
         /// <summary>
-        /// Opens the overlay in minimal mode prompting the user to ignore an incoming friend invite.
+        /// Opens the overlay in minimal mode, prompting the user to ignore an incoming friend invite.
         /// </summary>
-        friendrequestignore,
+        Friendrequestignore,
     }
-    //*/
-
 }
 #endif

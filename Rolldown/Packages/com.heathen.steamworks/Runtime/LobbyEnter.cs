@@ -1,19 +1,42 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 
 namespace Heathen.SteamworksIntegration
 {
+    /// <summary>
+    /// Represents the response to a lobby enter request.
+    /// </summary>
     [Serializable]
     public struct LobbyEnter
     {
-        public LobbyEnter_t data;
-        public LobbyData Lobby => data.m_ulSteamIDLobby;
-        public EChatRoomEnterResponse Response => (EChatRoomEnterResponse)data.m_EChatRoomEnterResponse;
-        public bool Locked => data.m_bLocked;
+        /// <summary>
+        /// The native Steamworks data.
+        /// </summary>
+        public LobbyEnter_t Data;
+        /// <summary>
+        /// The lobby that was entered.
+        /// </summary>
+        public LobbyData Lobby => Data.m_ulSteamIDLobby;
+        /// <summary>
+        /// The response to the enter request.
+        /// </summary>
+        public EChatRoomEnterResponse Response => (EChatRoomEnterResponse)Data.m_EChatRoomEnterResponse;
+        /// <summary>
+        /// Is the lobby locked?
+        /// </summary>
+        public bool Locked => Data.m_bLocked;
 
-        public static implicit operator LobbyEnter(LobbyEnter_t native) => new LobbyEnter { data = native };
-        public static implicit operator LobbyEnter_t(LobbyEnter heathen) => heathen.data;
+        /// <summary>
+        /// Implicitly converts a native <see cref="LobbyEnter_t"/> to a <see cref="LobbyEnter"/>.
+        /// </summary>
+        /// <param name="native">The native data to convert.</param>
+        public static implicit operator LobbyEnter(LobbyEnter_t native) => new LobbyEnter { Data = native };
+        /// <summary>
+        /// Implicitly converts a <see cref="LobbyEnter"/> to a native <see cref="LobbyEnter_t"/>.
+        /// </summary>
+        /// <param name="heathen">The Heathen data to convert.</param>
+        public static implicit operator LobbyEnter_t(LobbyEnter heathen) => heathen.Data;
     }
 }
 #endif

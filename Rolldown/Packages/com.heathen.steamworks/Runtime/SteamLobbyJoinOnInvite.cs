@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using UnityEngine;
 
 namespace Heathen.SteamworksIntegration
@@ -31,28 +31,28 @@ namespace Heathen.SteamworksIntegration
             LeaveSessionFirst,
         }
 
-        [SettingsField(header = "Join")]
+        [SettingsField(0,false, "Join")]
         public JoinOnMode mode = JoinOnMode.WithInitialInvite;
-        [SettingsField(header = "Join")]
+        [SettingsField(0,false, "Join")]
         public FilterMode filter = FilterMode.None;
-        [SettingsField(header = "Join")]
+        [SettingsField(0,false, "Join")]
         public PreprocessOptions preprocess = PreprocessOptions.None;
 
-        private SteamLobbyData m_Inspector;
-        private SteamLobbyJoin m_Join;
+        private SteamLobbyData _mInspector;
+        private SteamLobbyJoin _mJoin;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamLobbyData>();
-            m_Join = GetComponent<SteamLobbyJoin>();
-            API.Matchmaking.Client.OnLobbyInvite.AddListener(HandleInviteReceived);
-            API.Overlay.Client.OnGameLobbyJoinRequested.AddListener(HandleInviteAccepted);
+            _mInspector = GetComponent<SteamLobbyData>();
+            _mJoin = GetComponent<SteamLobbyJoin>();
+            SteamTools.Events.OnLobbyInvite += HandleInviteReceived;
+            SteamTools.Events.OnLobbyJoinRequested += HandleInviteAccepted;
         }
 
         private void OnDestroy()
         {
-            API.Matchmaking.Client.OnLobbyInvite.RemoveListener(HandleInviteReceived);
-            API.Overlay.Client.OnGameLobbyJoinRequested.RemoveListener(HandleInviteAccepted);
+            SteamTools.Events.OnLobbyInvite -= HandleInviteReceived;
+            SteamTools.Events.OnLobbyJoinRequested -= HandleInviteAccepted;
         }
 
         private bool CanProcess()
@@ -66,7 +66,7 @@ namespace Heathen.SteamworksIntegration
                 case FilterMode.IgnoreIfInSession:
                     return !LobbyData.SessionLobby(out var _);
                 case FilterMode.IgnoreIfInAny:
-                    return API.Matchmaking.Client.memberOfLobbies.Count == 0;
+                    return API.Matchmaking.Client.MemberOfLobbies.Count == 0;
                 default:  return true;
             }
         }
@@ -76,7 +76,7 @@ namespace Heathen.SteamworksIntegration
             if (preprocess == PreprocessOptions.None)
                 return;
 
-            var lobbies = API.Matchmaking.Client.memberOfLobbies.ToArray();
+            var lobbies = API.Matchmaking.Client.MemberOfLobbies.ToArray();
             for (int i = 0; i < lobbies.Length; i++)
             {
                 switch(preprocess)
@@ -96,18 +96,18 @@ namespace Heathen.SteamworksIntegration
             }
         }
 
-        private void HandleInviteReceived(LobbyInvite arg0)
+        private void HandleInviteReceived(UserData user, LobbyData lobby, GameData game)
         {
             if (mode != JoinOnMode.WithInitialInvite
-                || arg0.ToLobby.IsAMember(UserData.Me))
+                || lobby.IsAMember(UserData.Me))
                 return;
 
             Preprocess();
             if (!CanProcess())
                 return;
 
-            if (m_Join != null)
-                m_Join.Join(arg0.ToLobby);
+            if (_mJoin != null)
+                _mJoin.Join(lobby);
             else
                 Debug.LogWarning("To join a lobby you are invited to the GameObject must have a Steam Lobby Join component");
         }
@@ -122,24 +122,24 @@ namespace Heathen.SteamworksIntegration
             if (!CanProcess())
                 return;
 
-            if (m_Join != null)
-                m_Join.Join(arg0);
+            if (_mJoin != null)
+                _mJoin.Join(arg0);
             else
                 Debug.LogWarning("To join a lobby you are invited to the GameObject must have a Steam Lobby Join component");
         }
 
         public void OpenOverlay()
         {
-            if (m_Inspector.Data.IsValid)
-                API.Overlay.Client.ActivateInviteDialog(m_Inspector.Data);
+            if (_mInspector.Data.IsValid)
+                API.Overlay.Client.ActivateInviteDialog(_mInspector.Data);
             else
                 Debug.LogWarning("No lobby to invite to");
         }
 
         public void InviteUser(UserData user)
         {
-            if (m_Inspector.Data.IsValid)
-                m_Inspector.Data.InviteUserToLobby(user);
+            if (_mInspector.Data.IsValid)
+                _mInspector.Data.InviteUserToLobby(user);
             else
                 Debug.LogWarning("No lobby to invite to");
         }

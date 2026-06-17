@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using UnityEngine;
 
 namespace Heathen.SteamworksIntegration
@@ -16,11 +16,11 @@ namespace Heathen.SteamworksIntegration
         /// </summary>
         public UnityEngine.UI.RawImage image;
 
-        private SteamInputActionData m_Inspector;
+        private SteamInputActionData _mInspector;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamInputActionData>();
+            _mInspector = GetComponent<SteamInputActionData>();
 
             if (!SteamTools.Interface.IsReady)
                 SteamTools.Interface.OnReady += HandleInitialization;
@@ -44,24 +44,24 @@ namespace Heathen.SteamworksIntegration
         /// </summary>
         public void RefreshImage()
         {
-            if (m_Inspector != null && !string.IsNullOrEmpty(m_Inspector.Action.Name) && image != null)
+            if (_mInspector != null && !string.IsNullOrEmpty(_mInspector.Action.Name) && image != null)
             {
-                if (m_Inspector.Set.Handle > 0)
+                if (_mInspector.Set.Handle > 0)
                 {
-                    if (API.Input.Client.connectedControllers.Count > 0)
+                    if (API.Input.Client.ConnectedControllers.Count > 0)
                     {
-                        var textures = m_Inspector.Action.GetInputGlyphs(API.Input.Client.connectedControllers[0], m_Inspector.Set);
+                        var textures = _mInspector.Action.GetInputGlyphs(API.Input.Client.ConnectedControllers[0], _mInspector.Set);
                         if (textures.Length > 0)
                         {
                             image.texture = textures[0];
                         }
                     }
                 }
-                else if (!string.IsNullOrEmpty(m_Inspector.Layer.layerName))
+                else if (!string.IsNullOrEmpty(_mInspector.Layer.LayerName))
                 {
-                    if (API.Input.Client.connectedControllers.Count > 0)
+                    if (API.Input.Client.ConnectedControllers.Count > 0)
                     {
-                        var textures = m_Inspector.Action.GetInputGlyphs(API.Input.Client.connectedControllers[0], m_Inspector.Layer);
+                        var textures = _mInspector.Action.GetInputGlyphs(API.Input.Client.ConnectedControllers[0], _mInspector.Layer);
                         if (textures.Length > 0)
                         {
                             image.texture = textures[0];

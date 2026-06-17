@@ -1,34 +1,31 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using UnityEngine;
 
 namespace Heathen.SteamworksIntegration
 {
+    /// <summary>
+    /// Displays the icon of a Steam achievement.
+    /// </summary>
     [ModularComponent(typeof(SteamAchievementData), "Icons", nameof(image))]
     [AddComponentMenu("")]
     [RequireComponent(typeof(SteamAchievementData))]
     public class SteamAchievementIcon : MonoBehaviour
     {
+        /// <summary>
+        /// The raw image component to display the icon in.
+        /// </summary>
         public UnityEngine.UI.RawImage image;
-        private SteamAchievementData m_data;
+        private SteamAchievementData _data;
 
         private void Awake()
         {
-            m_data = GetComponent<SteamAchievementData>();
+            _data = GetComponent<SteamAchievementData>();
         }
 
         private void Start()
         {
             API.StatsAndAchievements.Client.OnAchievementStatusChanged.AddListener(HandleChange);
-
-            if (!string.IsNullOrEmpty(m_data.apiName))
-            {
-                if (API.App.Initialized)
-                {
-                    Refresh();
-                }
-                else
-                    API.App.onSteamInitialized.AddListener(Refresh);
-            }
+            SteamTools.Interface.WhenReady(Refresh);
         }
 
         private void OnDestroy()
@@ -43,22 +40,28 @@ namespace Heathen.SteamworksIntegration
 
         private void Refresh()
         {
-            if (!string.IsNullOrEmpty(m_data.apiName))
+            if (!string.IsNullOrEmpty(_data.apiName))
             {
-                API.StatsAndAchievements.Client.GetAchievementIcon(m_data.apiName, texture =>
+                API.StatsAndAchievements.Client.GetAchievementIcon(_data.apiName, texture =>
                 {
                     image.texture = texture;
                 });
             }
 
-            API.App.onSteamInitialized.RemoveListener(Refresh);
+            SteamTools.Events.OnSteamInitialised -= Refresh;
         }
     }
 
 #if UNITY_EDITOR
+    /// <summary>
+    /// Custom editor for <see cref="SteamAchievementIcon"/>.
+    /// </summary>
     [UnityEditor.CustomEditor(typeof(SteamAchievementIcon), true)]
     public class SteamAchievementIconEditor : UnityEditor.Editor
     {
+        /// <summary>
+        /// Draws the inspector GUI.
+        /// </summary>
         public override void OnInspectorGUI()
         {
             serializedObject.Update();

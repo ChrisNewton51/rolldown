@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,38 +11,38 @@ namespace Heathen.SteamworksIntegration
     [RequireComponent(typeof(SteamLobbyData))]
     public class SteamLobbyChatUI : MonoBehaviour
     {
-        [SettingsField(header = "Chat UI")]
+        [SettingsField(0, false, "Chat UI")]
         [SerializeField]
         private int maxMessages = 200;
 
-        [ElementField(header = "Chat UI")]
+        [ElementField("Chat UI")]
         [SerializeField]
         private GameObject chatPanel;
-        [ElementField(header = "Chat UI")]
+        [ElementField("Chat UI")]
         [SerializeField]
         private TMPro.TMP_InputField inputField;
-        [ElementField(header = "Chat UI")]
+        [ElementField("Chat UI")]
         [SerializeField]
         private UnityEngine.UI.ScrollRect scrollView;
-        [ElementField(header = "Chat UI")]
+        [ElementField("Chat UI")]
         [SerializeField]
         private Transform messageRoot;
 
-        [TemplateField(header = "Chat UI")]
+        [TemplateField("Chat UI")]
         [SerializeField]
         private GameObject myChatTemplate;
-        [TemplateField(header = "Chat UI")]
+        [TemplateField("Chat UI")]
         [SerializeField]
         private GameObject theirChatTemplate;
 
-        private SteamLobbyData m_Inspector;
-        private readonly List<SteamLobbyMemberChatMessage> chatMessages = new();
+        private SteamLobbyData _mInspector;
+        private readonly List<SteamLobbyMemberChatMessage> _chatMessages = new();
 
         private void Start()
         {
-            m_Inspector = GetComponent<SteamLobbyData>();
-            m_Inspector.onChanged.AddListener(HandleOnChanged);
-            API.Matchmaking.Client.OnLobbyChatMsg.AddListener(HandleChatMessage);
+            _mInspector = GetComponent<SteamLobbyData>();
+            _mInspector.onChanged.AddListener(HandleOnChanged);
+            SteamTools.Events.OnLobbyChatMsg += HandleChatMessage;
         }
 
         private void HandleOnChanged(LobbyData arg0)
@@ -53,19 +53,19 @@ namespace Heathen.SteamworksIntegration
 
         private void OnDestroy()
         {
-            API.Matchmaking.Client.OnLobbyChatMsg.RemoveListener(HandleChatMessage);
+            SteamTools.Events.OnLobbyChatMsg -= HandleChatMessage;
         }
 
         private void Update()
         {
-            if (chatPanel == null || inputField == null)
+            if (!chatPanel || !inputField)
                 return;
 
             //Show or hide the chat panel based on rather or not we have a lobby
-            if (m_Inspector.Data.IsValid
+            if (_mInspector.Data.IsValid
                 && !chatPanel.activeSelf)
                 chatPanel.SetActive(true);
-            else if (!m_Inspector.Data.IsValid
+            else if (!_mInspector.Data.IsValid
                 && chatPanel.activeSelf)
                 chatPanel.SetActive(false);
 
@@ -85,27 +85,27 @@ namespace Heathen.SteamworksIntegration
 
         public void Clear()
         {
-            if (chatMessages != null)
+            if (_chatMessages != null)
             {
-                foreach(var message in chatMessages)
+                foreach(var message in _chatMessages)
                 {
                     Destroy(message.gameObject);
                 }
-                chatMessages.Clear();
+                _chatMessages.Clear();
             }
         }
 
         private void HandleChatMessage(LobbyChatMsg message)
         {
-            if (message.lobby == m_Inspector.Data
+            if (message.lobby == _mInspector.Data
                 && message.type == Steamworks.EChatEntryType.k_EChatEntryTypeChatMsg)
             {
-                if (chatMessages != null)
+                if (_chatMessages != null)
                 {
-                    if (chatMessages.Count == maxMessages)
+                    if (_chatMessages.Count == maxMessages)
                     {
-                        Destroy(chatMessages[0].gameObject);
-                        chatMessages.RemoveAt(0);
+                        Destroy(_chatMessages[0].gameObject);
+                        _chatMessages.RemoveAt(0);
                     }
 
                     if (message.sender == UserData.Me)
@@ -115,12 +115,12 @@ namespace Heathen.SteamworksIntegration
                         var cmsg = go.GetComponent<SteamLobbyMemberChatMessage>();
                         if (cmsg != null)
                         {
-                            cmsg.Initialize(message);
-                            if (chatMessages.Count > 0
-                                && chatMessages[^1].User == cmsg.User)
+                            cmsg.Initialise(message);
+                            if (_chatMessages.Count > 0
+                                && _chatMessages[^1].User == cmsg.User)
                                 cmsg.IsExpanded = false;
 
-                            chatMessages.Add(cmsg);
+                            _chatMessages.Add(cmsg);
                         }
                     }
                     else
@@ -130,11 +130,11 @@ namespace Heathen.SteamworksIntegration
                         var cmsg = go.GetComponent<SteamLobbyMemberChatMessage>();
                         if (cmsg != null)
                         {
-                            cmsg.Initialize(message);
-                            if (chatMessages[^1].User == cmsg.User)
+                            cmsg.Initialise(message);
+                            if (_chatMessages[^1].User == cmsg.User)
                                 cmsg.IsExpanded = false;
 
-                            chatMessages.Add(cmsg);
+                            _chatMessages.Add(cmsg);
                         }
                     }
 
@@ -145,10 +145,10 @@ namespace Heathen.SteamworksIntegration
 
         public void SendMessage()
         {
-            if (m_Inspector.Data.IsValid
+            if (_mInspector.Data.IsValid
                 && !string.IsNullOrEmpty(inputField.text))
             {
-                m_Inspector.Data.SendChatMessage(inputField.text);
+                _mInspector.Data.SendChatMessage(inputField.text);
                 inputField.text = string.Empty;
                 StartCoroutine(SelectInputField());
             }

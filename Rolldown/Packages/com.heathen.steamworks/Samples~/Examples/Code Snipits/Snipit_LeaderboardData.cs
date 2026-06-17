@@ -111,7 +111,7 @@ namespace MyProperlyFormedNamespaceName
                             //So this is the name that will be in the user's Remote Storage, once attached we can remove it to save space.
                             //we like to us the same name all the time "tempFile" and we do not bother removing it instead we just let it 
                             //overwrite each time as a means to hold the space for future attachments
-                            targetBoard.AttachUGC("tempFile", fileData, (ugcResult, ugcIoError) =>
+                            targetBoard.AttachUgc("tempFile", fileData, (ugcResult, ugcIoError) =>
                             {
                                 if (!ugcIoError)
                                 {
@@ -162,7 +162,7 @@ namespace MyProperlyFormedNamespaceName
                     {
                         if (foundEntry != null)
                         {
-                            Debug.Log($"Found Entry: Score = {foundEntry.Score}, Rank = {foundEntry.Rank}, Detail Count Found = {(foundEntry.details != null ? foundEntry.details.Length : 0)}, Has Attachment? {foundEntry.UgcHandle != UGCHandle_t.Invalid}");
+                            Debug.Log($"Found Entry: Score = {foundEntry.Score}, Rank = {foundEntry.Rank}, Detail Count Found = {(foundEntry.Details != null ? foundEntry.Details.Length : 0)}, Has Attachment? {foundEntry.UgcHandle != UGCHandle_t.Invalid}");
                         }
                         else
                         {
@@ -236,14 +236,14 @@ namespace MyProperlyFormedNamespaceName
             });
 
             //If its not you can read it your self from Remote Storage
-            RemoteStorage.Client.UGCDownload(entry.UgcHandle, 0, (ugcDownloadResult, downloadIOError) =>
+            RemoteStorage.Client.UgcDownload(entry.UgcHandle, 0, (ugcDownloadResult, downloadIOError) =>
             {
                 if (!downloadIOError && ugcDownloadResult.m_eResult == EResult.k_EResultOK)
                 {
                     //Once its downloaded we can read its name
                     var theFileName = ugcDownloadResult.m_pchFileName;
                     //And we can read its data as a byte[]
-                    var theFileData = RemoteStorage.Client.UGCRead(ugcDownloadResult.m_hFile);
+                    var theFileData = RemoteStorage.Client.UgcRead(ugcDownloadResult.m_hFile);
                 }
             });
         }

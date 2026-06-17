@@ -1,31 +1,37 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using UnityEngine;
 
 namespace Heathen.SteamworksIntegration
 {
+    /// <summary>
+    /// Updates <see cref="label"/> with the <see cref="ItemData.GetTotalQuantity()"/> value of the related <see cref="ItemData"/>
+    /// </summary>
     [ModularComponent(typeof(SteamInventoryItemData), "Quantities", nameof(label))]
     [RequireComponent(typeof(SteamInventoryItemDataEvents))]
     [RequireComponent(typeof(SteamInventoryItemData))]
     [AddComponentMenu("")]
     public class SteamInventoryItemQuantity : MonoBehaviour
     {
+        /// <summary>
+        /// The label where the <see cref="ItemData.GetTotalQuantity()"/> will be written.
+        /// </summary>
         public TMPro.TextMeshProUGUI label;
 
-        private SteamInventoryItemData m_Inspector;
-        private SteamInventoryItemDataEvents m_Events;
+        private SteamInventoryItemData _mInspector;
+        private SteamInventoryItemDataEvents _mEvents;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamInventoryItemData>();
-            m_Events = GetComponent<SteamInventoryItemDataEvents>();
+            _mInspector = GetComponent<SteamInventoryItemData>();
+            _mEvents = GetComponent<SteamInventoryItemDataEvents>();
 
-            m_Events.onStateChanged?.AddListener(HandleStateChange);
+            _mEvents.onStateChanged?.AddListener(HandleStateChange);
         }
 
         private void HandleStateChange()
         {
             if (label != null)
-                label.text = m_Inspector.Data.GetTotalQuantity().ToString();
+                label.text = _mInspector.Data.GetTotalQuantity().ToString();
         }
     }
 }

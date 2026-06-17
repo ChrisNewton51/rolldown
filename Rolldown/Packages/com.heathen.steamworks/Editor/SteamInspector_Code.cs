@@ -1,4 +1,4 @@
-#if !DISABLESTEAMWORKS && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+#if !DISABLESTEAMWORKS && STEAM_INSTALLED
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -411,12 +411,12 @@ namespace Heathen.SteamworksIntegration.Editors
 
             if (Application.isPlaying)
             {
-                if (API.App.Initialized)
+                if (API.App.Initialised)
                 {
-                    var reportedId = API.App.Client.Id.m_AppId;
+                    var reportedId = API.App.Id;
 
                     initializationField.text = "Initialized";
-                    reportedAppId.text = API.App.Client.Id.m_AppId.ToString();
+                    reportedAppId.text = API.App.Id.ToString();
                     csteamId.text = API.User.Client.Id.ToString();
                     userName.text = API.User.Client.Id.Name;
                     userLevel.text = API.User.Client.Level.ToString();
@@ -440,7 +440,7 @@ namespace Heathen.SteamworksIntegration.Editors
                     }
 
                 }
-                else if (API.App.HasInitializationError)
+                else if (API.App.HasInitialisationError)
                 {
                     initializationField.text = "Erred";
                     csteamId.text = "0";
@@ -684,8 +684,8 @@ namespace Heathen.SteamworksIntegration.Editors
 
                 if (entryDictionary.ContainsKey(leaderboard.id) && leaderboard.IsValid && entryDictionary[leaderboard.id] != null)
                 {
-                    lblScore.text = entryDictionary[leaderboard.id].entry.m_nScore.ToString();
-                    lblRank.text = entryDictionary[leaderboard.id].entry.m_nGlobalRank.ToString();
+                    lblScore.text = entryDictionary[leaderboard.id].Entry.m_nScore.ToString();
+                    lblRank.text = entryDictionary[leaderboard.id].Entry.m_nGlobalRank.ToString();
                 }
                 else
                 {
@@ -767,7 +767,7 @@ namespace Heathen.SteamworksIntegration.Editors
                 lblCount.text = item.TotalQuantity.ToString();
 
                 Button clearButton = itemList[i].Query<Button>(name = "btnClear");
-                if (item.Type == InventoryItemType.item && item.TotalQuantity > 0)
+                if (item.Type == InventoryItemType.Item && item.TotalQuantity > 0)
                 {
                     clearButton.style.display = DisplayStyle.Flex;
                 }

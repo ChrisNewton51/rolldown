@@ -1,16 +1,16 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 
 namespace Heathen.SteamworksIntegration
 {
-    public struct LeaderboardUGCSet
+    public struct LeaderboardUgcSet
     {
-        public Steamworks.LeaderboardUGCSet_t data;
-        public EResult Result => data.m_eResult;
-        public LeaderboardData Leaderboard => data.m_hSteamLeaderboard;
+        public LeaderboardUGCSet_t Data;
+        public EResult Result => Data.m_eResult;
+        public LeaderboardData Leaderboard => Data.m_hSteamLeaderboard;
 
-        public static implicit operator LeaderboardUGCSet(LeaderboardUGCSet_t native) => new LeaderboardUGCSet { data = native };
-        public static implicit operator LeaderboardUGCSet_t(LeaderboardUGCSet heathen) => heathen.data;
+        public static implicit operator LeaderboardUgcSet(LeaderboardUGCSet_t native) => new() { Data = native };
+        public static implicit operator LeaderboardUGCSet_t(LeaderboardUgcSet heathen) => heathen.Data;
     }
 }
 #endif

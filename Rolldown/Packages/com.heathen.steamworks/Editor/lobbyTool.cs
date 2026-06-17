@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS && STEAM_INSTALLED
 using System;
 using UnityEditor;
 using UnityEngine;
@@ -17,9 +17,9 @@ namespace Heathen.SteamworksIntegration.Editors
         {
             if (Application.isPlaying)
             {
-                if (API.Matchmaking.Client.memberOfLobbies != null)
+                if (API.Matchmaking.Client.MemberOfLobbies != null)
                 {
-                    if (API.Matchmaking.Client.memberOfLobbies.Count > 0)
+                    if (API.Matchmaking.Client.MemberOfLobbies.Count > 0)
                     {
                         DrawWindow();
                     }
@@ -45,15 +45,15 @@ namespace Heathen.SteamworksIntegration.Editors
             ListLobbies();
             EditorGUILayout.EndHorizontal();
             scrollPos = EditorGUILayout.BeginScrollView(scrollPos);
-            LobbyDetails(API.Matchmaking.Client.memberOfLobbies[lobbyIndex]);
+            LobbyDetails(API.Matchmaking.Client.MemberOfLobbies[lobbyIndex]);
             EditorGUILayout.EndScrollView();
         }
 
         private void ListLobbies()
         {
-            for (int i = 0; i < API.Matchmaking.Client.memberOfLobbies.Count; i++)
+            for (int i = 0; i < API.Matchmaking.Client.MemberOfLobbies.Count; i++)
             {
-                var lobby = API.Matchmaking.Client.memberOfLobbies[i];
+                var lobby = API.Matchmaking.Client.MemberOfLobbies[i];
 
                 if (DrawLobbyEntry(lobby, lobbyIndex == i))
                     lobbyIndex = i;

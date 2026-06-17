@@ -1,171 +1,106 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
+using Object = UnityEngine.Object;
 
 namespace Heathen.SteamworksIntegration.API
 {
-
     /// <summary>
-    /// Provides functions for accessing and submitting stats, achievements, and leaderboards.
+    /// Provides access to functionality related to player stats and achievements,
+    /// including retrieving, updating, and clearing achievement data, as well as handling related events.
     /// </summary>
     public static class StatsAndAchievements
     {
         /// <summary>
-        /// Provides functions for accessing and submitting stats, achievements, and leaderboards.
+        /// Provides access to client-related functionality for managing stats and achievements.
+        /// This includes handling events such as user stats received, user stats unloaded,
+        /// user stats stored, and achievement updates. The class also provides methods to
+        /// manage achievements, retrieve their attributes, access global statistics, and handle
+        /// various details about player achievements and stats.
         /// </summary>
         public static class Client
         {
             [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
             static void Init()
             {
-                m_PendingLinks = new();
+                _pendingLinks = new();
 
-                if(m_LoadedImages != null)
+                if(_loadedImages != null)
                 {
-                    foreach(var kvp in m_LoadedImages)
+                    foreach(var kvp in _loadedImages)
                     {
                         var target = kvp.Value;
-                        GameObject.Destroy(target);
+                        Object.Destroy(target);
                     }
                 }
 
-                m_LoadedImages = new();
-                m_OnUserStatsReceived = new();
-                m_OnUserStatsUnloaded = new();
-                m_OnUserStatsStored = new();
-                m_OnUserAchievementStored = new();
-                m_OnAchievementStatusChanged = new();
+                _loadedImages = new();
+                _onUserStatsReceived = new();
+                _onUserStatsUnloaded = new();
+                _onUserStatsStored = new();
+                _onUserAchievementStored = new();
+                _onAchievementStatusChanged = new();
 
-                m_UserAchievementIconFetched_t = null;
-                m_UserStatsReceived_t = null;
-                m_UserStatsUnload_t = null;
-                m_UserAchievementStored_t = null;
-                m_UserStatsStored_t = null;
-                m_NumberOfCurrentPlayers_t = null;
-                m_GlobalAchievementPercentagesReady_t = null;
-                m_GlobalStatsReceived_t = null;
-                m_UserStatsReceived_t2 = null;
-                m_UserStatsLoaded = new();
+                _userAchievementIconFetchedT = null;
+                _numberOfCurrentPlayersT = null;
+                _globalAchievementPercentagesReadyT = null;
+                _globalStatsReceivedT = null;
+                _userStatsReceivedT2 = null;
             }
 
             private class ImageRequestCallbackLink
             {
-                public bool isAchievement;
-                public string apiName;
-                public Action<Texture2D> callback;
+                public bool IsAchievement;
+                public string APIName;
+                public Action<Texture2D> Callback;
             }
 
             /// <summary>
-            /// Called when the latest stats and achievements for a specific user (including the local user) have been received from the server.
+            /// Triggered when the status of an achievement changes.
+            /// This event provides the achievement API name and its current status (unlocked or locked).
             /// </summary>
-            public static UserStatsReceivedEvent OnUserStatsReceived
-            {
-                get
-                {
-                    m_UserStatsReceived_t ??= Callback<UserStatsReceived_t>.Create(HandleUserStatsReceived);
+            public static UnityEvent<string, bool> OnAchievementStatusChanged => _onAchievementStatusChanged;
 
-                    return m_OnUserStatsReceived;
-                }
-            }
-            private static void HandleUserStatsReceived(UserStatsReceived_t arg)
-            {
-                if (arg.m_nGameID == GameData.Me
-                    && arg.m_steamIDUser == UserData.Me)
-                    m_UserStatsLoaded = arg;
+            private static List<ImageRequestCallbackLink> _pendingLinks = new();
+            private static Dictionary<int, Texture2D> _loadedImages = new();
+            private static UserStatsReceivedEvent _onUserStatsReceived = new();
+            private static UserStatsUnloadedEvent _onUserStatsUnloaded = new();
+            private static UserStatsStoredEvent _onUserStatsStored = new();
+            private static UserAchievementStoredEvent _onUserAchievementStored = new();
+            private static UnityEvent<string, bool> _onAchievementStatusChanged = new();
 
-                m_OnUserStatsReceived.Invoke(arg);
-            }
-            /// <summary>
-            /// Callback indicating that a user's stats have been unloaded.
-            /// </summary>
-            public static UserStatsUnloadedEvent OnUserStatsUnloaded
-            {
-                get
-                {
-                    m_UserStatsUnload_t ??= Callback<UserStatsUnloaded_t>.Create(m_OnUserStatsUnloaded.Invoke);
+            private static Callback<UserAchievementIconFetched_t> _userAchievementIconFetchedT;
 
-                    return m_OnUserStatsUnloaded;
-                }
-            }
-
-            public static UserStatsStoredEvent OnUserStatsStored
-            {
-                get
-                {
-                    m_UserStatsStored_t ??= Callback<UserStatsStored_t>.Create(m_OnUserStatsStored.Invoke);
-
-                    return m_OnUserStatsStored;
-                }
-            }
-
-            public static UserAchievementStoredEvent OnUserAchievementStored
-            {
-                get
-                {
-                    m_UserAchievementStored_t ??= Callback<UserAchievementStored_t>.Create(m_OnUserAchievementStored.Invoke);
-
-                    return m_OnUserAchievementStored;
-                }
-            }
-
-            public static UnityEvent<string, bool> OnAchievementStatusChanged
-            {
-                get
-                {
-                    return m_OnAchievementStatusChanged;
-                }
-            }
-
-            private static List<ImageRequestCallbackLink> m_PendingLinks = new();
-            private static Dictionary<int, Texture2D> m_LoadedImages = new();
-            private static UserStatsReceivedEvent m_OnUserStatsReceived = new();
-            private static UserStatsUnloadedEvent m_OnUserStatsUnloaded = new();
-            private static UserStatsStoredEvent m_OnUserStatsStored = new();
-            private static UserAchievementStoredEvent m_OnUserAchievementStored = new();
-            private static UnityEvent<string, bool> m_OnAchievementStatusChanged = new();
-
-            private static Callback<UserAchievementIconFetched_t> m_UserAchievementIconFetched_t;
-            private static Callback<UserStatsReceived_t> m_UserStatsReceived_t;
-            private static Callback<UserStatsUnloaded_t> m_UserStatsUnload_t;
-            private static Callback<UserAchievementStored_t> m_UserAchievementStored_t;
-            private static Callback<UserStatsStored_t> m_UserStatsStored_t;
-
-            private static CallResult<NumberOfCurrentPlayers_t> m_NumberOfCurrentPlayers_t;
-            private static CallResult<GlobalAchievementPercentagesReady_t> m_GlobalAchievementPercentagesReady_t;
-            private static CallResult<GlobalStatsReceived_t> m_GlobalStatsReceived_t;
-            private static CallResult<UserStatsReceived_t> m_UserStatsReceived_t2;
-
-            private static UserStatsReceived m_UserStatsLoaded = new();
-            public static UserStatsReceived UserStatsLoaded => m_UserStatsLoaded;
+            private static CallResult<NumberOfCurrentPlayers_t> _numberOfCurrentPlayersT;
+            private static CallResult<GlobalAchievementPercentagesReady_t> _globalAchievementPercentagesReadyT;
+            private static CallResult<GlobalStatsReceived_t> _globalStatsReceivedT;
+            private static CallResult<UserStatsReceived_t> _userStatsReceivedT2;
 
             /// <summary>
-            /// Resets the unlock status of an achievement.
+            /// Resets the completion status of the specified achievement.
             /// </summary>
-            /// <param name="achievementApiName"></param>
-            /// <returns></returns>
+            /// <param name="achievementApiName">The API name of the achievement to reset.</param>
+            /// <returns>True if the achievement was successfully reset; otherwise, false.</returns>
             public static bool ClearAchievement(string achievementApiName)
             {
                 var value = SteamUserStats.ClearAchievement(achievementApiName);
 
-                if(value)
+                if (value)
                 {
-                    if (GetAchievement(achievementApiName, out bool status))
-                        OnAchievementStatusChanged?.Invoke(achievementApiName, status);
-                    else
-                        OnAchievementStatusChanged?.Invoke(achievementApiName, false);
+                    OnAchievementStatusChanged?.Invoke(achievementApiName,
+                        GetAchievement(achievementApiName, out var status) && status);
                 }
 
                 return value;
             }
             /// <summary>
-            /// Gets the unlock status of the Achievement.
+            /// Gets the unlocked status of the Achievement.
             /// </summary>
             /// <param name="achievementApiName">The 'API Name' of the achievement.</param>
-            /// <param name="achieved">Returns the unlock status of the achievement.</param>
+            /// <param name="achieved">Returns the unlocked status of the achievement.</param>
             /// <returns></returns>
             public static bool GetAchievement(string achievementApiName, out bool achieved) => SteamUserStats.GetAchievement(achievementApiName, out achieved);
             /// <summary>
@@ -182,11 +117,11 @@ namespace Heathen.SteamworksIntegration.API
                 return result;
             }
             /// <summary>
-            /// Gets the unlock status of the Achievement.
+            /// Gets the unlocked status of the Achievement.
             /// </summary>
             /// <param name="userId">The Steam ID of the user to get the achievement for.</param>
             /// <param name="achievementApiName">The 'API Name' of the achievement.</param>
-            /// <param name="achieved">Returns the unlock status of the achievement.</param>
+            /// <param name="achieved">Returns the unlocked status of the achievement.</param>
             /// <returns></returns>
             public static bool GetAchievement(UserData userId, string achievementApiName, out bool achieved) => SteamUserStats.GetUserAchievement(userId, achievementApiName, out achieved);
             /// <summary>
@@ -194,7 +129,7 @@ namespace Heathen.SteamworksIntegration.API
             /// </summary>
             /// <param name="userId"></param>
             /// <param name="achievementApiName">The 'API Name' of the achievement.</param>
-            /// <param name="achieved">Returns the unlock status of the achievement.</param>
+            /// <param name="achieved">Returns the unlocked status of the achievement.</param>
             /// <param name="unlockTime">Returns the time that the achievement was unlocked.</param>
             /// <returns></returns>
             public static bool GetAchievement(UserData userId, string achievementApiName, out bool achieved, out DateTime unlockTime)
@@ -211,14 +146,14 @@ namespace Heathen.SteamworksIntegration.API
             /// <returns></returns>
             public static bool GetAchievementAchievedPercent(string achievementApiName, out float percent) => SteamUserStats.GetAchievementAchievedPercent(achievementApiName, out percent);
             /// <summary>
-            /// Get general attributes for an achievement. Currently provides: Name, Description, and Hidden status.
+            /// Get general attributes for an achievement. Currently, provides: Name, Description, and Hidden status.
             /// </summary>
             /// <param name="achievementApiName">The 'API Name' of the achievement.</param>
             /// <param name="key">The 'key' to get a value for.</param>
             /// <returns></returns>
             public static string GetAchievementDisplayAttribute(string achievementApiName, string key) => SteamUserStats.GetAchievementDisplayAttribute(achievementApiName, key);
             /// <summary>
-            /// Get general attributes for an achievement. Currently provides: Name, Description, and Hidden status.
+            /// Get general attributes for an achievement. Currently, provides: Name, Description, and Hidden status.
             /// </summary>
             /// <param name="achievementApiName">The 'API Name' of the achievement.</param>
             /// <param name="attribute">The 'attribute' to get a value for.</param>
@@ -235,7 +170,6 @@ namespace Heathen.SteamworksIntegration.API
                 //Valve seems to sometimes not register the icon fetched callback unless a read has been done on the achievement ... so do a read then request
                 if (!SteamUserStats.GetAchievement(achievementApiName, out _))
                 {
-                    Debug.LogWarning(nameof(GetAchievementIcon) + $": Achievement data has not been cashed for the achievement, check {nameof(UserStatsLoaded)} Results to insure User Stats have been loaded.");
                     return false;
                 }
 
@@ -245,18 +179,17 @@ namespace Heathen.SteamworksIntegration.API
                     return false;
                 }
 
-                if (m_UserAchievementIconFetched_t == null)
-                    m_UserAchievementIconFetched_t = Callback<UserAchievementIconFetched_t>.Create(HandleIconImageLoaded);
+                _userAchievementIconFetchedT ??= Callback<UserAchievementIconFetched_t>.Create(HandleIconImageLoaded);
 
                 var handle = SteamUserStats.GetAchievementIcon(achievementApiName);
                 if (handle > 0)
                 {
-                    if (m_LoadedImages.ContainsKey(handle))
-                        callback.Invoke(m_LoadedImages[handle]);
+                    if (_loadedImages.TryGetValue(handle, out var image))
+                        callback.Invoke(image);
                     else
                     {
                         if (LoadImage(handle))
-                            callback.Invoke(m_LoadedImages[handle]);
+                            callback.Invoke(_loadedImages[handle]);
                         else
                         {
                             Debug.LogWarning(nameof(GetAchievementIcon) + ": Failed to load the requested icon");
@@ -266,11 +199,11 @@ namespace Heathen.SteamworksIntegration.API
                 }
                 else
                 {
-                    m_PendingLinks.Add(new ImageRequestCallbackLink
+                    _pendingLinks.Add(new ImageRequestCallbackLink
                     {
-                        isAchievement = true,
-                        apiName = achievementApiName,
-                        callback = callback
+                        IsAchievement = true,
+                        APIName = achievementApiName,
+                        Callback = callback
                     });
                 }
 
@@ -318,7 +251,7 @@ namespace Heathen.SteamworksIntegration.API
                 {
                     if (!error && result.m_eResult == EResult.k_EResultOK)
                     {
-                        var index = GetMostAchievedAchievementInfo(out string achievementApiName, out float percent, out bool achieved);
+                        var index = GetMostAchievedAchievementInfo(out string achievementApiName, out float percent, out _);
                         if (index > -1)
                         {
                             List<(AchievementData achievement, float percentage)> results = new List<(AchievementData achievement, float percentage)>();
@@ -327,13 +260,13 @@ namespace Heathen.SteamworksIntegration.API
                             {
                                 results.Add((achievementApiName, percent));
 
-                                index = GetNextMostAchievedAchievementInfo(index, out achievementApiName, out percent, out achieved);
+                                index = GetNextMostAchievedAchievementInfo(index, out achievementApiName, out percent, out _);
                             }
 
-                            callback?.Invoke(result.m_eResult, results.ToArray(), error);
+                            callback?.Invoke(result.m_eResult, results.ToArray(), false);
                         }
                         else
-                            callback?.Invoke(result.m_eResult, null, error);
+                            callback?.Invoke(result.m_eResult, null, false);
                     }
                     else
                         callback?.Invoke(result.m_eResult, null, error);
@@ -345,13 +278,13 @@ namespace Heathen.SteamworksIntegration.API
             /// <param name="achievementApiName"></param>
             /// <param name="percent"></param>
             /// <param name="achieved"></param>
-            /// <returns>Returns -1 if RequestGlobalAchievementPercentages has not been called or if there are no global achievement percentages for this app Id. If the call is successful it returns an iterator which should be used with GetNextMostAchievedAchievementInfo.</returns>
+            /// <returns>Returns -1 if RequestGlobalAchievementPercentages has not been called or if there are no global achievement percentages for this app ID. If the call is successful, it returns an iterator which should be used with GetNextMostAchievedAchievementInfo.</returns>
             public static int GetMostAchievedAchievementInfo(out string achievementApiName, out float percent, out bool achieved) => SteamUserStats.GetMostAchievedAchievementInfo(out achievementApiName, 8193, out percent, out achieved);
             /// <summary>
             /// Gets the info on the next most achieved achievement for the game.
             /// </summary>
             /// <remarks>
-            /// You must have called RequestGlobalAchievementPercentages and it needs to return successfully via its callback prior to calling this.
+            /// You must have called RequestGlobalAchievementPercentages, and it needs to return successfully via its callback before calling this.
             /// </remarks>
             /// <param name="previousIndex">Iterator returned from the previous call to this function or from GetMostAchievedAchievementInfo</param>
             /// <param name="achievementApiName">String buffer to return the 'API Name' of the achievement into.</param>
@@ -373,28 +306,27 @@ namespace Heathen.SteamworksIntegration.API
                 if (callback == null)
                     return;
 
-                if (m_NumberOfCurrentPlayers_t == null)
-                    m_NumberOfCurrentPlayers_t = CallResult<NumberOfCurrentPlayers_t>.Create();
+                _numberOfCurrentPlayersT ??= CallResult<NumberOfCurrentPlayers_t>.Create();
 
                 var handle = SteamUserStats.GetNumberOfCurrentPlayers();
-                m_NumberOfCurrentPlayers_t.Set(handle, callback.Invoke);
+                _numberOfCurrentPlayersT.Set(handle, callback.Invoke);
             }
             /// <summary>
-            /// Gets the current value of the a stat for the current user.
+            /// Gets the current value of a stat for the current user.
             /// </summary>
             /// <param name="statApiName">The 'API Name' of the stat. Must not be longer than k_cchStatNameMax.</param>
             /// <param name="data">The variable to return the stat value into.</param>
             /// <returns></returns>
             public static bool GetStat(string statApiName, out int data) => SteamUserStats.GetStat(statApiName, out data);
             /// <summary>
-            /// Gets the current value of the a stat for the current user.
+            /// Gets the current value of a stat for the current user.
             /// </summary>
             /// <param name="statApiName">The 'API Name' of the stat. Must not be longer than k_cchStatNameMax.</param>
             /// <param name="data">The variable to return the stat value into.</param>
             /// <returns></returns>
             public static bool GetStat(string statApiName, out float data) => SteamUserStats.GetStat(statApiName, out data);
             /// <summary>
-            /// Gets the current value of the a stat for the specified user.
+            /// Gets the current value of a stat for the specified user.
             /// </summary>
             /// <param name="userId">The Steam ID of the user to get the stat for.</param>
             /// <param name="statApiName">The 'API Name' of the stat. Must not be longer than k_cchStatNameMax.</param>
@@ -402,7 +334,7 @@ namespace Heathen.SteamworksIntegration.API
             /// <returns></returns>
             public static bool GetStat(UserData userId, string statApiName, out int data) => SteamUserStats.GetUserStat(userId, statApiName, out data);
             /// <summary>
-            /// Gets the current value of the a stat for the specified user.
+            /// Gets the current value of a stat for the specified user.
             /// </summary>
             /// <param name="userId">The Steam ID of the user to get the stat for.</param>
             /// <param name="statApiName">The 'API Name' of the stat. Must not be longer than k_cchStatNameMax.</param>
@@ -424,18 +356,17 @@ namespace Heathen.SteamworksIntegration.API
             /// Asynchronously fetch the data for the percentage of players who have received each achievement for the current game globally.
             /// </summary>
             /// <remarks>
-            /// You must have called RequestCurrentStats and it needs to return successfully via its callback prior to calling this!
+            /// You must have called RequestCurrentStats, and it needs to return successfully via its callback before calling this!
             /// </remarks>
             public static void RequestGlobalAchievementPercentages(Action<GlobalAchievementPercentagesReady_t, bool> callback)
             {
                 if (callback == null)
                     return;
 
-                if (m_GlobalAchievementPercentagesReady_t == null)
-                    m_GlobalAchievementPercentagesReady_t = CallResult<GlobalAchievementPercentagesReady_t>.Create();
+                _globalAchievementPercentagesReadyT ??= CallResult<GlobalAchievementPercentagesReady_t>.Create();
 
                 var handle = SteamUserStats.RequestGlobalAchievementPercentages();
-                m_GlobalAchievementPercentagesReady_t.Set(handle, callback.Invoke);
+                _globalAchievementPercentagesReadyT.Set(handle, callback.Invoke);
             }
             /// <summary>
             /// Asynchronously fetches global stats data, which is available for stats marked as "aggregated" in the App Admin panel of the Steamworks website.
@@ -447,17 +378,16 @@ namespace Heathen.SteamworksIntegration.API
                 if (callback == null)
                     return;
 
-                if (m_GlobalStatsReceived_t == null)
-                    m_GlobalStatsReceived_t = CallResult<GlobalStatsReceived_t>.Create();
+                _globalStatsReceivedT ??= CallResult<GlobalStatsReceived_t>.Create();
 
                 var handle = SteamUserStats.RequestGlobalStats(historyDays);
-                m_GlobalStatsReceived_t.Set(handle, callback.Invoke);
+                _globalStatsReceivedT.Set(handle, callback.Invoke);
             }
             /// <summary>
             /// Asynchronously downloads stats and achievements for the specified user from the server.
             /// </summary>
             /// <remarks>
-            /// To keep from using too much memory, an least recently used cache (LRU) is maintained and other user's stats will occasionally be unloaded. When this happens a UserStatsUnloaded_t callback is sent. After receiving this callback the user's stats will be unavailable until this function is called again.
+            /// To keep from using too much memory, the least recently used cache (LRU) is maintained and the other user's stats will occasionally be unloaded. When this happens, a UserStatsUnloaded_t callback is sent. After receiving this callback, the user's stats will be unavailable until this function is called again.
             /// </remarks>
             /// <param name="userId"></param>
             /// <param name="callback"></param>
@@ -466,14 +396,13 @@ namespace Heathen.SteamworksIntegration.API
                 if (callback == null)
                     return;
 
-                if (m_UserStatsReceived_t2 == null)
-                    m_UserStatsReceived_t2 = CallResult<UserStatsReceived_t>.Create();
+                _userStatsReceivedT2 ??= CallResult<UserStatsReceived_t>.Create();
 
                 var handle = SteamUserStats.RequestUserStats(userId);
-                m_UserStatsReceived_t2.Set(handle, (r,e) => callback.Invoke(r, e));
+                _userStatsReceivedT2.Set(handle, (r,e) => callback.Invoke(r, e));
             }
             /// <summary>
-            /// Resets the current users stats and, optionally achievements.
+            /// Resets the current users stats and, optionally, achievements.
             /// </summary>
             /// <remarks>
             /// This automatically calls StoreStats to persist the changes to the server. This should typically only be used for testing purposes during development. Ensure that you sync up your stats with the new default values provided by Steam after calling this by calling RequestCurrentStats.
@@ -487,10 +416,8 @@ namespace Heathen.SteamworksIntegration.API
                 {
                     foreach (var achievementApiName in GetAchievementNames())
                     {
-                        if (GetAchievement(achievementApiName, out bool status))
-                            OnAchievementStatusChanged?.Invoke(achievementApiName, status);
-                        else
-                            OnAchievementStatusChanged?.Invoke(achievementApiName, false);
+                        OnAchievementStatusChanged?.Invoke(achievementApiName,
+                            GetAchievement(achievementApiName, out bool status) && status);
                     }
                 }
 
@@ -507,10 +434,8 @@ namespace Heathen.SteamworksIntegration.API
 
                 if (value)
                 {
-                    if (GetAchievement(achievementApiName, out bool status))
-                        OnAchievementStatusChanged?.Invoke(achievementApiName, status);
-                    else
-                        OnAchievementStatusChanged?.Invoke(achievementApiName, false);
+                    OnAchievementStatusChanged?.Invoke(achievementApiName,
+                        GetAchievement(achievementApiName, out var status) && status);
                 }
 
                 return value;
@@ -529,47 +454,53 @@ namespace Heathen.SteamworksIntegration.API
             /// <param name="data">The new value of the stat. This must be an absolute value, it will not increment or decrement for you.</param>
             /// <returns></returns>
             public static bool SetStat(string statApiName, float data) => SteamUserStats.SetStat(statApiName, data);
+
             /// <summary>
-            /// Send the changed stats and achievements data to the server for permanent storage.
+            /// Sends updated stats and achievement data to the Steam servers for permanent storage.
             /// </summary>
             /// <remarks>
-            /// If this fails then nothing is sent to the server. It's advisable to keep trying until the call is successful. This call can be rate limited.Call frequency should be on the order of minutes, rather than seconds.You should only be calling this during major state changes such as the end of a round, the map changing, or the user leaving a server. This call is required to display the achievement unlock notification dialog though, so if you have called SetAchievement then it's advisable to call this soon after that.
+            /// This method ensures that changes to stats and achievements are sent to the server.
+            /// It should be called sparingly, as frequent calls may cause rate-limiting.
+            /// Recommended usage scenarios include major state transitions, such as the end of a session or significant gameplay events.
+            /// Additionally, it is necessary to invoke this method shortly after calling <c>SetAchievement</c> to display the achievement notification dialogue.
             /// </remarks>
-            /// <returns></returns>
+            /// <returns>True if the data was successfully stored on the server; otherwise, false.</returns>
             public static bool StoreStats() => SteamUserStats.StoreStats();
+
             /// <summary>
-            /// Updates an AVGRATE stat with new values.
+            /// Updates an AVGRATE stat with the specified values.
             /// </summary>
-            /// <param name="statApiName">The 'API Name' of the stat. Must not be longer than k_cchStatNameMax.</param>
-            /// <param name="countThisSession">The value accumulation since the last call to this function.</param>
-            /// <param name="sessionLength">The amount of time in seconds since the last call to this function.</param>
-            /// <returns></returns>
-            public static bool UpdateAvgRateStat(string statApiName, float countThisSession, double sessionLength) => SteamUserStats.UpdateAvgRateStat(statApiName, countThisSession, sessionLength);
-            
+            /// <param name="statApiName">The API name of the stat. Must not exceed the maximum allowable length.</param>
+            /// <param name="countThisSession">The accumulated value to add since the last update.</param>
+            /// <param name="sessionLength">The elapsed time in seconds since the last update.</param>
+            /// <returns>True if the stat was successfully updated; otherwise, false.</returns>
+            public static bool UpdateAvgRateStat(string statApiName, float countThisSession, double sessionLength) =>
+                SteamUserStats.UpdateAvgRateStat(statApiName, countThisSession, sessionLength);
+
             private static void HandleIconImageLoaded(UserAchievementIconFetched_t param)
             {
                 if (LoadImage(param.m_nIconHandle))
                 {
-                    var target = m_LoadedImages[param.m_nIconHandle];
+                    var target = _loadedImages[param.m_nIconHandle];
                     var apiName = param.m_rgchAchievementName;
-                    foreach (var link in m_PendingLinks)
+                    foreach (var link in _pendingLinks)
                     {
-                        if (link.isAchievement && link.apiName == apiName)
-                            link.callback?.Invoke(target);
+                        if (link.IsAchievement && link.APIName == apiName)
+                            link.Callback?.Invoke(target);
                     }
 
-                    m_PendingLinks.RemoveAll(p => p.isAchievement && p.apiName == apiName);
+                    _pendingLinks.RemoveAll(p => p.IsAchievement && p.APIName == apiName);
                 }
                 else
                 {
                     var apiName = param.m_rgchAchievementName;
-                    foreach (var link in m_PendingLinks)
+                    foreach (var link in _pendingLinks)
                     {
-                        if (link.isAchievement && link.apiName == apiName)
-                            link.callback?.Invoke(null);
+                        if (link.IsAchievement && link.APIName == apiName)
+                            link.Callback?.Invoke(null);
                     }
 
-                    m_PendingLinks.RemoveAll(p => p.isAchievement && p.apiName == apiName);
+                    _pendingLinks.RemoveAll(p => p.IsAchievement && p.APIName == apiName);
                 }
             }
             private static bool LoadImage(int imageHandle)
@@ -578,8 +509,8 @@ namespace Heathen.SteamworksIntegration.API
                 {
                     Texture2D pointer = null;
 
-                    if (m_LoadedImages.ContainsKey(imageHandle))
-                        pointer = m_LoadedImages[imageHandle];
+                    if (_loadedImages.TryGetValue(imageHandle, out var image))
+                        pointer = image;
 
                     if (pointer == null)
                     {
@@ -587,7 +518,7 @@ namespace Heathen.SteamworksIntegration.API
                     }
                     else
                     {
-                        GameObject.Destroy(pointer);
+                        Object.Destroy(pointer);
                         pointer = new Texture2D((int)width, (int)height, TextureFormat.RGBA32, false);
                     }
 
@@ -596,14 +527,11 @@ namespace Heathen.SteamworksIntegration.API
 
                     if (SteamUtils.GetImageRGBA(imageHandle, imageBuffer, bufferSize))
                     {
-                        pointer.LoadRawTextureData(API.Utilities.FlipImageBufferVertical((int)width, (int)height, imageBuffer));
+                        pointer.LoadRawTextureData(Utilities.FlipImageBufferVertical((int)width, (int)height, imageBuffer));
                         pointer.Apply();
                     }
 
-                    if (m_LoadedImages.ContainsKey(imageHandle))
-                        m_LoadedImages[imageHandle] = pointer;
-                    else
-                        m_LoadedImages.Add(imageHandle, pointer);
+                    _loadedImages[imageHandle] = pointer;
 
                     return true;
                 }
@@ -617,78 +545,57 @@ namespace Heathen.SteamworksIntegration.API
         /// </summary>
         public static class Server
         {
-            private static CallResult<GSStatsReceived_t> m_GSStatsReceived_t;
-            private static CallResult<GSStatsStored_t> m_GSStatsStored_t;
+            private static CallResult<GSStatsReceived_t> _mGsStatsReceivedT;
+            private static CallResult<GSStatsStored_t> _mGsStatsStoredT;
 
             /// <summary>
-            /// Resets the unlock status of an achievement for the specified user.
+            /// Resets the specified user's achievement to an uncompleted status.
             /// </summary>
-            /// <remarks>
-            /// You must have called RequestUserStats and it needs to return successfully via its callback prior to calling this!
-            /// </remarks>
-            /// <param name="userId">The Steam ID of the user to clear the achievement for.</param>
-            /// <param name="achievementApiName">The 'API Name' of the Achievement to reset.</param>
-            /// <returns>
-            /// <para>
-            /// This function returns true upon success if all of the following conditions are met; otherwise, false.
-            /// </para>
-            /// <list type="bullet">
-            /// <item>The specified achievement "API Name" exists in App Admin on the Steamworks website, and the changes are published.</item>
-            /// <item>RequestUserStats has completed and successfully returned its callback for the specified user.</item>
-            /// <item>The stat must be allowed to be set by game server.</item>
-            /// </list>
-            /// </returns>
-            public static bool ClearUserAchievement(CSteamID userId, string achievementApiName) => SteamGameServerStats.ClearUserAchievement(userId, achievementApiName);
+            /// <param name="userId">The Steam ID of the user whose achievement is to be cleared.</param>
+            /// <param name="achievementApiName">The API name of the achievement to reset.</param>
+            /// <returns>True if the achievement was successfully cleared; otherwise, false.</returns>
+            public static bool ClearUserAchievement(CSteamID userId, string achievementApiName) =>
+                SteamGameServerStats.ClearUserAchievement(userId, achievementApiName);
+
             /// <summary>
-            /// Gets the unlock status of the Achievement.
+            /// Retrieves the unlocked status of a specific achievement for a given user.
             /// </summary>
-            /// <param name="userId">The Steam ID of the user to get the achievement for.</param>
-            /// <param name="achievementApiName">The 'API Name' of the achievement.</param>
-            /// <param name="achieved">Returns the unlock status of the achievement.</param>
-            /// <returns>
-            /// <para>This function returns true upon success if all of the following conditions are met; otherwise, false.</para>
-            /// <list type="bullet">
-            /// <item>RequestUserStats has completed and successfully returned its callback.</item>
-            /// <item>The 'API Name' of the specified achievement exists in App Admin on the Steamworks website, and the changes are published.</item>
-            /// </list>
-            /// </returns>
-            public static bool GetUserAchievement(CSteamID userId, string achievementApiName, out bool achieved) => SteamGameServerStats.GetUserAchievement(userId, achievementApiName, out achieved);
+            /// <param name="userId">The Steam ID of the user for whom the achievement status is being retrieved.</param>
+            /// <param name="achievementApiName">The API name of the achievement to check.</param>
+            /// <param name="achieved">Outputs the unlocked status of the specified achievement. True if the achievement is unlocked; otherwise, false.</param>
+            /// <returns>True if the operation was successful; otherwise, false. Ensure that user stats have been requested and that the achievement exists in the App Admin configuration on Steamworks.</returns>
+            public static bool GetUserAchievement(CSteamID userId, string achievementApiName, out bool achieved) =>
+                SteamGameServerStats.GetUserAchievement(userId, achievementApiName, out achieved);
+
             /// <summary>
-            /// Gets the current value of the a stat for the specified user.
+            /// Retrieves the current value of a stat for a specified user.
             /// </summary>
-            /// <remarks>
-            /// You must have called RequestUserStats and it needs to return successfully via its callback prior to calling this.
-            /// </remarks>
-            /// <param name="userId">The Steam ID of the user to get the stat for.</param>
-            /// <param name="statApiName">The 'API Name' of the stat. Must not be longer than <see cref="Constants.k_cchStatNameMax"/>.</param>
-            /// <param name="data">The variable to return the stat value into.</param>
+            /// <param name="userId">The Steam ID of the user whose stat is being queried.</param>
+            /// <param name="statApiName">The API name of the stat to retrieve. It must adhere to the defined name length constraints.</param>
+            /// <param name="data">The output variable where the retrieved stat value will be stored.</param>
             /// <returns>
-            /// This function returns true upon success if all of the following conditions are met; otherwise, false.
-            /// <list type="bullet">
-            /// <item>The specified stat exists in App Admin on the Steamworks website, and the changes are published.</item>
-            /// <item>RequestUserStats has completed and successfully returned its callback.</item>
-            /// <item>The type passed to this function must match the type listed in the App Admin panel of the Steamworks website.</item>
-            /// </list>
+            /// True if the stat was successfully retrieved. The following conditions must be met for success:
+            /// - The stat exists and is properly configured in the Steamworks App Admin.
+            /// - The RequestUserStats call has successfully completed.
+            /// - The type of the variable provided matches the type defined for the stat in Steamworks.
+            /// Returns false if any condition is unmet.
             /// </returns>
-            public static bool GetUserStat(CSteamID userId, string statApiName, out int data) => SteamGameServerStats.GetUserStat(userId, statApiName, out data);
+            public static bool GetUserStat(CSteamID userId, string statApiName, out int data) =>
+                SteamGameServerStats.GetUserStat(userId, statApiName, out data);
+
             /// <summary>
-            /// Gets the current value of the a stat for the specified user.
+            /// Retrieves the current value of a statistic for the specified user.
             /// </summary>
-            /// <remarks>
-            /// You must have called RequestUserStats and it needs to return successfully via its callback prior to calling this.
-            /// </remarks>
-            /// <param name="userId">The Steam ID of the user to get the stat for.</param>
-            /// <param name="statApiName">The 'API Name' of the stat. Must not be longer than <see cref="Constants.k_cchStatNameMax"/>.</param>
-            /// <param name="data">The variable to return the stat value into.</param>
+            /// <param name="userId">The Steam ID of the user whose statistic value is to be retrieved.</param>
+            /// <param name="statApiName">The API name of the statistic to retrieve. The name must conform to the limits defined in the Steamworks configuration.</param>
+            /// <param name="data">Outputs the retrieved statistic value.</param>
             /// <returns>
-            /// This function returns true upon success if all of the following conditions are met; otherwise, false.
-            /// <list type="bullet">
-            /// <item>The specified stat exists in App Admin on the Steamworks website, and the changes are published.</item>
-            /// <item>RequestUserStats has completed and successfully returned its callback.</item>
-            /// <item>The type passed to this function must match the type listed in the App Admin panel of the Steamworks website.</item>
-            /// </list>
+            /// True if the statistic value was successfully retrieved. This requires the statistic to exist,
+            /// the RequestUserStats call to have completed successfully, and the statistic's type to match the definition in the Steamworks settings. Otherwise, false.
             /// </returns>
-            public static bool GetUserStat(CSteamID userId, string statApiName, out float data) => SteamGameServerStats.GetUserStat(userId, statApiName, out data);
+            public static bool GetUserStat(CSteamID userId, string statApiName, out float data) =>
+                SteamGameServerStats.GetUserStat(userId, statApiName, out data);
+
             /// <summary>
             /// Asynchronously downloads stats and achievements for the specified user from the server.
             /// </summary>
@@ -702,112 +609,57 @@ namespace Heathen.SteamworksIntegration.API
                 if (callback == null)
                     return;
 
-                if (m_GSStatsReceived_t == null)
-                    m_GSStatsReceived_t = CallResult<GSStatsReceived_t>.Create();
+                _mGsStatsReceivedT ??= CallResult<GSStatsReceived_t>.Create();
 
                 var handle = SteamGameServerStats.RequestUserStats(userId);
-                m_GSStatsReceived_t.Set(handle, callback.Invoke);
+                _mGsStatsReceivedT.Set(handle, callback.Invoke);
             }
+
             /// <summary>
-            /// Unlocks an achievement for the specified user.
+            /// Unlocks an achievement for a specified user.
             /// </summary>
-            /// <remarks>
-            /// You must have called RequestUserStats and it needs to return successfully via its callback prior to calling this!
-            /// <para>
-            /// This call only modifies Steam's in-memory state and is very cheap. To submit the stats to the server you must call StoreUserStats.
-            /// </para>
-            /// <para>
-            /// NOTE: This will work only on achievements that game servers are allowed to set. If the "Set By" field for this achievement is "Official GS" then only game servers that have been declared as officially controlled by you will be able to set it. To do this you must set the IP range of your official servers in the Dedicated Servers section of App Admin.
-            /// </para>
-            /// </remarks>
-            /// <param name="userId">The Steam ID of the user to unlock the achievement for.</param>
-            /// <param name="achievementApiName">The 'API Name' of the Achievement to unlock.</param>
-            /// <returns>
-            /// This function returns true upon success if all of the following conditions are met; otherwise, false.
-            /// <list type="bullet">
-            /// <item>The specified achievement "API Name" exists in App Admin on the Steamworks website, and the changes are published.</item>
-            /// <item>RequestUserStats has completed and successfully returned its callback for the specified user.</item>
-            /// <item>The stat must be allowed to be set by game server.</item>
-            /// </list>
-            /// </returns>
-            public static bool SetUserAchievement(CSteamID userId, string achievementApiName) => SteamGameServerStats.SetUserAchievement(userId, achievementApiName);
+            /// <param name="userId">The Steam ID of the user for whom the achievement will be unlocked.</param>
+            /// <param name="achievementApiName">The API name of the achievement to be unlocked.</param>
+            /// <returns>True if the achievement was successfully unlocked, provided all required conditions are met; otherwise, false.</returns>
+            public static bool SetUserAchievement(CSteamID userId, string achievementApiName) =>
+                SteamGameServerStats.SetUserAchievement(userId, achievementApiName);
+
             /// <summary>
-            /// Sets / updates the value of a given stat for the specified user.
+            /// Sets the value of a specified statistic for a given user.
             /// </summary>
-            /// <remarks>
-            /// You must have called RequestUserStats and it needs to return successfully via its callback prior to calling this!
-            /// <para>
-            /// This call only modifies Steam's in-memory state and is very cheap. To submit the stats to the server you must call StoreUserStats.
-            /// </para>
-            /// <para>
-            /// NOTE: These updates will work only on stats that game servers are allowed to edit. If the "Set By" field for this stat is "Official GS" then only game servers that have been declared as officially controlled by you will be able to set it. To do this you must set the IP range of your official servers in the Dedicated Servers section of App Admin.
-            /// </para>
-            /// </remarks>
-            /// <param name="userId">The Steam ID of the user to set the stat on.</param>
-            /// <param name="statApiName">The 'API Name' of the stat. Must not be longer than <see cref="Constants.k_cchStatNameMax"/>.</param>
-            /// <param name="data">The new value of the stat. This must be an absolute value, it will not increment or decrement for you.</param>
-            /// <returns>
-            /// This function returns true upon success if all of the following conditions are met; otherwise, false.
-            /// <list type="bullet">
-            /// <item>The specified stat exists in App Admin on the Steamworks website, and the changes are published.</item>
-            /// <item>RequestUserStats has completed and successfully returned its callback for the specified user.</item>
-            /// <item>The type passed to this function must match the type listed in the App Admin panel of the Steamworks website.</item>
-            /// <item>The stat must be allowed to be set by game server.</item>
-            /// </list>
-            /// </returns>
-            public static bool SetUserStat(CSteamID userId, string statApiName, int data) => SteamGameServerStats.SetUserStat(userId, statApiName, data);
+            /// <param name="userId">The Steam ID of the user whose statistic is to be updated.</param>
+            /// <param name="statApiName">The API name of the statistic to set.</param>
+            /// <param name="data">The new value to assign to the statistic.</param>
+            /// <returns>True if the statistic was successfully updated; otherwise, false.</returns>
+            public static bool SetUserStat(CSteamID userId, string statApiName, int data) =>
+                SteamGameServerStats.SetUserStat(userId, statApiName, data);
+
             /// <summary>
-            /// Sets / updates the value of a given stat for the specified user.
+            /// Sets a statistical value for the specified user.
             /// </summary>
-            /// <remarks>
-            /// You must have called RequestUserStats and it needs to return successfully via its callback prior to calling this!
-            /// <para>
-            /// This call only modifies Steam's in-memory state and is very cheap. To submit the stats to the server you must call StoreUserStats.
-            /// </para>
-            /// <para>
-            /// NOTE: These updates will work only on stats that game servers are allowed to edit. If the "Set By" field for this stat is "Official GS" then only game servers that have been declared as officially controlled by you will be able to set it. To do this you must set the IP range of your official servers in the Dedicated Servers section of App Admin.
-            /// </para>
-            /// </remarks>
-            /// <param name="userId">The Steam ID of the user to set the stat on.</param>
-            /// <param name="statApiName">The 'API Name' of the stat. Must not be longer than <see cref="Constants.k_cchStatNameMax"/>.</param>
-            /// <param name="data">The new value of the stat. This must be an absolute value, it will not increment or decrement for you.</param>
-            /// <returns>
-            /// This function returns true upon success if all of the following conditions are met; otherwise, false.
-            /// <list type="bullet">
-            /// <item>The specified stat exists in App Admin on the Steamworks website, and the changes are published.</item>
-            /// <item>RequestUserStats has completed and successfully returned its callback for the specified user.</item>
-            /// <item>The type passed to this function must match the type listed in the App Admin panel of the Steamworks website.</item>
-            /// <item>The stat must be allowed to be set by game server.</item>
-            /// </list>
-            /// </returns>
-            public static bool SetUserStat(CSteamID userId, string statApiName, float data) => SteamGameServerStats.SetUserStat(userId, statApiName, data);
+            /// <param name="userId">The Steam ID of the user for whom the statistic is being set.</param>
+            /// <param name="statApiName">The API name of the statistic to update.</param>
+            /// <param name="data">The new value to assign to the statistic.</param>
+            /// <returns>True if the statistic was successfully updated; otherwise, false.</returns>
+            public static bool SetUserStat(CSteamID userId, string statApiName, float data) =>
+                SteamGameServerStats.SetUserStat(userId, statApiName, data);
+
             /// <summary>
-            /// Send the changed stats and achievements data to the server for permanent storage for the specified user.
+            /// Sends updated stats and achievements data to the server for permanent storage for the specified user.
             /// </summary>
-            /// <remarks>
-            /// <para>
-            /// If this fails then nothing is sent to the server. It's advisable to keep trying until the call is successful.
-            /// </para>
-            /// <para>
-            /// If you have stats or achievements that you have saved locally but haven't uploaded with this function when your application process ends then this function will automatically be called.
-            /// </para>
-            /// <para>
-            /// If m_eResult has a result of k_EResultInvalidParam, then one or more stats uploaded has been rejected, either because they broke constraints or were out of date. In this case the server sends back updated values and the stats should be updated locally to keep in sync.
-            /// </para>
-            /// </remarks>
-            /// <param name="userId"></param>
-            /// <param name="callback"></param>
+            /// <param name="userId">The unique identifier of the user whose stats and achievements data will be stored.</param>
+            /// <param name="callback">A callback function invoked when the operation completes, providing the result of the stats storage operation and a boolean indicating success.</param>
             public static void StoreUserStats(CSteamID userId, Action<GSStatsStored_t, bool> callback)
             {
                 if (callback == null)
                     return;
 
-                if (m_GSStatsStored_t == null)
-                    m_GSStatsStored_t = CallResult<GSStatsStored_t>.Create();
+                _mGsStatsStoredT ??= CallResult<GSStatsStored_t>.Create();
 
                 var handle = SteamGameServerStats.StoreUserStats(userId);
-                m_GSStatsStored_t.Set(handle, callback.Invoke);
+                _mGsStatsStoredT.Set(handle, callback.Invoke);
             }
+
             /// <summary>
             /// Updates an AVGRATE stat with new values for the specified user.
             /// </summary>

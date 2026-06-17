@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS && STEAM_INSTALLED
 using Steamworks;
 using System;
 using UnityEngine;
@@ -8,16 +8,16 @@ namespace Heathen.SteamworksIntegration
 {
     public class LeaderboardEntry
     {
-        public LeaderboardEntry_t entry;
-        public int[] details;
-        public UserData User => entry.m_steamIDUser;
-        public int Rank => entry.m_nGlobalRank;
-        public int Score => entry.m_nScore;
-        public UGCHandle_t UgcHandle => entry.m_hUGC;
-        public int this[int index] => details[index];
-        public bool HasCashedUgcFileName => !string.IsNullOrEmpty(cashedUgcFileName);
-        public string cashedUgcFileName = string.Empty;
-        public UnityEvent<string> evtUgcDownloaded = new();
+        public LeaderboardEntry_t Entry;
+        public int[] Details;
+        public UserData User => Entry.m_steamIDUser;
+        public int Rank => Entry.m_nGlobalRank;
+        public int Score => Entry.m_nScore;
+        public UGCHandle_t UgcHandle => Entry.m_hUGC;
+        public int this[int index] => Details[index];
+        public bool HasCashedUgcFileName => !string.IsNullOrEmpty(CashedUgcFileName);
+        public string CashedUgcFileName = string.Empty;
+        public UnityEvent<string> EvtUgcDownloaded = new();
 
         /// <summary>
         /// Returns the object attached to the record if any
@@ -34,16 +34,16 @@ namespace Heathen.SteamworksIntegration
             }
             else
             {
-                API.RemoteStorage.Client.UGCDownload(UgcHandle, 0, (dr, de) =>
+                API.RemoteStorage.Client.UgcDownload(UgcHandle, 0, (dr, de) =>
                 {
                     if (!de && dr.m_eResult == EResult.k_EResultOK)
                     {
-                        cashedUgcFileName = dr.m_pchFileName;
-                        evtUgcDownloaded.Invoke(dr.m_pchFileName);
+                        CashedUgcFileName = dr.m_pchFileName;
+                        EvtUgcDownloaded.Invoke(dr.m_pchFileName);
 
                         if (callback != null)
                         {
-                            var buffer = API.RemoteStorage.Client.UGCRead(dr.m_hFile);
+                            var buffer = API.RemoteStorage.Client.UgcRead(dr.m_hFile);
                             var jsonString = System.Text.Encoding.UTF8.GetString(buffer);
                             var result = JsonUtility.FromJson<T>(jsonString);
                             callback.Invoke(result, false);
@@ -51,8 +51,8 @@ namespace Heathen.SteamworksIntegration
                     }
                     else
                     {
-                        cashedUgcFileName = string.Empty;
-                        evtUgcDownloaded.Invoke(null);
+                        CashedUgcFileName = string.Empty;
+                        EvtUgcDownloaded.Invoke(null);
 
                         callback?.Invoke(default, true);
                     }
@@ -64,7 +64,7 @@ namespace Heathen.SteamworksIntegration
         /// Starts the process of downloading the UGC file.
         /// </summary>
         /// <remarks>
-        /// Invokes the <see cref="evtUgcDownloaded"/> when completed
+        /// Invokes the <see cref="EvtUgcDownloaded"/> when completed
         /// </remarks>
         /// <param name="priority"></param>
         /// <returns></returns>
@@ -72,7 +72,7 @@ namespace Heathen.SteamworksIntegration
         {
             if (UgcHandle != UGCHandle_t.Invalid)
             {
-                API.RemoteStorage.Client.UGCDownload(UgcHandle, priority, HandleUgcDownloadResult);
+                API.RemoteStorage.Client.UgcDownload(UgcHandle, priority, HandleUgcDownloadResult);
                 return true;
             }
             else
@@ -83,7 +83,7 @@ namespace Heathen.SteamworksIntegration
         /// Starts the process of downloading the UGC file.
         /// </summary>
         /// <remarks>
-        /// Invokes the <see cref="evtUgcDownloaded"/> and <paramref name="callback"/> when completed
+        /// Invokes the <see cref="EvtUgcDownloaded"/> and <paramref name="callback"/> when completed
         /// </remarks>
         /// <param name="priority"></param>
         /// <param name="callback"></param>
@@ -92,7 +92,7 @@ namespace Heathen.SteamworksIntegration
         {
             if (UgcHandle != UGCHandle_t.Invalid)
             {
-                API.RemoteStorage.Client.UGCDownload(UgcHandle, priority, (p, e) =>
+                API.RemoteStorage.Client.UgcDownload(UgcHandle, priority, (p, e) =>
                 {
                     HandleUgcDownloadResult(p, e);
                     if (callback != null)
@@ -120,13 +120,13 @@ namespace Heathen.SteamworksIntegration
         {
             if (!bIOFailure && param.m_eResult == EResult.k_EResultOK)
             {
-                cashedUgcFileName = param.m_pchFileName;
-                evtUgcDownloaded.Invoke(param.m_pchFileName);
+                CashedUgcFileName = param.m_pchFileName;
+                EvtUgcDownloaded.Invoke(param.m_pchFileName);
             }
             else
             {
-                cashedUgcFileName = string.Empty;
-                evtUgcDownloaded.Invoke(null);
+                CashedUgcFileName = string.Empty;
+                EvtUgcDownloaded.Invoke(null);
             }
         }
     }

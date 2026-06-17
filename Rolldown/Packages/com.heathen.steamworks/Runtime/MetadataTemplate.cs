@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using System;
 
 namespace Heathen.SteamworksIntegration
@@ -46,16 +46,16 @@ namespace Heathen.SteamworksIntegration
     [Obsolete("Please use MetadataTemplate")]
     public struct MetadataTempalate : IEquatable<MetadataTemplate>
     {
-        public string key;
-        public string value;
+        public string Key;
+        public string Value;
 
         public bool Equals(MetadataTemplate other)
         {
-            return key == other.key && value == other.value;
+            return Key == other.key && Value == other.value;
         }
 
-        public static implicit operator MetadataTempalate(MetadataTemplate other) => new() { key = other.key, value = other.value };
-        public static implicit operator MetadataTemplate(MetadataTempalate other) => new() { key = other.key, value = other.value };
+        public static implicit operator MetadataTempalate(MetadataTemplate other) => new() { Key = other.key, Value = other.value };
+        public static implicit operator MetadataTemplate(MetadataTempalate other) => new() { key = other.Key, value = other.Value };
     }
 }
 #endif

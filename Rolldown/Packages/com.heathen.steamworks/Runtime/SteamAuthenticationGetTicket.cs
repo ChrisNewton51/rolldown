@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 #if UNITY_EDITOR
 #endif
 using UnityEngine;
@@ -6,20 +6,30 @@ using Heathen.SteamworksIntegration.API;
 
 namespace Heathen.SteamworksIntegration
 {
+    /// <summary>
+    /// Helper component to get an authentication ticket.
+    /// </summary>
     [AddComponentMenu("")]
     [RequireComponent(typeof(SteamAuthenticationData))]
     public class SteamAuthenticationGetTicket : MonoBehaviour
     {
+        /// <summary>
+        /// The last ticket received.
+        /// </summary>
         public AuthenticationTicket Data
         {
-            get => m_Data;
+            get => _mData;
             private set
             {
-                m_Data = value;
+                _mData = value;
             }
         }
-        private AuthenticationTicket m_Data;
+        private AuthenticationTicket _mData;
 
+        /// <summary>
+        /// Gets a ticket for the lobby's game server.
+        /// </summary>
+        /// <param name="lobby">The lobby to get the ticket for.</param>
         public void GetTicketForLobbyServer(SteamLobbyData lobby)
         {
             if (!lobby.Data.IsValid)
@@ -32,6 +42,10 @@ namespace Heathen.SteamworksIntegration
             }
         }
 
+        /// <summary>
+        /// Gets a ticket for the lobby's owner.
+        /// </summary>
+        /// <param name="lobby">The lobby to get the ticket for.</param>
         public void GetTicketForLobbyOwner(SteamLobbyData lobby)
         {
             if (lobby.Data.IsValid)
@@ -40,6 +54,10 @@ namespace Heathen.SteamworksIntegration
             }
         }
 
+        /// <summary>
+        /// Gets a ticket for a specific user.
+        /// </summary>
+        /// <param name="user">The user to get the ticket for.</param>
         public void GetTicketForUser(SteamUserData user)
         {
             if (user.Data.IsValid)
@@ -48,6 +66,10 @@ namespace Heathen.SteamworksIntegration
             }
         }
 
+        /// <summary>
+        /// Gets a ticket for a specific game server.
+        /// </summary>
+        /// <param name="server">The game server to get the ticket for.</param>
         public void GetTicketForGameServer(SteamGameServerData server)
         {
             if(server.Data.SteamId.IsValid())
@@ -56,6 +78,10 @@ namespace Heathen.SteamworksIntegration
             }
         }
 
+        /// <summary>
+        /// Gets a ticket for use with a Web API.
+        /// </summary>
+        /// <param name="identity">The identity to get the ticket for.</param>
         public void GetTicketForWebAPI(string identity)
         {
             Authentication.GetWebAuthSessionTicket(identity, HandleTicketCallback);

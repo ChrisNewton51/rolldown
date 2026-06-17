@@ -1,43 +1,61 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Heathen.SteamworksIntegration
 {
+    /// <summary>
+    /// Manages Steam Input integration, including controller state updates and event dispatching.
+    /// </summary>
     [HelpURL("")]
     public class SteamInputManager : MonoBehaviour
     {
-        public static SteamInputManager current;
+        /// <summary>
+        /// A reference to the current instance of the <see cref="SteamInputManager"/>.
+        /// </summary>
+        public static SteamInputManager Current;
 
         [Tooltip("If set to true then we will attempt to force Steam to use input for this app on start.\nThis is generally only needed in editor testing.")]
         [SerializeField]
         private bool forceInput = true;
+        /// <summary>
+        /// If set to true, the system will update every input action every frame for every controller found.
+        /// </summary>
         [Tooltip("If set to true the system will update every input action every frame for every controller found")]
         public bool autoUpdate = true;
+        /// <summary>
+        /// Occurs when the input data for any controller has changed.
+        /// </summary>
         [Header("Events")]
         public ControllerDataEvent onInputDataChanged;
 
-        private bool lastAutoUpdate;
+        private bool _lastAutoUpdate;
 
+        /// <summary>
+        /// Gets or sets whether the system should automatically update input actions every frame.
+        /// </summary>
         public static bool AutoUpdate
         {
-            get => current != null ? current.autoUpdate : false;
+            get => Current && Current.autoUpdate;
             set 
             { 
-                if(current != null)
-                    current.autoUpdate = value;
+                if(Current != null)
+                    Current.autoUpdate = value;
             }
         }
 
+        /// <summary>
+        /// A list of currently connected and tracked Steam Input controllers.
+        /// </summary>
         public static List<InputControllerStateData> Controllers { get; private set; } = new List<InputControllerStateData>();
 
         private void Start()
         {
-            current = this;
+            Current = this;
 
-            API.Input.Client.onInputDataChanged.AddListener(onInputDataChanged.Invoke);
+            SteamTools.Events.OnInputDataChanged += onInputDataChanged.Invoke;
             API.Input.Client.IsAutoRefreshControllerState = autoUpdate;
-            lastAutoUpdate = autoUpdate;
+            _lastAutoUpdate = autoUpdate;
 
             if (!SteamTools.Interface.IsReady)
                 SteamTools.Interface.OnReady += HandleInitialization;
@@ -57,10 +75,10 @@ namespace Heathen.SteamworksIntegration
 
         private void OnDestroy()
         {
-            if(current == this)
-                current = null;
+            if(Current == this)
+                Current = null;
 
-            API.Input.Client.onInputDataChanged.RemoveListener(onInputDataChanged.Invoke);
+            SteamTools.Events.OnInputDataChanged -= onInputDataChanged.Invoke;
 
             if (forceInput)
                 Application.OpenURL("steam://forceinputappid/0");
@@ -76,16 +94,19 @@ namespace Heathen.SteamworksIntegration
                 API.Input.Client.IsAutoRefreshControllerState = autoUpdate;
 
             // Optionally mirror API → manager (if other code changed it)
-            if (lastAutoUpdate != API.Input.Client.IsAutoRefreshControllerState)
+            if (_lastAutoUpdate != API.Input.Client.IsAutoRefreshControllerState)
             {
-                lastAutoUpdate = API.Input.Client.IsAutoRefreshControllerState;
-                autoUpdate = lastAutoUpdate;
+                _lastAutoUpdate = API.Input.Client.IsAutoRefreshControllerState;
+                autoUpdate = _lastAutoUpdate;
             }
 
             if (autoUpdate)
                 API.Input.Client.RunFrame();
         }
 
+        /// <summary>
+        /// Manually refreshes the Steam Input state.
+        /// </summary>
         public void Refresh() => API.Input.Client.RunFrame();
     }
 #if UNITY_EDITOR

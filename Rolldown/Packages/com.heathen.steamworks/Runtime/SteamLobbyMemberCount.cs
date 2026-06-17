@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Heathen.SteamworksIntegration.API;
 using Steamworks;
 using UnityEngine;
@@ -12,33 +12,34 @@ namespace Heathen.SteamworksIntegration
     {
         public TMPro.TextMeshProUGUI label;
 
-        private SteamLobbyData m_Inspector;
+        private SteamLobbyData _mInspector;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamLobbyData>();
-            m_Inspector.onChanged.AddListener(HandleOnChanged);
-            Matchmaking.Client.OnLobbyChatUpdate.AddListener(HandleChatUpdate);
-            if (m_Inspector.Data.IsValid)
-                label.text = m_Inspector.Data.MemberCount.ToString();
+            _mInspector = GetComponent<SteamLobbyData>();
+            _mInspector.onChanged.AddListener(HandleOnChanged);
+            
+            SteamTools.Events.OnLobbyChatUpdate += HandleChatUpdate;
+            if (_mInspector.Data.IsValid)
+                label.text = _mInspector.Data.MemberCount.ToString();
         }
 
         private void OnDestroy()
         {
-            m_Inspector.onChanged.RemoveListener(HandleOnChanged);
-            Matchmaking.Client.OnLobbyChatUpdate.RemoveListener(HandleChatUpdate);
+            _mInspector.onChanged.RemoveListener(HandleOnChanged);
+            SteamTools.Events.OnLobbyChatUpdate -= HandleChatUpdate;
         }
 
-        private void HandleChatUpdate(LobbyChatUpdate_t arg0)
+        private void HandleChatUpdate(LobbyData lobby, UserData user, EChatMemberStateChange state)
         {
-            if (arg0.m_ulSteamIDLobby == m_Inspector.Data)
-                label.text = m_Inspector.Data.MemberCount.ToString();
+            if (lobby == _mInspector.Data)
+                label.text = _mInspector.Data.MemberCount.ToString();
         }
 
         private void HandleOnChanged(LobbyData arg0)
         {
-            if (m_Inspector.Data.IsValid)
-                label.text = m_Inspector.Data.MemberCount.ToString();
+            if (_mInspector.Data.IsValid)
+                label.text = _mInspector.Data.MemberCount.ToString();
             else
                 label.text = "0";
         }

@@ -1,71 +1,27 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
-using UnityEngine;
-using UnityEngine.Events;
 
 namespace Heathen.SteamworksIntegration.API
 {
     /// <summary>
-    /// Functions for adding screenshots to the user's screenshot library.
+    /// Provides functionality for managing and interacting with screenshots via the Steamworks API.
     /// </summary>
-    /// <remarks>
-    /// https://partner.steamgames.com/doc/api/ISteamScreenshots
-    /// </remarks>
     public static class Screenshots
     {
+        /// <summary>
+        /// Provides functionality for managing screenshots, including adding screenshots to the library, capturing VR screenshots, tagging users, setting locations, and handling screenshot events via the Steamworks API.
+        /// </summary>
         public static class Client
         {
-            [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-            static void Init()
-            {
-                m_OnScreenshotReady = new();
-                m_OnScreenshotRequested = new();
-                m_ScreenshotRequested_t = null;
-                m_ScreenshotReady_t = null;
-            }
-
             /// <summary>
-            /// Checks if the app is hooking screenshots, or if the Steam Overlay is handling them.
-            /// When set this will call <see cref="HookScreenshots(bool)"/>
+            /// Indicates whether the screenshot capturing is hooked by the application or managed by the Steam Overlay.
+            /// When set, this invokes <see cref="HookScreenshots(bool)"/>, enabling or disabling the screenshot hook.
             /// </summary>
             public static bool IsScreenshotsHooked
             {
                 get => SteamScreenshots.IsScreenshotsHooked();
                 set => SteamScreenshots.HookScreenshots(value);
             }
-
-            /// <summary>
-            /// A screenshot successfully written or otherwise added to the library and can now be tagged.
-            /// </summary>
-            public static ScreenshotReadyEvent OnScreenshotReady
-            {
-                get
-                {
-                    if (m_ScreenshotReady_t == null)
-                        m_ScreenshotReady_t = Callback<ScreenshotReady_t>.Create((e) => m_OnScreenshotReady.Invoke(e));
-
-                    return m_OnScreenshotReady;
-                }
-            }
-            /// <summary>
-            /// A screenshot has been requested by the user from the Steam screenshot hotkey. This will only be called if HookScreenshots has been enabled, in which case Steam will not take the screenshot itself.
-            /// </summary>
-            public static UnityEvent OnScreenshotRequested
-            {
-                get
-                {
-                    if (m_ScreenshotRequested_t == null)
-                        m_ScreenshotRequested_t = Callback<ScreenshotRequested_t>.Create((e) => m_OnScreenshotRequested.Invoke());
-
-                    return m_OnScreenshotRequested;
-                }
-            }
-
-            private static ScreenshotReadyEvent m_OnScreenshotReady = new();
-            private static UnityEvent m_OnScreenshotRequested = new();
-
-            private static Callback<ScreenshotRequested_t> m_ScreenshotRequested_t;
-            private static Callback<ScreenshotReady_t> m_ScreenshotReady_t;
 
             /// <summary>
             /// Adds a screenshot to the user's Steam screenshot library from disk.
@@ -89,7 +45,7 @@ namespace Heathen.SteamworksIntegration.API
             /// </summary>
             /// <remarks>
             /// <para>
-            /// Hooking is disabled by default, and only ever enabled if you do so with this function.
+            /// Hooking is disabled by default and only ever enabled if you do so with this function.
             /// </para>
             /// <para>
             /// If the hooking is enabled, then the ScreenshotRequested_t callback will be sent if the user presses the hotkey or when TriggerScreenshot is called, and then the game is expected to call WriteScreenshot or AddScreenshotToLibrary in response.
@@ -128,7 +84,7 @@ namespace Heathen.SteamworksIntegration.API
             /// <returns></returns>
             public static bool TagUser(ScreenshotHandle handle, CSteamID userId) => SteamScreenshots.TagUser(handle, userId);
             /// <summary>
-            /// Either causes the Steam Overlay to take a screenshot, or tells your screenshot manager that a screenshot needs to be taken. Depending on the value of IsScreenshotsHooked.
+            /// Either causes the Steam Overlay to take a screenshot or tells your screenshot manager that a screenshot needs to be taken. Depending on the value of IsScreenshotsHooked.
             /// </summary>
             public static void TriggerScreenshot() => SteamScreenshots.TriggerScreenshot();
             /// <summary>

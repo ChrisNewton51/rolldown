@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 
 using System;
 
@@ -7,13 +7,13 @@ namespace Heathen.SteamworksIntegration
     [Serializable]
     public enum OverlayDialog
     {
-        friends,
-        community,
-        players,
-        settings,
-        officalgamegroup,
-        stats,
-        achievements,
+        Friends,
+        Community,
+        Players,
+        Settings,
+        Officalgamegroup,
+        Stats,
+        Achievements,
     }
 }
 #endif

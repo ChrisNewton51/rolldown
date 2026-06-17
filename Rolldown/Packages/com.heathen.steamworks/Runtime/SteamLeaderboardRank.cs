@@ -1,5 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
-using System;
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using UnityEngine;
 
 namespace Heathen.SteamworksIntegration
@@ -12,23 +11,23 @@ namespace Heathen.SteamworksIntegration
     {
         public TMPro.TextMeshProUGUI label;
 
-        private SteamLeaderboardData m_Inspector;
-        private SteamLeaderboardDataEvents m_Events;
+        private SteamLeaderboardData _inspector;
+        private SteamLeaderboardDataEvents _events;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamLeaderboardData>();
-            m_Events = GetComponent<SteamLeaderboardDataEvents>();
+            _inspector = GetComponent<SteamLeaderboardData>();
+            _events = GetComponent<SteamLeaderboardDataEvents>();
 
-            if (m_Events != null)
+            if (_events != null)
             {
-                m_Events.onChange?.AddListener(HandleOnChanged);
-                m_Events.onRankChanged?.AddListener(HandleRankChange);
+                _events.onChange?.AddListener(HandleOnChanged);
+                _events.onRankChanged?.AddListener(HandleRankChange);
             }
 
-            if (m_Inspector.Data.IsValid)
+            if (_inspector.Data.IsValid)
             {
-                m_Inspector.Data.GetUserEntry(0, (entry, ioError) =>
+                _inspector.Data.GetUserEntry(0, (entry, ioError) =>
                 {
                     if (!ioError && entry != null)
                         label.text = entry.Rank.ToString();
@@ -40,11 +39,9 @@ namespace Heathen.SteamworksIntegration
 
         private void OnDestroy()
         {
-            if (m_Events != null)
-            {
-                m_Events.onChange?.RemoveListener(HandleOnChanged);
-                m_Events.onRankChanged?.RemoveListener(HandleRankChange);
-            }
+            if (!_events) return;
+            _events.onChange?.RemoveListener(HandleOnChanged);
+            _events.onRankChanged?.RemoveListener(HandleRankChange);
         }
 
         private void HandleRankChange(LeaderboardScoreUploaded arg0)
@@ -54,10 +51,7 @@ namespace Heathen.SteamworksIntegration
 
         private void HandleOnChanged()
         {
-            if (m_Inspector.Data.IsValid)
-                label.text = m_Inspector.Data.DisplayName;
-            else
-                label.text = string.Empty;
+            label.text = _inspector.Data.IsValid ? _inspector.Data.DisplayName : string.Empty;
         }
     }
 }

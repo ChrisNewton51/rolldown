@@ -1,62 +1,58 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using System;
 using System.IO;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Heathen.SteamworksIntegration
 {
     /// <summary>
     /// Represents a Steam Game Server configuration.
-    /// This can be easily read or write to disk as a simple text file in JSON format.
+    /// This can be easily read or written to disk as a simple text file in JSON format.
     /// </summary>
     [Serializable]
     public struct SteamGameServerConfiguration
     {
-        public static SteamGameServerConfiguration Default
-        {
-            get
+        public static SteamGameServerConfiguration Default =>
+            new()
             {
-                return new SteamGameServerConfiguration
-                {
-                    autoInitialize = true,
-                    autoLogon = true,
-                    ip = 0,
-                    gamePort = 27015,
-                    queryPort = 27016,
-                    spectatorPort = 27017,
-                    serverVersion = "1.0.0.0",
-                    usingGameServerAuthApi = false,
-                    enableHeartbeats = true,
-                    supportSpectators = false,
-                    spectatorServerName = string.Empty,
-                    anonymousServerLogin = true,
-                    gameServerToken = string.Empty,
-                    isPasswordProtected = false,
-                    serverName = $"Must Not Be Empty | Must be Less than {Steamworks.Constants.k_cbMaxGameServerName}",
-                    gameDescription = $"Must Not Be Empty | Must be Less than {Steamworks.Constants.k_cbMaxGameServerGameDescription}",
-                    gameDirectory = $"Must Not Be Empty | Must be Less than {Steamworks.Constants.k_cbMaxGameServerGameDir}",
-                    isDedicated = false,
-                    maxPlayerCount = 4,
-                    botPlayerCount = 0,
-                    mapName = string.Empty,
-                    gameData = string.Empty,
-                    rulePairs = null,
-                };
-            }
-        }
+                autoInitialise = true,
+                autoLogon = true,
+                ip = 0,
+                gamePort = 27015,
+                queryPort = 27016,
+                spectatorPort = 27017,
+                serverVersion = "1.0.0.0",
+                usingGameServerAuthApi = false,
+                enableHeartbeats = true,
+                supportSpectators = false,
+                spectatorServerName = string.Empty,
+                anonymousServerLogin = true,
+                gameServerToken = string.Empty,
+                isPasswordProtected = false,
+                serverName = $"Must Not Be Empty | Must be Less than {Steamworks.Constants.k_cbMaxGameServerName}",
+                gameDescription = $"Must Not Be Empty | Must be Less than {Steamworks.Constants.k_cbMaxGameServerGameDescription}",
+                gameDirectory = $"Must Not Be Empty | Must be Less than {Steamworks.Constants.k_cbMaxGameServerGameDir}",
+                isDedicated = false,
+                maxPlayerCount = 4,
+                botPlayerCount = 0,
+                mapName = string.Empty,
+                gameData = string.Empty,
+                rulePairs = null,
+            };
 
         /// <summary>
-        /// Should the system automatically initialize the Steam Game Server APIs for server builds
+        /// Should the system automatically initialise the Steam Game Server APIs for server builds?
         /// </summary>
-        public bool autoInitialize;
+        [FormerlySerializedAs("autoInitialize")] public bool autoInitialise;
         /// <summary>
-        /// Should the system automatically log on to the Steam Game Server end point when the Steam Game Server has finished initialization.
+        /// Should the system automatically log on to the Steam Game Server end point when the Steam Game Server has finished initialisation?
         /// Logon of the Steam Game Server is required for the server to be issued its ID and for the server to appear in the Steam Game Server Browser.
         /// </summary>
         public bool autoLogon;
         /// <summary>
-        /// The IP address of the server packed into a <see cref="uint"/> value such that each octave occupies 4 bits of the 32 bit uint value.
+        /// The IP address of the server packed into a <see cref="uint"/> value such that each octave occupies 4 bits of the 32-bit uint value.
         /// You can read and write to the <see cref="IpAddress"/> value as a string and the system will parse and load that for you
         /// </summary>
         public uint ip;
@@ -69,7 +65,7 @@ namespace Heathen.SteamworksIntegration
         /// </summary>
         public ushort queryPort;
         /// <summary>
-        /// The spectator port if any typically 27017
+        /// The spectator port, if any, typically 27017
         /// </summary>
         public ushort spectatorPort;
         /// <summary>
@@ -81,20 +77,20 @@ namespace Heathen.SteamworksIntegration
         /// </summary>
         public bool usingGameServerAuthApi;
         /// <summary>
-        /// Enable server heartbeats, this is what allows the Steam Game Server Browser to be updated with ping, user count and to simply list on browser
+        /// Enable server heartbeats, this is what allows the Steam Game Server Browser to be updated with ping, user count and to simply list on the browser
         /// </summary>
         public bool enableHeartbeats;
         /// <summary>
-        /// Should the system support spectators
+        /// Should the system support spectators?
         /// </summary>
         public bool supportSpectators;
         /// <summary>
         /// The name to display for the Spector server, this must be populated and must not be longer than <see cref="Steamworks.Constants.k_cbMaxGameServerMapName"/>.
-        /// No it is not a typo, Valve documentation says it must be shorter than the max Game Server Map Name value
+        /// No, it is not a typo, Valve documentation says it must be shorter than the max Game Server Map Name value
         /// </summary>
         public string spectatorServerName;
         /// <summary>
-        /// Should the server logon anonymous, if not then a token is required
+        /// Should the server logon anonymous, if not, then a token is required
         /// </summary>
         public bool anonymousServerLogin;
         /// <summary>
@@ -119,7 +115,7 @@ namespace Heathen.SteamworksIntegration
         /// </summary>
         public string gameDirectory;
         /// <summary>
-        /// Is this a dedicated server, again this is a flag for the UI only, its up to you to host your server your self
+        /// Is this a dedicated server, again this is a flag for the UI only, it's up to you to host your server your self
         /// </summary>
         public bool isDedicated;
         /// <summary>
@@ -137,8 +133,8 @@ namespace Heathen.SteamworksIntegration
         /// <summary>
         /// Sets a string defining the "gamedata" for this server, this is optional, but if set it allows users to filter in the matchmaking/server-browser interfaces based on the value.
         /// This is usually formatted as a comma or semicolon separated list.
-        /// Don't set this unless it actually changes, its only uploaded to the master once; when acknowledged.
-        /// If set this must not be longer than <see cref="Steamworks.Constants.k_cbMaxGameServerGameData"/>
+        /// Don't set this unless it actually changes, it's only uploaded to the master once; when acknowledged.
+        /// If set, this must not be longer than <see cref="Steamworks.Constants.k_cbMaxGameServerGameData"/>
         /// </summary>
         public string gameData;
         public StringKeyValuePair[] rulePairs;
@@ -224,18 +220,12 @@ namespace Heathen.SteamworksIntegration
         }
 
         /// <summary>
-        /// Read the <see cref="ip"/> as a human friendly string in traditional format such as 0.0.0.0
+        /// Read the <see cref="ip"/> as a human-friendly string in traditional format such as 0.0.0.0
         /// </summary>
         public string IpAddress
         {
-            set
-            {
-                ip = API.Utilities.IPStringToUint(value);
-            }
-            get
-            {
-                return API.Utilities.IPUintToString(ip);
-            }
+            set => ip = API.Utilities.IPStringToUint(value);
+            get => API.Utilities.IPUintToString(ip);
         }
 
         /// <summary>
@@ -312,9 +302,9 @@ namespace Heathen.SteamworksIntegration
         {
             try
             {
-                if (serializedData != null && serializedData.Length > 0)
+                if (serializedData is { Length: > 0 })
                 {
-                    config = JsonUtility.FromJson<SteamGameServerConfiguration>(System.Text.Encoding.UTF8.GetString(serializedData));
+                    config = JsonUtility.FromJson<SteamGameServerConfiguration>(Encoding.UTF8.GetString(serializedData));
                     return true;
                 }
                 else
@@ -341,7 +331,7 @@ namespace Heathen.SteamworksIntegration
         /// Get the bytes of the serialized configuration for writing to disk
         /// </summary>
         /// <returns></returns>
-        public byte[] ToBytes() => System.Text.Encoding.UTF8.GetBytes(ToString());
+        public byte[] ToBytes() => Encoding.UTF8.GetBytes(ToString());
 
         /// <summary>
         /// Save this configuration to disk as a JSON structure
@@ -369,7 +359,7 @@ namespace Heathen.SteamworksIntegration
         /// <returns>True if successful</returns>
         public static bool LoadFromDisk(string path, out SteamGameServerConfiguration config) => Get(path, out config);
         /// <summary>
-        /// Save this configuration to disk as a INI structure
+        /// Save this configuration to disk as an INI structure
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
@@ -436,7 +426,7 @@ namespace Heathen.SteamworksIntegration
                     {
                         case "autoinitialize":
                             if (bool.TryParse(value, out bool autoInitialize))
-                                config.autoInitialize = autoInitialize;
+                                config.autoInitialise = autoInitialize;
                             break;
                         case "autologon":
                             if (bool.TryParse(value, out bool autoLogon))
@@ -536,7 +526,7 @@ namespace Heathen.SteamworksIntegration
         {
             StringBuilder iniBuilder = new StringBuilder();
 
-            iniBuilder.AppendLine($"autoInitialize = {config.autoInitialize}");
+            iniBuilder.AppendLine($"autoInitialise = {config.autoInitialise}");
             iniBuilder.AppendLine($"autoLogon = {config.autoLogon}");
             iniBuilder.AppendLine($"ip = {config.IpAddress}");
             iniBuilder.AppendLine($"gamePort = {config.gamePort}");

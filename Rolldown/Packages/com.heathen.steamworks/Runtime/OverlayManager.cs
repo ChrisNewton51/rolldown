@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -7,6 +7,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System;
 using System.CodeDom;
+using UnityEngine.Serialization;
 
 namespace Heathen.SteamworksIntegration
 {
@@ -26,8 +27,8 @@ namespace Heathen.SteamworksIntegration
             ServerChangeRequested,   
         }
 
-        [SerializeField]
-        private List<ManagedEvents> m_Delegates;
+        [FormerlySerializedAs("m_Delegates")] [SerializeField]
+        private List<ManagedEvents> mDelegates;
 
         [SerializeField]
         private ENotificationPosition notificationPosition = ENotificationPosition.k_EPositionBottomRight;
@@ -55,36 +56,31 @@ namespace Heathen.SteamworksIntegration
 
         private void OnEnable()
         {
-            if (API.App.Initialized)
-                EnabledProcess();
-            else
-            {
-                API.App.onSteamInitialized.AddListener(EnabledProcess);
-            }
+            SteamTools.Interface.WhenReady(EnabledProcess);
         }
 
         private void EnabledProcess()
         {
             NotificationPosition = notificationPosition;
             NotificationInset = notificationInset;
-            API.Overlay.Client.OnGameOverlayActivated.AddListener(evtOverlayActivated.Invoke);
-            API.Overlay.Client.OnGameServerChangeRequested.AddListener(evtGameServerChangeRequested.Invoke);
-            API.Overlay.Client.OnGameLobbyJoinRequested.AddListener(evtGameLobbyJoinRequested.Invoke);
-            API.Overlay.Client.OnGameRichPresenceJoinRequested.AddListener(evtRichPresenceJoinRequested.Invoke);
+            SteamTools.Events.OnGameOverlayActivated += evtOverlayActivated.Invoke;
+            SteamTools.Events.OnGameServerChangeRequested += evtGameServerChangeRequested.Invoke;
+            SteamTools.Events.OnLobbyJoinRequested += evtGameLobbyJoinRequested.Invoke;
+            SteamTools.Events.OnRichPresenceJoinRequested += evtRichPresenceJoinRequested.Invoke;
         }
 
         private void OnDisable()
         {
-            API.Overlay.Client.OnGameOverlayActivated.RemoveListener(evtOverlayActivated.Invoke);
-            API.Overlay.Client.OnGameServerChangeRequested.RemoveListener(evtGameServerChangeRequested.Invoke);
-            API.Overlay.Client.OnGameLobbyJoinRequested.RemoveListener(evtGameLobbyJoinRequested.Invoke);
-            API.Overlay.Client.OnGameRichPresenceJoinRequested.RemoveListener(evtRichPresenceJoinRequested.Invoke);
+            SteamTools.Events.OnGameOverlayActivated -= evtOverlayActivated.Invoke;
+            SteamTools.Events.OnGameServerChangeRequested -= evtGameServerChangeRequested.Invoke;
+            SteamTools.Events.OnLobbyJoinRequested -= evtGameLobbyJoinRequested.Invoke;
+            SteamTools.Events.OnRichPresenceJoinRequested -= evtRichPresenceJoinRequested.Invoke;
         }
 
 #if UNITY_EDITOR
         private void Update()
         {
-            if (API.App.Initialized)
+            if (API.App.Initialised)
             {
                 if (notificationPosition != API.Overlay.Client.NotificationPosition)
                 {
@@ -205,31 +201,31 @@ namespace Heathen.SteamworksIntegration
     [CustomEditor(typeof(OverlayManager), true)]
     public class OverlayManagerEditor : Editor
     {
-        SerializedProperty m_DelegatesProperty;
-        SerializedProperty m_notificationPosition;
-        SerializedProperty m_notificationInset;
+        SerializedProperty _mDelegatesProperty;
+        SerializedProperty _mNotificationPosition;
+        SerializedProperty _mNotificationInset;
 
-        GUIContent m_IconToolbarMinus;
-        GUIContent m_EventIDName;
-        GUIContent[] m_EventTypes;
-        GUIContent m_AddButtonContent;
+        GUIContent _mIconToolbarMinus;
+        GUIContent _mEventIDName;
+        GUIContent[] _mEventTypes;
+        GUIContent _mAddButtonContent;
 
         protected virtual void OnEnable()
         {
-            m_DelegatesProperty = serializedObject.FindProperty("m_Delegates");
-            m_notificationPosition = serializedObject.FindProperty("notificationPosition");
-            m_notificationInset = serializedObject.FindProperty("notificationInset");
-            m_AddButtonContent = new GUIContent("Add New Event Type");
-            m_EventIDName = new GUIContent("");
+            _mDelegatesProperty = serializedObject.FindProperty("m_Delegates");
+            _mNotificationPosition = serializedObject.FindProperty("notificationPosition");
+            _mNotificationInset = serializedObject.FindProperty("notificationInset");
+            _mAddButtonContent = new GUIContent("Add New Event Type");
+            _mEventIDName = new GUIContent("");
             // Have to create a copy since otherwise the tooltip will be overwritten.
-            m_IconToolbarMinus = new GUIContent(EditorGUIUtility.IconContent("Toolbar Minus"));
-            m_IconToolbarMinus.tooltip = "Remove all events in this list.";
+            _mIconToolbarMinus = new GUIContent(EditorGUIUtility.IconContent("Toolbar Minus"));
+            _mIconToolbarMinus.tooltip = "Remove all events in this list.";
 
             string[] eventNames = Enum.GetNames(typeof(OverlayManager.ManagedEvents));
-            m_EventTypes = new GUIContent[eventNames.Length];
+            _mEventTypes = new GUIContent[eventNames.Length];
             for (int i = 0; i < eventNames.Length; ++i)
             {
-                m_EventTypes[i] = new GUIContent(eventNames[i]);
+                _mEventTypes[i] = new GUIContent(eventNames[i]);
             }
         }
 
@@ -237,40 +233,40 @@ namespace Heathen.SteamworksIntegration
         {
             serializedObject.Update();
 
-            EditorGUILayout.PropertyField(m_notificationPosition, true);
-            EditorGUILayout.PropertyField(m_notificationInset, true);
+            EditorGUILayout.PropertyField(_mNotificationPosition, true);
+            EditorGUILayout.PropertyField(_mNotificationInset, true);
 
             int toBeRemovedEntry = -1;
 
             EditorGUILayout.Space();
 
-            Vector2 removeButtonSize = GUIStyle.none.CalcSize(m_IconToolbarMinus);
+            Vector2 removeButtonSize = GUIStyle.none.CalcSize(_mIconToolbarMinus);
 
-            for (int i = 0; i < m_DelegatesProperty.arraySize; ++i)
+            for (int i = 0; i < _mDelegatesProperty.arraySize; ++i)
             {
-                SerializedProperty delegateProperty = m_DelegatesProperty.GetArrayElementAtIndex(i);
-                m_EventIDName.text = delegateProperty.enumDisplayNames[delegateProperty.enumValueIndex];
+                SerializedProperty delegateProperty = _mDelegatesProperty.GetArrayElementAtIndex(i);
+                _mEventIDName.text = delegateProperty.enumDisplayNames[delegateProperty.enumValueIndex];
 
                 switch ((OverlayManager.ManagedEvents)delegateProperty.enumValueIndex)
                 {
                     case OverlayManager.ManagedEvents.OverlayActivated:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(OverlayManager.evtOverlayActivated)), m_EventIDName);
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(OverlayManager.evtOverlayActivated)), _mEventIDName);
                         break;
                     case OverlayManager.ManagedEvents.JoinGameRequested:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(OverlayManager.evtRichPresenceJoinRequested)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(OverlayManager.evtRichPresenceJoinRequested)), _mEventIDName); 
                         break;
                     case OverlayManager.ManagedEvents.LobbyInviteAccepted:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(OverlayManager.evtGameLobbyJoinRequested)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(OverlayManager.evtGameLobbyJoinRequested)), _mEventIDName); 
                         break;
                     case OverlayManager.ManagedEvents.ServerChangeRequested:
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(OverlayManager.evtGameServerChangeRequested)), m_EventIDName); 
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(OverlayManager.evtGameServerChangeRequested)), _mEventIDName); 
                         break;
                 }
 
                 Rect callbackRect = GUILayoutUtility.GetLastRect();
 
                 Rect removeButtonPos = new Rect(callbackRect.xMax - removeButtonSize.x - 8, callbackRect.y + 1, removeButtonSize.x, removeButtonSize.y);
-                if (GUI.Button(removeButtonPos, m_IconToolbarMinus, GUIStyle.none))
+                if (GUI.Button(removeButtonPos, _mIconToolbarMinus, GUIStyle.none))
                 {
                     toBeRemovedEntry = i;
                 }
@@ -283,11 +279,11 @@ namespace Heathen.SteamworksIntegration
                 RemoveEntry(toBeRemovedEntry);
             }
 
-            Rect btPosition = GUILayoutUtility.GetRect(m_AddButtonContent, GUI.skin.button);
+            Rect btPosition = GUILayoutUtility.GetRect(_mAddButtonContent, GUI.skin.button);
             const float addButtonWidth = 200f;
             btPosition.x = btPosition.x + (btPosition.width - addButtonWidth) / 2;
             btPosition.width = addButtonWidth;
-            if (GUI.Button(btPosition, m_AddButtonContent))
+            if (GUI.Button(btPosition, _mAddButtonContent))
             {
                 ShowAddTriggerMenu();
             }
@@ -297,30 +293,30 @@ namespace Heathen.SteamworksIntegration
 
         private void RemoveEntry(int toBeRemovedEntry)
         {
-            m_DelegatesProperty.DeleteArrayElementAtIndex(toBeRemovedEntry);
+            _mDelegatesProperty.DeleteArrayElementAtIndex(toBeRemovedEntry);
         }
 
         void ShowAddTriggerMenu()
         {
             // Now create the menu, add items and show it
             GenericMenu menu = new GenericMenu();
-            for (int i = 0; i < m_EventTypes.Length; ++i)
+            for (int i = 0; i < _mEventTypes.Length; ++i)
             {
                 bool active = true;
 
                 // Check if we already have a Entry for the current eventType, if so, disable it
-                for (int p = 0; p < m_DelegatesProperty.arraySize; ++p)
+                for (int p = 0; p < _mDelegatesProperty.arraySize; ++p)
                 {
-                    SerializedProperty delegateEntry = m_DelegatesProperty.GetArrayElementAtIndex(p);
+                    SerializedProperty delegateEntry = _mDelegatesProperty.GetArrayElementAtIndex(p);
                     if (delegateEntry.enumValueIndex == i)
                     {
                         active = false;
                     }
                 }
                 if (active)
-                    menu.AddItem(m_EventTypes[i], false, OnAddNewSelected, i);
+                    menu.AddItem(_mEventTypes[i], false, OnAddNewSelected, i);
                 else
-                    menu.AddDisabledItem(m_EventTypes[i]);
+                    menu.AddDisabledItem(_mEventTypes[i]);
             }
             menu.ShowAsContext();
             Event.current.Use();
@@ -330,8 +326,8 @@ namespace Heathen.SteamworksIntegration
         {
             int selected = (int)index;
 
-            m_DelegatesProperty.arraySize += 1;
-            SerializedProperty delegateEntry = m_DelegatesProperty.GetArrayElementAtIndex(m_DelegatesProperty.arraySize - 1);
+            _mDelegatesProperty.arraySize += 1;
+            SerializedProperty delegateEntry = _mDelegatesProperty.GetArrayElementAtIndex(_mDelegatesProperty.arraySize - 1);
             delegateEntry.enumValueIndex = selected;
             serializedObject.ApplyModifiedProperties();
         }

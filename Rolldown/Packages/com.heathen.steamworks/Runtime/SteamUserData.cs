@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using System.Collections.Generic;
@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using UnityEditor;
 #endif
 using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.Serialization;
 
 namespace Heathen.SteamworksIntegration
 {
@@ -23,59 +25,54 @@ namespace Heathen.SteamworksIntegration
 
         public UserData Data
         {
-            get => m_Data;
+            get => _mData;
             set
             {
-                m_Data = value;
-                onChanged?.Invoke(new PersonaStateChange_t { m_nChangeFlags = (EPersonaChange)int.MaxValue, m_ulSteamID = value });
+                _mData = value;
+                onChanged?.Invoke(value, (EPersonaChange)int.MaxValue);
             }
         }
 
         [HideInInspector]
-        public PersonaStateChangeEvent onChanged;
+        public UnityEvent<UserData, EPersonaChange> onChanged;
 
-        private UserData m_Data;
-        [SerializeField]
-        private List<string> m_Delegates;
+        private UserData _mData;
+        [FormerlySerializedAs("m_Delegates")] [SerializeField]
+        private List<string> mDelegates;
 
         private void Awake()
         {
-            API.Friends.Client.OnPersonaStateChange.AddListener(GlobalPersonaUpdate);
+            SteamTools.Events.OnPersonaStateChange += GlobalPersonaUpdate;
         }
 
         private void Start()
         {
-            if (!API.App.Initialized)
-                API.App.onSteamInitialized.AddListener(HandleInitialization);
-            else
-                if (localUser) Data = UserData.Me;
+            SteamTools.Interface.WhenReady(HandleInitialization);
         }
 
         private void HandleInitialization()
         {
             if (localUser) Data = UserData.Me;
-            API.App.onSteamInitialized.RemoveListener(HandleInitialization);
         }
 
         private void OnDestroy()
         {
-            API.Friends.Client.OnPersonaStateChange.RemoveListener(GlobalPersonaUpdate);
-            API.App.onSteamInitialized.RemoveListener(HandleInitialization);
+            SteamTools.Events.OnPersonaStateChange -= GlobalPersonaUpdate;
         }
 
-        private void GlobalPersonaUpdate(PersonaStateChange arg0)
+        private void GlobalPersonaUpdate(UserData user, EPersonaChange changeFlag)
         {
-            if (arg0.SubjectId == Data)
-                onChanged?.Invoke(arg0);
+            if (user == Data)
+                onChanged?.Invoke(user, changeFlag);
         }
     }
 
 #if UNITY_EDITOR
-    [UnityEditor.CustomEditor(typeof(SteamUserData), true)]
+    [CustomEditor(typeof(SteamUserData), true)]
     public class SteamUserDataEditor : ModularEditor
     {
-        private SerializedProperty localUserProp;
-        private SteamToolsSettings settings;
+        private SerializedProperty _localUserProp;
+        private SteamToolsSettings _settings;
 
         protected override Type[] AllowedTypes => new Type[]
         {
@@ -91,8 +88,8 @@ namespace Heathen.SteamworksIntegration
 
         private void OnEnable()
         {
-            settings = SteamToolsSettings.GetOrCreate();
-            localUserProp = serializedObject.FindProperty("localUser");
+            _settings = SteamToolsSettings.GetOrCreate();
+            _localUserProp = serializedObject.FindProperty("localUser");
         }
 
         public override void OnInspectorGUI()
@@ -101,10 +98,10 @@ namespace Heathen.SteamworksIntegration
 
             DrawDefault(
                 "Project/Player/Steamworks"
-                , $"https://partner.steamgames.com/apps/landing/{settings.Get(settings.ActiveApp.Value).applicationId}"
+                , $"https://partner.steamgames.com/apps/landing/{_settings.Get(_settings.ActiveApp.Value).applicationId}"
                 , "https://kb.heathen.group/steam/features/lobby"
                 , "https://discord.gg/heathen-group-463483739612381204"
-                , new[] { localUserProp });
+                , new[] { _localUserProp });
 
             serializedObject.ApplyModifiedProperties();
         }

@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using System.Collections.Generic;
@@ -121,8 +121,8 @@ namespace Heathen.SteamworksIntegration
             SetGameTags(item.GetGameTags());
             SetMap(item.GetMap());
             SetServerName(item.GetServerName());
-            this.players = new List<ServerPlayerEntry>();
-            this.rules = new List<StringKeyValuePair>();
+            players = new List<ServerPlayerEntry>();
+            rules = new List<StringKeyValuePair>();
         }
 
         /// <summary>

@@ -193,6 +193,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -328,10 +329,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 194e3b2fd028de44b9b31deda8a85a30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  load: 0
   onChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Delegates: 0400000006000000
+  mDelegates: []
 --- !u!114 &6555749516270304747
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -454,11 +456,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0aa3f79dfae06b847b5cc2f12520b4c0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dataToSet:
-  - key: z_exampleSeachField
-    value: A Value To Match
-  - key: name
-    value: Some Cool Name
+  dataToSet: []
   onChanged: []
 --- !u!114 &1648189850762786472
 MonoBehaviour:
@@ -473,6 +471,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   onLobbyChange:
+    m_PersistentCalls:
+      m_Calls: []
+  onLobbySet:
+    m_PersistentCalls:
+      m_Calls: []
+  onLobbyRemoved:
+    m_PersistentCalls:
+      m_Calls: []
+  onLobbyIdChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onLobbySetIsOwner:
+    m_PersistentCalls:
+      m_Calls: []
+  onLobbySetIsNotOwner:
+    m_PersistentCalls:
+      m_Calls: []
+  onLobbySetIsMember:
+    m_PersistentCalls:
+      m_Calls: []
+  onLobbySetIsNotMember:
     m_PersistentCalls:
       m_Calls: []
   onLobbyInvite:
@@ -549,7 +568,6 @@ MonoBehaviour:
   onAuthenticationSessionResult:
     m_PersistentCalls:
       m_Calls: []
-  m_Delegates: 0400000006000000
 --- !u!1 &561634105524280603
 GameObject:
   m_ObjectHideFlags: 0
@@ -766,6 +784,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -902,6 +921,7 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1039,6 +1059,7 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1196,6 +1217,7 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1592,6 +1614,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1684,7 +1707,7 @@ MonoBehaviour:
   onChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Delegates: 
+  mDelegates: []
 --- !u!114 &2921887256183318117
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1697,9 +1720,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee33024d491226d46aca4780e0be4546, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  onMemberUpdated:
-    m_PersistentCalls:
-      m_Calls: []
+  Delegates: []
 --- !u!114 &3341903321533854375
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1792,8 +1813,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hideAfterSeconds: 15
-  Success:
-    Localized:
+  success:
+    localised:
       m_TableReference:
         m_TableCollectionName: 
       m_TableEntryReference:
@@ -1802,9 +1823,9 @@ MonoBehaviour:
       m_FallbackState: 0
       m_WaitForCompletion: 0
       m_LocalVariables: []
-    Default: Success
-  DoesntExist:
-    Localized:
+    defaultText: Success
+  doesntExist:
+    localised:
       m_TableReference:
         m_TableCollectionName: 
       m_TableEntryReference:
@@ -1813,9 +1834,9 @@ MonoBehaviour:
       m_FallbackState: 0
       m_WaitForCompletion: 0
       m_LocalVariables: []
-    Default: Chat doesn't exist (probably closed)
-  NotAllowed:
-    Localized:
+    defaultText: Chat doesn't exist (probably closed)
+  notAllowed:
+    localised:
       m_TableReference:
         m_TableCollectionName: 
       m_TableEntryReference:
@@ -1824,9 +1845,10 @@ MonoBehaviour:
       m_FallbackState: 0
       m_WaitForCompletion: 0
       m_LocalVariables: []
-    Default: General Denied - You don't have the permissions needed to join the chat
-  Full:
-    Localized:
+    defaultText: General Denied - You don't have the permissions needed to join the
+      chat
+  full:
+    localised:
       m_TableReference:
         m_TableCollectionName: 
       m_TableEntryReference:
@@ -1835,9 +1857,9 @@ MonoBehaviour:
       m_FallbackState: 0
       m_WaitForCompletion: 0
       m_LocalVariables: []
-    Default: Chat room has reached its maximum size
-  Error:
-    Localized:
+    defaultText: Chat room has reached its maximum size
+  error:
+    localised:
       m_TableReference:
         m_TableCollectionName: 
       m_TableEntryReference:
@@ -1846,9 +1868,9 @@ MonoBehaviour:
       m_FallbackState: 0
       m_WaitForCompletion: 0
       m_LocalVariables: []
-    Default: Unexpected Error
-  Banned:
-    Localized:
+    defaultText: Unexpected Error
+  banned:
+    localised:
       m_TableReference:
         m_TableCollectionName: 
       m_TableEntryReference:
@@ -1857,9 +1879,9 @@ MonoBehaviour:
       m_FallbackState: 0
       m_WaitForCompletion: 0
       m_LocalVariables: []
-    Default: You are banned from this chat room and may not join
-  Limited:
-    Localized:
+    defaultText: You are banned from this chat room and may not join
+  limited:
+    localised:
       m_TableReference:
         m_TableCollectionName: 
       m_TableEntryReference:
@@ -1868,10 +1890,10 @@ MonoBehaviour:
       m_FallbackState: 0
       m_WaitForCompletion: 0
       m_LocalVariables: []
-    Default: Joining this chat is not allowed because you are a limited user (no
-      value on account)
-  ClanDisabled:
-    Localized:
+    defaultText: Joining this chat is not allowed because you are a limited user
+      (no value on account)
+  clanDisabled:
+    localised:
       m_TableReference:
         m_TableCollectionName: 
       m_TableEntryReference:
@@ -1880,9 +1902,9 @@ MonoBehaviour:
       m_FallbackState: 0
       m_WaitForCompletion: 0
       m_LocalVariables: []
-    Default: Attempt to join a clan chat when the clan is locked or disabled
-  CommunityBan:
-    Localized:
+    defaultText: Attempt to join a clan chat when the clan is locked or disabled
+  communityBan:
+    localised:
       m_TableReference:
         m_TableCollectionName: 
       m_TableEntryReference:
@@ -1891,9 +1913,10 @@ MonoBehaviour:
       m_FallbackState: 0
       m_WaitForCompletion: 0
       m_LocalVariables: []
-    Default: Attempt to join a chat when the user has a community lock on their account
-  MemberBlockedYou:
-    Localized:
+    defaultText: Attempt to join a chat when the user has a community lock on their
+      account
+  memberBlockedYou:
+    localised:
       m_TableReference:
         m_TableCollectionName: 
       m_TableEntryReference:
@@ -1902,9 +1925,9 @@ MonoBehaviour:
       m_FallbackState: 0
       m_WaitForCompletion: 0
       m_LocalVariables: []
-    Default: Join failed - some member in the chat has blocked you from joining
-  YouBlockedMember:
-    Localized:
+    defaultText: Join failed - some member in the chat has blocked you from joining
+  youBlockedMember:
+    localised:
       m_TableReference:
         m_TableCollectionName: 
       m_TableEntryReference:
@@ -1913,9 +1936,9 @@ MonoBehaviour:
       m_FallbackState: 0
       m_WaitForCompletion: 0
       m_LocalVariables: []
-    Default: Join failed - you have blocked some member already in the chat
-  RateLimitExceeded:
-    Localized:
+    defaultText: Join failed - you have blocked some member already in the chat
+  rateLimitExceeded:
+    localised:
       m_TableReference:
         m_TableCollectionName: 
       m_TableEntryReference:
@@ -1924,7 +1947,7 @@ MonoBehaviour:
       m_FallbackState: 0
       m_WaitForCompletion: 0
       m_LocalVariables: []
-    Default: Join failed - to many join attempts in a very short period of time
+    defaultText: Join failed - to many join attempts in a very short period of time
   outputElement: {fileID: 2674624700982325783}
   displayElement: {fileID: 3023984548253859494}
   onDisplay:
@@ -2378,6 +2401,7 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -2514,6 +2538,7 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -2650,6 +2675,7 @@ MonoBehaviour:
   m_VerticalAlignment: 8192
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -3684,6 +3710,7 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -3915,6 +3942,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -4051,6 +4079,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0

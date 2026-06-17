@@ -1,10 +1,11 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 
 namespace Heathen.SteamworksIntegration
 {
@@ -19,7 +20,7 @@ namespace Heathen.SteamworksIntegration
         { }
 
         [Serializable]
-        public class OrderAuthorization : UnityEvent<ItemEntry[], bool>
+        public class OrderAuthorisation : UnityEvent<ItemEntry[], bool>
         { }
 
         [Serializable]
@@ -31,7 +32,8 @@ namespace Heathen.SteamworksIntegration
 
         public StartPurchaseError evtStartPurchaseError;
         public StartPurchaseSuccess evtStartPurchaseSuccess;
-        public OrderAuthorization evtOrderAuthorization;
+        [FormerlySerializedAs("evtOrderAuthoriation")] 
+        public OrderAuthorisation evtOrderAuthorisation;
 
         /// <summary>
         /// Defaults to false
@@ -52,15 +54,15 @@ namespace Heathen.SteamworksIntegration
 
         private void Start()
         {
-            API.Inventory.Client.OnSteamMicroTransactionAuthorizationResponse.AddListener(HandleAuthorizationResponce);
+            SteamTools.Events.OnMicroTxnAuthorisationResponse += HandleAuthorisationResponse;
         }
 
         private void OnDestroy()
         {
-            API.Inventory.Client.OnSteamMicroTransactionAuthorizationResponse.RemoveListener(HandleAuthorizationResponce);
+            SteamTools.Events.OnMicroTxnAuthorisationResponse -= HandleAuthorisationResponse;
         }
 
-        private void HandleAuthorizationResponce(AppId_t appId, ulong orderId, bool authorized)
+        private void HandleAuthorisationResponse(AppData appId, ulong orderId, bool authorized)
         {
             if (OrderPending
                 && appId == API.App.Id
@@ -72,7 +74,7 @@ namespace Heathen.SteamworksIntegration
                     items.Clear();
                 }
                 _result = null;
-                evtOrderAuthorization.Invoke(itemsSent, authorized);
+                evtOrderAuthorisation.Invoke(itemsSent, authorized);
             }
         }
 
@@ -80,7 +82,7 @@ namespace Heathen.SteamworksIntegration
         {
             if (OrderPending)
             {
-                Debug.LogWarning($"{nameof(ItemShoppingCartManager.Add)} - Attempted to add items with a purchase pending, wait for order authorization responce or call {nameof(ItemShoppingCartManager.ClearPending)} before starting a new one.");
+                Debug.LogWarning($"{nameof(Add)} - Attempted to add items with a purchase pending, wait for order authorisation response or call {nameof(ClearPending)} before starting a new one.");
                 return;
             }
 
@@ -96,7 +98,7 @@ namespace Heathen.SteamworksIntegration
         {
             if (OrderPending)
             {
-                Debug.LogWarning($"{nameof(ItemShoppingCartManager.Set)} - Attempted to set item quantity with a purchase pending, wait for order authorization responce or call {nameof(ItemShoppingCartManager.ClearPending)} before starting a new one.");
+                Debug.LogWarning($"{nameof(Set)} - Attempted to set item quantity with a purchase pending, wait for order authorisation response or call {nameof(ClearPending)} before starting a new one.");
                 return;
             }
 
@@ -172,12 +174,12 @@ namespace Heathen.SteamworksIntegration
         {
             if (OrderPending)
             {
-                Debug.LogWarning($"{nameof(ItemShoppingCartManager.StartPurchase)} - Attempted to start a purcahse with a purchase pending, wait for order authorization responce or call {nameof(ItemShoppingCartManager.ClearPending)} before starting a new one.");
+                Debug.LogWarning($"{nameof(StartPurchase)} - Attempted to start a purchase with a purchase pending, wait for order authorisation response or call {nameof(ClearPending)} before starting a new one.");
             }
             else
             {
                 items.RemoveAll(p => p.item == null || p.quantity <= 0);
-                var itemDefs = new Steamworks.SteamItemDef_t[items.Count];
+                var itemDefs = new SteamItemDef_t[items.Count];
                 var itemQuan = new uint[items.Count];
                 for (int i = 0; i < items.Count; i++)
                 {
@@ -190,14 +192,14 @@ namespace Heathen.SteamworksIntegration
                 {
                     if(error)
                     {
-                        Debug.LogError($"{nameof(ItemShoppingCartManager.StartPurchase)} - IO Error reported by Steam");
+                        Debug.LogError($"{nameof(StartPurchase)} - IO Error reported by Steam");
                         evtStartPurchaseError.Invoke(EResult.k_EResultIOFailure);
                     }
                     else
                     {
                         if (result.m_result != EResult.k_EResultOK)
                         {
-                            Debug.LogError($"{nameof(ItemShoppingCartManager.StartPurchase)} - Error reported by Steam: {result.m_result}");
+                            Debug.LogError($"{nameof(StartPurchase)} - Error reported by Steam: {result.m_result}");
                             evtStartPurchaseError.Invoke(result.m_result);
                         }
                         else
@@ -216,7 +218,7 @@ namespace Heathen.SteamworksIntegration
         {
             if(OrderPending)
             {
-                Debug.LogWarning($"{nameof(ItemShoppingCartManager.ClearPending)}(clearCart = {clearCart}) - Clearing a pending order before the Authorization Responce is returned does not cancel the order, the order may still complete at a later time but will be ignored by the cart.");
+                Debug.LogWarning($"{nameof(ClearPending)}(clearCart = {clearCart}) - Clearing a pending order before the Authorisation Response is returned does not cancel the order, the order may still complete at a later time but will be ignored by the cart.");
                 _result = null;
                 if (clearCart)
                     items.Clear();

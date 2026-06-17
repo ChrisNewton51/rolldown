@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 
 using Steamworks;
 using System;
@@ -27,17 +27,17 @@ namespace Heathen.SteamworksIntegration
             public List<GameServerData> entries;
             public bool hasIOFailure;
 
-            public ResultData(GameServerSearchType type, List<GameServerData> entries, bool IOFailure)
+            public ResultData(GameServerSearchType type, List<GameServerData> entries, bool ioFailure)
             {
                 this.type = type;
                 this.entries = entries;
-                this.hasIOFailure = IOFailure;
+                hasIOFailure = ioFailure;
             }
         }
 
         private class Search
         {
-            public HServerListRequest hRequest;
+            public HServerListRequest HRequest;
             /// <summary>
             /// <para>
             /// param 1:
@@ -50,13 +50,13 @@ namespace Heathen.SteamworksIntegration
             /// This indicates a failure e.g. true = failure; while false = no failure 
             /// </para>
             /// </summary>
-            public Action<List<GameServerData>, bool> callback;
-            public Action clear;
-            public ISteamMatchmakingServerListResponse m_ServerListResponse;
+            public Action<List<GameServerData>, bool> Callback;
+            public Action Clear;
+            public ISteamMatchmakingServerListResponse MServerListResponse;
 
             public Search()
             {
-                m_ServerListResponse = new ISteamMatchmakingServerListResponse(OnServerResponded, OnServerFailedToRespond, OnRefreshComplete);
+                MServerListResponse = new ISteamMatchmakingServerListResponse(OnServerResponded, OnServerFailedToRespond, OnRefreshComplete);
             }
 
             private void OnServerResponded(HServerListRequest hRequest, int iServer)
@@ -67,8 +67,8 @@ namespace Heathen.SteamworksIntegration
             private void OnServerFailedToRespond(HServerListRequest hRequest, int iServer)
             {
                 Debug.Log("OnServerFailedToRespond: " + hRequest + " - " + iServer);
-                if (callback != null)
-                    callback.Invoke(null, true);
+                if (Callback != null)
+                    Callback.Invoke(null, true);
             }
 
             private void OnRefreshComplete(HServerListRequest hRequest, EMatchMakingServerResponse response)
@@ -93,110 +93,110 @@ namespace Heathen.SteamworksIntegration
                     SteamMatchmakingServers.ReleaseRequest(hRequest);
                 }
 
-                if (callback != null)
-                    callback(serverResults, false);
+                if (Callback != null)
+                    Callback(serverResults, false);
 
-                clear();
+                Clear();
             }
         }
 
         private class PingQuery
         {
-            public HServerQuery hQuery;
-            public ISteamMatchmakingPingResponse m_PingResponse;
-            public GameServerData target;
-            public Action<GameServerData, bool> callback;
-            public Action clear;
+            public HServerQuery HQuery;
+            public ISteamMatchmakingPingResponse MPingResponse;
+            public GameServerData Target;
+            public Action<GameServerData, bool> Callback;
+            public Action Clear;
 
             public PingQuery()
             {
-                m_PingResponse = new ISteamMatchmakingPingResponse(OnServerRespondedPing, OnServerFailedToRespondPing);
+                MPingResponse = new ISteamMatchmakingPingResponse(OnServerRespondedPing, OnServerFailedToRespondPing);
             }
 
             private void OnServerFailedToRespondPing()
             {
-                if (hQuery != HServerQuery.Invalid)
+                if (HQuery != HServerQuery.Invalid)
                 {
-                    SteamMatchmakingServers.CancelServerQuery(hQuery);
+                    SteamMatchmakingServers.CancelServerQuery(HQuery);
                 }
 
-                callback?.Invoke(target, true);
+                Callback?.Invoke(Target, true);
 
-                clear?.Invoke();
+                Clear?.Invoke();
             }
 
             private void OnServerRespondedPing(gameserveritem_t server)
             {
-                if (hQuery != HServerQuery.Invalid)
+                if (HQuery != HServerQuery.Invalid)
                 {
-                    SteamMatchmakingServers.CancelServerQuery(hQuery);
+                    SteamMatchmakingServers.CancelServerQuery(HQuery);
                 }
 
-                if (target != null)
+                if (Target != null)
                 {
-                    target.Update(server);
-                    target.evtDataUpdated.Invoke();
-                    callback?.Invoke(target, false);
+                    Target.Update(server);
+                    Target.evtDataUpdated.Invoke();
+                    Callback?.Invoke(Target, false);
                 }
                 else
                 {
-                    callback?.Invoke(new GameServerData(server), false);
+                    Callback?.Invoke(new GameServerData(server), false);
                 }
 
-                clear?.Invoke();
+                Clear?.Invoke();
             }
         }
 
         private class PlayerQuery
         {
-            public HServerQuery hQuery;
-            public ISteamMatchmakingPlayersResponse m_PlayersResponse;
-            public GameServerData target;
-            public Action<GameServerData, bool> callback;
-            public Action clear;
+            public HServerQuery HQuery;
+            public ISteamMatchmakingPlayersResponse MPlayersResponse;
+            public GameServerData Target;
+            public Action<GameServerData, bool> Callback;
+            public Action Clear;
 
             public PlayerQuery()
             {
-                m_PlayersResponse = new ISteamMatchmakingPlayersResponse(OnAddPlayerToList, OnPlayersFailedToRespond, OnPlayersRefreshComplete);
+                MPlayersResponse = new ISteamMatchmakingPlayersResponse(OnAddPlayerToList, OnPlayersFailedToRespond, OnPlayersRefreshComplete);
             }
 
             private void OnPlayersRefreshComplete()
             {
-                if (hQuery != HServerQuery.Invalid)
+                if (HQuery != HServerQuery.Invalid)
                 {
-                    SteamMatchmakingServers.CancelServerQuery(hQuery);
+                    SteamMatchmakingServers.CancelServerQuery(HQuery);
                 }
 
-                target.evtDataUpdated.Invoke();
+                Target.evtDataUpdated.Invoke();
 
-                callback?.Invoke(target, false);
+                Callback?.Invoke(Target, false);
 
-                clear?.Invoke();
+                Clear?.Invoke();
             }
 
             private void OnPlayersFailedToRespond()
             {
-                if (hQuery != HServerQuery.Invalid)
+                if (HQuery != HServerQuery.Invalid)
                 {
-                    SteamMatchmakingServers.CancelServerQuery(hQuery);
+                    SteamMatchmakingServers.CancelServerQuery(HQuery);
                 }
 
-                callback?.Invoke(target, true);
+                Callback?.Invoke(Target, true);
 
-                clear?.Invoke();
+                Clear?.Invoke();
             }
 
             private void OnAddPlayerToList(string pchName, int nScore, float flTimePlayed)
             {
-                target.players.Add(new ServerPlayerEntry() { name = pchName, score = nScore, timePlayed = new TimeSpan(0, 0, 0, (int)flTimePlayed, 0) });
+                Target.players.Add(new ServerPlayerEntry() { name = pchName, score = nScore, TimePlayed = new TimeSpan(0, 0, 0, (int)flTimePlayed, 0) });
             }
         }
 
         private class RulesQuery
         {
-            public HServerQuery hQuery;
-            public ISteamMatchmakingRulesResponse m_RulesResponse;
-            public GameServerData target;
+            public HServerQuery HQuery;
+            public ISteamMatchmakingRulesResponse MRulesResponse;
+            public GameServerData Target;
             /// <summary>
             /// <para>
             /// param 1:
@@ -209,45 +209,45 @@ namespace Heathen.SteamworksIntegration
             /// This indicates a falure e.g. true = failure; while false = no failure 
             /// </para>
             /// </summary>
-            public Action<GameServerData, bool> callback;
-            public Action clear;
+            public Action<GameServerData, bool> Callback;
+            public Action Clear;
 
             public RulesQuery()
             {
-                m_RulesResponse = new ISteamMatchmakingRulesResponse(OnAddRuleToList, OnRulesFailedToRespond, OnRulesRefreshComplete);
+                MRulesResponse = new ISteamMatchmakingRulesResponse(OnAddRuleToList, OnRulesFailedToRespond, OnRulesRefreshComplete);
             }
 
             private void OnAddRuleToList(string pchRule, string pchValue)
             {
-                target.rules.Add(new StringKeyValuePair { key = pchRule, value = pchValue });
+                Target.rules.Add(new StringKeyValuePair { key = pchRule, value = pchValue });
             }
 
             private void OnRulesRefreshComplete()
             {
-                if (hQuery != HServerQuery.Invalid)
+                if (HQuery != HServerQuery.Invalid)
                 {
-                    SteamMatchmakingServers.CancelServerQuery(hQuery);
+                    SteamMatchmakingServers.CancelServerQuery(HQuery);
                 }
 
-                target.evtDataUpdated.Invoke();
+                Target.evtDataUpdated.Invoke();
 
-                if (callback != null)
-                    callback(target, false);
+                if (Callback != null)
+                    Callback(Target, false);
 
-                if (clear != null)
-                    clear();
+                if (Clear != null)
+                    Clear();
             }
 
             private void OnRulesFailedToRespond()
             {
-                if (hQuery != HServerQuery.Invalid)
+                if (HQuery != HServerQuery.Invalid)
                 {
-                    SteamMatchmakingServers.CancelServerQuery(hQuery);
+                    SteamMatchmakingServers.CancelServerQuery(HQuery);
                 }
 
-                callback?.Invoke(target, true);
+                Callback?.Invoke(Target, true);
 
-                clear?.Invoke();
+                Clear?.Invoke();
             }
         }
 
@@ -281,24 +281,24 @@ namespace Heathen.SteamworksIntegration
             }
         }
 
-        private readonly List<Search> searchList = new List<Search>();
-        private readonly List<PingQuery> pingList = new List<PingQuery>();
-        private readonly List<PlayerQuery> playerList = new List<PlayerQuery>();
-        private readonly List<RulesQuery> ruleList = new List<RulesQuery>();
+        private readonly List<Search> _searchList = new List<Search>();
+        private readonly List<PingQuery> _pingList = new List<PingQuery>();
+        private readonly List<PlayerQuery> _playerList = new List<PlayerQuery>();
+        private readonly List<RulesQuery> _ruleList = new List<RulesQuery>();
         public ResultsEvent evtSearchCompleted = new ResultsEvent();
 
-        public void GetAllFavorites() => GetServerList(API.App.Client.Id, GameServerSearchType.Favorites, null, null);
-        public void GetAllFriends() => GetServerList(API.App.Client.Id, GameServerSearchType.Friends, null, null);
-        public void GetAllHistory() => GetServerList(API.App.Client.Id, GameServerSearchType.History, null, null);
-        public void GetAllInternet() => GetServerList(API.App.Client.Id, GameServerSearchType.Internet, null, null);
-        public void GetAllLAN() => GetServerList(API.App.Client.Id, GameServerSearchType.LAN, null, null);
-        public void GetAllSpectator() => GetServerList(API.App.Client.Id, GameServerSearchType.Spectator, null, null);
-        public void GetFavorites(Filter filter) => GetServerList(API.App.Client.Id, GameServerSearchType.Favorites, null, filter);
-        public void GetFriends(Filter filter) => GetServerList(API.App.Client.Id, GameServerSearchType.Friends, null, filter);
-        public void GetHistory(Filter filter) => GetServerList(API.App.Client.Id, GameServerSearchType.History, null, filter);
-        public void GetInternet(Filter filter) => GetServerList(API.App.Client.Id, GameServerSearchType.Internet, null, filter);
-        public void GetLAN(Filter filter) => GetServerList(API.App.Client.Id, GameServerSearchType.LAN, null, filter);
-        public void GetSpectator(Filter filter) => GetServerList(API.App.Client.Id, GameServerSearchType.Spectator, null, filter);
+        public void GetAllFavorites() => GetServerList(API.App.Id, GameServerSearchType.Favorites, null, null);
+        public void GetAllFriends() => GetServerList(API.App.Id, GameServerSearchType.Friends, null, null);
+        public void GetAllHistory() => GetServerList(API.App.Id, GameServerSearchType.History, null, null);
+        public void GetAllInternet() => GetServerList(API.App.Id, GameServerSearchType.Internet, null, null);
+        public void GetAllLan() => GetServerList(API.App.Id, GameServerSearchType.Lan, null, null);
+        public void GetAllSpectator() => GetServerList(API.App.Id, GameServerSearchType.Spectator, null, null);
+        public void GetFavorites(Filter filter) => GetServerList(API.App.Id, GameServerSearchType.Favorites, null, filter);
+        public void GetFriends(Filter filter) => GetServerList(API.App.Id, GameServerSearchType.Friends, null, filter);
+        public void GetHistory(Filter filter) => GetServerList(API.App.Id, GameServerSearchType.History, null, filter);
+        public void GetInternet(Filter filter) => GetServerList(API.App.Id, GameServerSearchType.Internet, null, filter);
+        public void GetLan(Filter filter) => GetServerList(API.App.Id, GameServerSearchType.Lan, null, filter);
+        public void GetSpectator(Filter filter) => GetServerList(API.App.Id, GameServerSearchType.Spectator, null, filter);
         /// <summary>
         /// Fetch a list of server data from Valve for this app id
         /// </summary>
@@ -308,7 +308,7 @@ namespace Heathen.SteamworksIntegration
         /// <param name="filter">a set of key value pairs representing the search filter</param>
         public void GetServerList(GameServerSearchType type, Action<List<GameServerData>, bool> callback = null, Filter filter = null)
         {
-            GetServerList(API.App.Client.Id, type, callback, filter);
+            GetServerList(API.App.Id, type, callback, filter);
         }
         /// <summary>
         /// Fetch a list of server data from Valve for the app id indicated by <paramref name="appId"/>
@@ -321,7 +321,7 @@ namespace Heathen.SteamworksIntegration
         public void GetServerList(AppId_t appId, GameServerSearchType type, Action<List<GameServerData>, bool> callback = null, Filter filter = null)
         {
             var nSearch = new Search();
-            nSearch.clear = () => searchList.Remove(nSearch);
+            nSearch.Clear = () => _searchList.Remove(nSearch);
 
             MatchMakingKeyValuePair_t[] filters = new MatchMakingKeyValuePair_t[0];
 
@@ -331,56 +331,56 @@ namespace Heathen.SteamworksIntegration
             switch (type)
             {
                 case GameServerSearchType.Favorites:
-                    nSearch.callback = (r, e) =>
+                    nSearch.Callback = (r, e) =>
                         {
                             callback?.Invoke(r, e);
                             evtSearchCompleted.Invoke(new ResultData(GameServerSearchType.Favorites, r, e));
                         };
-                    API.Matchmaking.Client.RequestFavoritesServerList(appId, filters, nSearch.m_ServerListResponse);
+                    API.Matchmaking.Client.RequestFavoritesServerList(appId, filters, nSearch.MServerListResponse);
                     break;
                 case GameServerSearchType.Friends:
-                    nSearch.callback = (r, e) =>
+                    nSearch.Callback = (r, e) =>
                     {
                         callback?.Invoke(r, e);
                         evtSearchCompleted.Invoke(new ResultData(GameServerSearchType.Friends, r, e));
                     };
-                    API.Matchmaking.Client.RequestFriendsServerList(appId, filters, nSearch.m_ServerListResponse);
+                    API.Matchmaking.Client.RequestFriendsServerList(appId, filters, nSearch.MServerListResponse);
                     break;
                 case GameServerSearchType.History:
-                    nSearch.callback = (r, e) =>
+                    nSearch.Callback = (r, e) =>
                     {
                         callback?.Invoke(r, e);
                         evtSearchCompleted.Invoke(new ResultData(GameServerSearchType.History, r, e));
                     };
-                    API.Matchmaking.Client.RequestHistoryServerList(appId, filters, nSearch.m_ServerListResponse);
+                    API.Matchmaking.Client.RequestHistoryServerList(appId, filters, nSearch.MServerListResponse);
                     break;
                 case GameServerSearchType.Internet:
-                    nSearch.callback = (r, e) =>
+                    nSearch.Callback = (r, e) =>
                     {
                         callback?.Invoke(r, e);
                         evtSearchCompleted.Invoke(new ResultData(GameServerSearchType.Internet, r, e));
                     };
-                    API.Matchmaking.Client.RequestInternetServerList(appId, filters, nSearch.m_ServerListResponse);
+                    API.Matchmaking.Client.RequestInternetServerList(appId, filters, nSearch.MServerListResponse);
                     break;
-                case GameServerSearchType.LAN:
-                    nSearch.callback = (r, e) =>
+                case GameServerSearchType.Lan:
+                    nSearch.Callback = (r, e) =>
                     {
                         callback?.Invoke(r, e);
-                        evtSearchCompleted.Invoke(new ResultData(GameServerSearchType.LAN, r, e));
+                        evtSearchCompleted.Invoke(new ResultData(GameServerSearchType.Lan, r, e));
                     };
-                    API.Matchmaking.Client.RequestLANServerList(appId, nSearch.m_ServerListResponse);
+                    API.Matchmaking.Client.RequestLanServerList(appId, nSearch.MServerListResponse);
                     break;
                 case GameServerSearchType.Spectator:
-                    nSearch.callback = (r, e) =>
+                    nSearch.Callback = (r, e) =>
                     {
                         callback?.Invoke(r, e);
                         evtSearchCompleted.Invoke(new ResultData(GameServerSearchType.Spectator, r, e));
                     };
-                    API.Matchmaking.Client.RequestSpectatorServerList(appId, filters, nSearch.m_ServerListResponse);
+                    API.Matchmaking.Client.RequestSpectatorServerList(appId, filters, nSearch.MServerListResponse);
                     break;
             }
 
-            searchList.Add(nSearch);
+            _searchList.Add(nSearch);
         }
 
         /// <summary>
@@ -403,11 +403,11 @@ namespace Heathen.SteamworksIntegration
         public void PingServer(uint ipAddress, ushort port, Action<GameServerData, bool> callback)
         {
             var nQuery = new PingQuery();
-            nQuery.callback = callback;
-            nQuery.hQuery = API.Matchmaking.Client.PingServer(ipAddress, port, nQuery.m_PingResponse);
-            nQuery.clear = () => pingList.Remove(nQuery);
+            nQuery.Callback = callback;
+            nQuery.HQuery = API.Matchmaking.Client.PingServer(ipAddress, port, nQuery.MPingResponse);
+            nQuery.Clear = () => _pingList.Remove(nQuery);
 
-            pingList.Add(nQuery);
+            _pingList.Add(nQuery);
         }
 
         /// <summary>
@@ -428,12 +428,12 @@ namespace Heathen.SteamworksIntegration
         public void PingServer(GameServerData entry, Action<GameServerData, bool> callback)
         {
             var nQuery = new PingQuery();
-            nQuery.callback = callback;
-            nQuery.target = entry;
-            nQuery.hQuery = API.Matchmaking.Client.PingServer(entry.m_NetAdr.GetIP(), entry.m_NetAdr.GetQueryPort(), nQuery.m_PingResponse);
-            nQuery.clear = () => pingList.Remove(nQuery);
+            nQuery.Callback = callback;
+            nQuery.Target = entry;
+            nQuery.HQuery = API.Matchmaking.Client.PingServer(entry.m_NetAdr.GetIP(), entry.m_NetAdr.GetQueryPort(), nQuery.MPingResponse);
+            nQuery.Clear = () => _pingList.Remove(nQuery);
 
-            pingList.Add(nQuery);
+            _pingList.Add(nQuery);
         }
 
         /// <summary>
@@ -444,13 +444,13 @@ namespace Heathen.SteamworksIntegration
         public void PlayerDetails(GameServerData entry, Action<GameServerData, bool> callback)
         {
             var nQuery = new PlayerQuery();
-            nQuery.callback = callback;
+            nQuery.Callback = callback;
             entry.players.Clear();
-            nQuery.target = entry;
-            nQuery.hQuery = API.Matchmaking.Client.PlayerDetails(entry.m_NetAdr.GetIP(), entry.m_NetAdr.GetQueryPort(), nQuery.m_PlayersResponse);
-            nQuery.clear = () => playerList.Remove(nQuery);
+            nQuery.Target = entry;
+            nQuery.HQuery = API.Matchmaking.Client.PlayerDetails(entry.m_NetAdr.GetIP(), entry.m_NetAdr.GetQueryPort(), nQuery.MPlayersResponse);
+            nQuery.Clear = () => _playerList.Remove(nQuery);
 
-            playerList.Add(nQuery);
+            _playerList.Add(nQuery);
         }
 
         /// <summary>
@@ -461,64 +461,64 @@ namespace Heathen.SteamworksIntegration
         public void ServerRules(GameServerData entry, Action<GameServerData, bool> callback)
         {
             var nQuery = new RulesQuery();
-            nQuery.callback = callback;
+            nQuery.Callback = callback;
             entry.rules.Clear();
-            nQuery.target = entry;
-            nQuery.hQuery = API.Matchmaking.Client.ServerRules(entry.m_NetAdr.GetIP(), entry.m_NetAdr.GetQueryPort(), nQuery.m_RulesResponse);
-            nQuery.clear = () => ruleList.Remove(nQuery);
+            nQuery.Target = entry;
+            nQuery.HQuery = API.Matchmaking.Client.ServerRules(entry.m_NetAdr.GetIP(), entry.m_NetAdr.GetQueryPort(), nQuery.MRulesResponse);
+            nQuery.Clear = () => _ruleList.Remove(nQuery);
 
-            ruleList.Add(nQuery);
+            _ruleList.Add(nQuery);
         }
 
         private void OnDestroy()
         {
-            if (searchList != null)
+            if (_searchList != null)
             {
-                foreach (var search in searchList)
+                foreach (var search in _searchList)
                 {
                     try
                     {
-                        if (search.hRequest != HServerListRequest.Invalid)
-                            SteamMatchmakingServers.ReleaseRequest(search.hRequest);
+                        if (search.HRequest != HServerListRequest.Invalid)
+                            SteamMatchmakingServers.ReleaseRequest(search.HRequest);
                     }
                     catch { }
                 }
             }
 
-            if(pingList != null)
+            if(_pingList != null)
             {
-                foreach(var ping in pingList)
+                foreach(var ping in _pingList)
                 {
                     try
                     {
-                        if (ping.hQuery != HServerQuery.Invalid)
-                            SteamMatchmakingServers.CancelServerQuery(ping.hQuery);
+                        if (ping.HQuery != HServerQuery.Invalid)
+                            SteamMatchmakingServers.CancelServerQuery(ping.HQuery);
                     }
                     catch { }
                 }
             }
 
-            if(playerList != null)
+            if(_playerList != null)
             {
-                foreach (var player in playerList)
+                foreach (var player in _playerList)
                 {
                     try
                     {
-                        if (player.hQuery != HServerQuery.Invalid)
-                            SteamMatchmakingServers.CancelServerQuery(player.hQuery);
+                        if (player.HQuery != HServerQuery.Invalid)
+                            SteamMatchmakingServers.CancelServerQuery(player.HQuery);
                     }
                     catch { }
                 }
             }
 
-            if (ruleList != null)
+            if (_ruleList != null)
             {
-                foreach (var rule in ruleList)
+                foreach (var rule in _ruleList)
                 {
                     try
                     {
-                        if (rule.hQuery != HServerQuery.Invalid)
-                            SteamMatchmakingServers.CancelServerQuery(rule.hQuery);
+                        if (rule.HQuery != HServerQuery.Invalid)
+                            SteamMatchmakingServers.CancelServerQuery(rule.HQuery);
                     }
                     catch { }
                 }

@@ -1,347 +1,73 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading.Tasks;
+#if UNITASK_INSTALLED
+using Cysharp.Threading.Tasks;
+#endif
 using UnityEngine;
 
 namespace Heathen.SteamworksIntegration.API
 {
     /// <summary>
-    /// Functions for clients to access matchmaking services, favorites, and to operate on game lobbies and the game server browser.
+    /// Provides functionality for managing matchmaking and lobby-related operations.
+    /// Acts as the primary interface for interacting with Steam matchmaking APIs,
+    /// including handling events, lobby data updates, and member interactions.
     /// </summary>
     public static class Matchmaking
     {
+        /// <summary>
+        /// Provides methods and events for managing Steam lobby interactions and matchmaking functionalities.
+        /// This includes lobby membership, event handling, filters for lobby searches, and adding games to favorites or history.
+        /// </summary>
         public static class Client
         {
             [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
             static void Init()
             {
-                memberOfLobbies = new();
-                m_OnLobbyEnter = new();
-                m_OnLobbyDataUpdate = new();
-                m_OnLobbyChatMsg = new();
-                m_OnFavoritesListChanged = new();
-                m_OnLobbyChatUpdate = new();
-                m_OnLobbyGameCreated = new();
-                m_OnLobbyInvite = new();
-                m_OnLobbyLeave = new();
-                m_OnLobbyAskedToLeave = new();
-                m_LobbyCreated_t = null;
-                m_LobbyMatchList_t = null;
-                m_LobbyEnter_t2 = null;
-                m_LobbyEnter_t = null;
-                m_LobbyChatMsg_t = null;
-                m_LobbyDataUpdate_t = null;
-                m_FavoritesListChanged_t = null;
-                m_LobbyChatUpdate_t = null;
-                m_LobbyGameCreated_t = null;
-                m_LobbyInvite_t = null;
+                MemberOfLobbies = new();
+                _lobbyCreatedT = null;
+                _lobbyMatchListT = null;
+                _lobbyEnterT2 = null;
             }
 
             /// <summary>
-            /// This list is populated by the system as the user creates, joins and leaves lobbies.
+            /// The system populates this list as the user creates, joins and leaves lobbies.
             /// </summary>
-            public static List<LobbyData> memberOfLobbies = new();
-            /// <summary>
-            /// Occurs when a lobby enter callback is received and the response code is a success
-            /// </summary>
-            public static LobbyEnterEvent OnLobbyEnterSuccess
-            {
-                get
-                {
-                    m_LobbyEnter_t ??= Callback<LobbyEnter_t>.Create(LobbyEnterHandler);
+            public static List<LobbyData> MemberOfLobbies = new();
 
-                    return m_OnLobbyEnterSuccess;
-                }
-            }
-            /// <summary>
-            /// Occurs when a lobby enter callback is received and the response code is not a success.
-            /// </summary>
-            /// <remarks>
-            /// You can cast the m_EChatRoomEnterResponse value to a EChatRoomEnterResponse enum to determine the reason for failure
-            /// </remarks>
-            public static LobbyEnterEvent OnLobbyEnterFailed
-            {
-                get
-                {
-                    m_LobbyEnter_t ??= Callback<LobbyEnter_t>.Create(LobbyEnterHandler);
+            private static CallResult<LobbyCreated_t> _lobbyCreatedT;
+            private static CallResult<LobbyMatchList_t> _lobbyMatchListT;
+            private static CallResult<LobbyEnter_t> _lobbyEnterT2;
 
-                    return m_OnLobbyEnterFailed;
-                }
-            }
-            /// <summary>
-            /// The lobby metadata has changed.
-            /// </summary>
-            public static LobbyDataUpdateEvent OnLobbyDataUpdate
-            {
-                get
-                {
-                    m_LobbyDataUpdate_t ??= Callback<LobbyDataUpdate_t>.Create((response) =>
-                        {
-                            if (response.m_ulSteamIDLobby == response.m_ulSteamIDMember)
-                            {
-                                //This is a metadata change for the lobby ... check for kick update
-                                LobbyData lobby = response.m_ulSteamIDLobby;
-                                if (lobby[LobbyData.DataKick].Contains("[" + User.Client.Id.ToString() + "]"))
-                                    m_OnLobbyAskedToLeave.Invoke(lobby);
-                            }
-
-                            m_OnLobbyDataUpdate.Invoke(response);
-                        });
-
-                    return m_OnLobbyDataUpdate;
-                }
-            }
-            /// <summary>
-            /// A chat (text or binary) message for this lobby has been received. After getting this you must use GetLobbyChatEntry to retrieve the contents of this message.
-            /// </summary>
-            public static LobbyChatMsgEvent OnLobbyChatMsg
-            {
-                get
-                {
-                    m_LobbyChatMsg_t ??= Callback<LobbyChatMsg_t>.Create((result) =>
-                    {
-                        byte[] data = new byte[4096];
-                        var lobby = new CSteamID(result.m_ulSteamIDLobby);
-                        int ret = SteamMatchmaking.GetLobbyChatEntry(lobby, (int)result.m_iChatID, out CSteamID user, data, data.Length, out EChatEntryType chatEntryType);
-                        Array.Resize(ref data, ret);
-
-                        var chatMsg = new LobbyChatMsg
-                        {
-                            lobby = lobby,
-                            type = chatEntryType,
-                            data = data,
-                            receivedTime = DateTime.Now,
-                            sender = user,
-                        };
-
-                        //If this is a chat message
-                        //and is not from me
-                        //and I am the owner of the lobby its from
-                        if (chatMsg.type == EChatEntryType.k_EChatEntryTypeChatMsg
-                         && chatMsg.sender != UserData.Me
-                         && chatMsg.lobby.IsOwner)
-                        {
-                            //Check if its an authentication request
-                            if (chatMsg.TryFromJson<LobbyMessagePayload>(out var authRequest)
-                            && authRequest.data != null)
-                                m_OnLobbyAuthentication.Invoke(chatMsg.lobby, chatMsg.sender, authRequest.data, authRequest.inventory);
-                            else
-                                m_OnLobbyChatMsg.Invoke(chatMsg);
-                        }
-                        else
-                        {
-                            if (!chatMsg.TryFromJson<LobbyMessagePayload>(out var authRequest)
-                            || authRequest.data == null)
-                                m_OnLobbyChatMsg.Invoke(chatMsg);
-                            //else we are not the owner but this is an auth request so ignore it
-                        }
-                    });
-
-                    return m_OnLobbyChatMsg;
-                }
-            }
-
-            public static LobbyAuthenticationEvent OnLobbyAuthenticationRequest
-            {
-                get
-                {
-                    m_LobbyChatMsg_t ??= Callback<LobbyChatMsg_t>.Create((result) =>
-                    {
-                        byte[] data = new byte[4096];
-                        var lobby = new CSteamID(result.m_ulSteamIDLobby);
-                        int ret = SteamMatchmaking.GetLobbyChatEntry(lobby, (int)result.m_iChatID, out CSteamID user, data, data.Length, out EChatEntryType chatEntryType);
-                        Array.Resize(ref data, ret);
-
-                        var chatMsg = new LobbyChatMsg
-                        {
-                            lobby = lobby,
-                            type = chatEntryType,
-                            data = data,
-                            receivedTime = DateTime.Now,
-                            sender = user,
-                        };
-
-                        //If this is a chat message
-                        //and is not from me
-                        //and I am the owner of the lobby its from
-                        if (chatMsg.type == EChatEntryType.k_EChatEntryTypeChatMsg
-                         && chatMsg.sender != UserData.Me
-                         && chatMsg.lobby.IsOwner)
-                        {
-                            //Check if its an authentication request
-                            if (chatMsg.TryFromJson<LobbyMessagePayload>(out var authRequest)
-                           && authRequest.data != null)
-                                m_OnLobbyAuthentication.Invoke(chatMsg.lobby, chatMsg.sender, authRequest.data, authRequest.inventory);
-                            else
-                                m_OnLobbyChatMsg.Invoke(chatMsg);
-                        }
-                        else
-                        {
-                            if (!chatMsg.TryFromJson<LobbyMessagePayload>(out var authRequest)
-                           || authRequest.data == null)
-                                m_OnLobbyChatMsg.Invoke(chatMsg);
-                            //else we are not the owner but this is an auth request so ignore it
-                        }
-                    });
-
-                    return m_OnLobbyAuthentication;
-                }
-            }
 
             /// <summary>
-            /// A server was added/removed from the favorites list, you should refresh now.
+            /// Retrieves the lobby specified in the command line arguments using the "+connect_lobby" argument.
+            /// Parses the command line arguments to locate a lobby identifier and returns it as a <c>LobbyData</c> object.
             /// </summary>
-            public static FavoritesListChangedEvent OnFavoritesListChanged
-            {
-                get
-                {
-                    m_FavoritesListChanged_t ??= Callback<FavoritesListChanged_t>.Create(m_OnFavoritesListChanged.Invoke);
-
-                    return m_OnFavoritesListChanged;
-                }
-            }
-            /// <summary>
-            /// A lobby chat room state has changed, this is usually sent when a user has joined or left the lobby.
-            /// </summary>
-            public static LobbyChatUpdateEvent OnLobbyChatUpdate
-            {
-                get
-                {
-                    m_LobbyChatUpdate_t ??= Callback<LobbyChatUpdate_t>.Create(m_OnLobbyChatUpdate.Invoke);
-
-                    return m_OnLobbyChatUpdate;
-                }
-            }
-            /// <summary>
-            /// A game server has been set via SetLobbyGameServer for all of the members of the lobby to join. It's up to the individual clients to take action on this; the typical game behavior is to leave the lobby and connect to the specified game server; but the lobby may stay open throughout the session if desired.
-            /// </summary>
-            public static LobbyGameCreatedEvent OnLobbyGameCreated
-            {
-                get
-                {
-                    m_LobbyGameCreated_t ??= Callback<LobbyGameCreated_t>.Create(m_OnLobbyGameCreated.Invoke);
-
-                    return m_OnLobbyGameCreated;
-                }
-            }
-            /// <summary>
-            /// Someone has invited you to join a Lobby. Normally you don't need to do anything with this, as the Steam UI will also display a '&lt;user&gt; has invited you to the lobby, join?' notification and message.
-            /// </summary>
-            /// <remarks>
-            /// If the user outside a game chooses to join, your game will be launched with the parameter +connect_lobby &lt;64-bit lobby id&gt;, or with the callback GameLobbyJoinRequested_t if they're already in-game.
-            /// </remarks>
-            public static LobbyInviteEvent OnLobbyInvite
-            {
-                get
-                {
-                    m_LobbyInvite_t ??= Callback<LobbyInvite_t>.Create((e) => m_OnLobbyInvite.Invoke(e));
-
-                    return m_OnLobbyInvite;
-                }
-            }
-            public static LobbyDataEvent OnLobbyLeave => m_OnLobbyLeave;
-            public static LobbyDataEvent OnLobbyAskedToLeave
-            {
-                get
-                {
-                    m_LobbyDataUpdate_t ??= Callback<LobbyDataUpdate_t>.Create((response) =>
-                    {
-                        if (response.m_ulSteamIDLobby == response.m_ulSteamIDMember)
-                        {
-                            //This is a metadata change for the lobby ... check for kick update
-                            LobbyData lobby = response.m_ulSteamIDLobby;
-                            if (lobby[LobbyData.DataKick].Contains("[" + User.Client.Id.ToString() + "]"))
-                                m_OnLobbyAskedToLeave.Invoke(lobby);
-                        }
-
-                        m_OnLobbyDataUpdate.Invoke(response);
-                    });
-
-                    return m_OnLobbyAskedToLeave;
-                }
-            }
-
-            private static LobbyEnterEvent m_OnLobbyEnter = new();
-            private static LobbyEnterEvent m_OnLobbyEnterSuccess = new();
-            private static LobbyEnterEvent m_OnLobbyEnterFailed = new();
-            private static LobbyDataUpdateEvent m_OnLobbyDataUpdate = new();
-            private static LobbyChatMsgEvent m_OnLobbyChatMsg = new();
-            private static LobbyAuthenticationEvent m_OnLobbyAuthentication = new();
-            private static FavoritesListChangedEvent m_OnFavoritesListChanged = new();
-            private static LobbyChatUpdateEvent m_OnLobbyChatUpdate = new();
-            private static LobbyGameCreatedEvent m_OnLobbyGameCreated = new();
-            private static LobbyInviteEvent m_OnLobbyInvite = new();
-            private static LobbyDataEvent m_OnLobbyLeave = new();
-            private static LobbyDataEvent m_OnLobbyAskedToLeave = new();
-
-            private static CallResult<LobbyCreated_t> m_LobbyCreated_t;
-            private static CallResult<LobbyMatchList_t> m_LobbyMatchList_t;
-            private static CallResult<LobbyEnter_t> m_LobbyEnter_t2;
-
-            private static Callback<LobbyEnter_t> m_LobbyEnter_t;
-            private static Callback<LobbyDataUpdate_t> m_LobbyDataUpdate_t;
-            private static Callback<LobbyChatMsg_t> m_LobbyChatMsg_t;
-            private static Callback<FavoritesListChanged_t> m_FavoritesListChanged_t;
-            private static Callback<LobbyChatUpdate_t> m_LobbyChatUpdate_t;
-            private static Callback<LobbyGameCreated_t> m_LobbyGameCreated_t;
-            private static Callback<LobbyInvite_t> m_LobbyInvite_t;
-
-            private static void LobbyEnterHandler(LobbyEnter_t response)
-            {
-                var responseCode = (EChatRoomEnterResponse)response.m_EChatRoomEnterResponse;
-
-                if (responseCode == EChatRoomEnterResponse.k_EChatRoomEnterResponseSuccess)
-                {
-                    if (!memberOfLobbies.Any(p => p == response.m_ulSteamIDLobby))
-                        memberOfLobbies.Add(new CSteamID(response.m_ulSteamIDLobby));
-
-                    m_OnLobbyEnterSuccess.Invoke(response);
-                }
-                else
-                {
-                    if (API.App.isDebugging || Application.isEditor)
-                    {
-                        if (responseCode == EChatRoomEnterResponse.k_EChatRoomEnterResponseLimited)
-                        {
-                            Debug.LogWarning("This user is limited and cannot fully join a Steam Lobby! metadata and lobby chat will not work for this user though they may appear in the members list.");
-                        }
-                        else
-                        {
-                            if (responseCode != EChatRoomEnterResponse.k_EChatRoomEnterResponseSuccess)
-                                Debug.LogWarning("Detected a Failed lobby enter attempt (" + (LobbyData)(response.m_ulSteamIDLobby) + ":" + responseCode + ")");
-                            else
-                                Debug.Log("Detected a successful lobby enter attempt (" + (LobbyData)(response.m_ulSteamIDLobby) + ":" + responseCode + ")");
-                        }
-
-                        LeaveLobby(response.m_ulSteamIDLobby);
-                    }
-
-                    m_OnLobbyEnterFailed.Invoke(response);
-                }
-
-                m_OnLobbyEnter.Invoke(response);
-            }
-
+            /// <returns>
+            /// A <c>LobbyData</c> object representing the lobby specified in the command line arguments, or a default instance
+            /// with an invalid state if no valid lobby identifier is found.
+            /// </returns>
             public static LobbyData GetCommandLineConnectLobby()
             {
                 var args = Environment.GetCommandLineArgs();
-                ulong value = 0;
-                for (int i = 0; i < args.Length; i++)
+
+                for (var i = 0; i < args.Length - 1; i++)
                 {
-                    if (args[i] == "+connect_lobby" && i + 1 < args.Length && ulong.TryParse(args[i + 1], out value))
+                    if (args[i] == "+connect_lobby" && ulong.TryParse(args[i + 1], out var value))
                         return value;
                 }
 
-                return value;
+                return 0;
             }
 
             /// <summary>
             /// Adds the game server to the local favorites list or updates the time played of the server if it already exists in the list.
             /// </summary>
             /// <param name="appID">The App ID of the game.</param>
-            /// <param name="ipAddress">The IP address of the server in host order, i.e 127.0.0.1 == 0x7f000001.</param>
+            /// <param name="ipAddress">The IP address of the server in host order, i.e. 127.0.0.1 == 0x7f000001.</param>
             /// <param name="port">The port used to connect to the server, in host order.</param>
             /// <param name="queryPort">The port used to query the server, in host order.</param>
             /// <param name="lastPlayedOnServer"></param>
@@ -350,7 +76,7 @@ namespace Heathen.SteamworksIntegration.API
             /// Adds the game server to the local favorites list or updates the time played of the server if it already exists in the list.
             /// </summary>
             /// <param name="appID">The App ID of the game.</param>
-            /// <param name="ipAddress">The IP address of the server in host order, i.e 127.0.0.1 == 0x7f000001.</param>
+            /// <param name="ipAddress">The IP address of the server in host order, i.e. 127.0.0.1 == 0x7f000001.</param>
             /// <param name="port">The port used to connect to the server, in host order.</param>
             /// <param name="queryPort">The port used to query the server, in host order.</param>
             /// <param name="lastPlayedOnServer"></param>
@@ -374,7 +100,7 @@ namespace Heathen.SteamworksIntegration.API
             /// <param name="lastPlayedOnServer"></param>
             public static void AddFavoriteGame(AppId_t appID, string ipAddress, ushort port, ushort queryPort, DateTime lastPlayedOnServer) => SteamMatchmaking.AddFavoriteGame(appID, Utilities.IPStringToUint(ipAddress), port, queryPort, Constants.k_unFavoriteFlagFavorite, Convert.ToUInt32((lastPlayedOnServer - new DateTime(1970, 1, 1)).TotalSeconds));
             /// <summary>
-            /// Sets the physical distance for which we should search for lobbies, this is based on the users IP address and a IP location map on the Steam backed.
+            /// Sets the physical distance for which we should search for lobbies, this is based on the users IP address and an IP location map on the Steam backed.
             /// </summary>
             /// <param name="distanceFilter">Specifies the maximum distance.</param>
             public static void AddRequestLobbyListDistanceFilter(ELobbyDistanceFilter distanceFilter) => SteamMatchmaking.AddRequestLobbyListDistanceFilter(distanceFilter);
@@ -420,7 +146,7 @@ namespace Heathen.SteamworksIntegration.API
             /// <param name="callback">
             /// An action to be invoked when the creation is completed
             /// <code>
-            /// void Callback(EResult result, Lobby lobby, bool ioError)
+            /// void Callback(EResult result, LobbyData lobby, bool ioError)
             /// {
             /// }
             /// </code>
@@ -429,27 +155,115 @@ namespace Heathen.SteamworksIntegration.API
             {
                 if (type == ELobbyType.k_ELobbyTypePrivateUnique)
                 {
-                    throw new ArgumentOutOfRangeException("The `k_ELobbyTypePrivateUnique` should not be used and is a legacy feature of Steam API that is not defined for use in the Client API. It is shown in the ELobbyType and editor as a matter of compatibility with the native API. Do Not User It.");
+                    throw new ArgumentOutOfRangeException(nameof(type), "The `k_ELobbyTypePrivateUnique` should not be used and is a legacy feature of Steam API that is not defined for use in the Client API. It is shown in the ELobbyType and editor as a matter of compatibility with the native API. Do Not Use It.");
                 }
 
                 if (callback == null)
                     return;
 
-                m_LobbyCreated_t ??= CallResult<LobbyCreated_t>.Create();
+                _lobbyCreatedT ??= CallResult<LobbyCreated_t>.Create();
 
                 var handle = SteamMatchmaking.CreateLobby(type, maxMembers);
-                m_LobbyCreated_t.Set(handle, (r, e) =>
+                _lobbyCreatedT.Set(handle, (r, e) =>
                 {
                     if (!e && r.m_eResult == EResult.k_EResultOK)
                     {
                         SetLobbyData(new CSteamID(r.m_ulSteamIDLobby), LobbyData.DataType, ((int)type).ToString());
                         ((LobbyData)r.m_ulSteamIDLobby).Mode = mode;
-                        memberOfLobbies.Add(new CSteamID(r.m_ulSteamIDLobby));
+                        MemberOfLobbies.Add(new CSteamID(r.m_ulSteamIDLobby));
                     }
 
                     callback.Invoke(r.m_eResult, new CSteamID(r.m_ulSteamIDLobby), e);
                 });
             }
+            /// <summary>
+            /// Create a new matchmaking lobby.
+            /// </summary>
+            /// <param name="type">The type and visibility of this lobby. This can be changed later via SetLobbyType.</param>
+            /// <param name="mode">How is this lobby used, Session, Party, General.</param>
+            /// <param name="maxMembers">The maximum number of players that can join this lobby. This cannot be above 250.</param>
+            /// <returns>
+            /// A Task that resolves when the lobby creation is completed.
+            /// The Task result contains a tuple:
+            /// <list type="bullet">
+            ///     <item><description><see cref="EResult"/> result of the creation request.</description></item>
+            ///     <item><description><see cref="LobbyData"/> representing the created lobby.</description></item>
+            ///     <item><description><c>bool</c> indicating whether an IO error occurred.</description></item>
+            /// </list>
+            /// </returns>
+            public static Task<(EResult result, LobbyData lobbyData, bool failed)> CreateLobbyTask(
+                ELobbyType type,
+                SteamLobbyModeType mode,
+                int maxMembers)
+            {
+                if (type == ELobbyType.k_ELobbyTypePrivateUnique)
+                    throw new ArgumentOutOfRangeException(nameof(type),
+                        "The `k_ELobbyTypePrivateUnique` should not be used and is a legacy feature of Steam API that is not defined for use in the Client API. It is shown in the ELobbyType and editor as a matter of compatibility with the native API. Do Not Use It.");
+
+                var tcs = new TaskCompletionSource<(EResult, LobbyData, bool)>();
+
+                _lobbyCreatedT ??= CallResult<LobbyCreated_t>.Create();
+
+                var handle = SteamMatchmaking.CreateLobby(type, maxMembers);
+                _lobbyCreatedT.Set(handle, (r, e) =>
+                {
+                    if (!e && r.m_eResult == EResult.k_EResultOK)
+                    {
+                        SetLobbyData(new CSteamID(r.m_ulSteamIDLobby), LobbyData.DataType, ((int)type).ToString());
+                        ((LobbyData)r.m_ulSteamIDLobby).Mode = mode;
+                        MemberOfLobbies.Add(new CSteamID(r.m_ulSteamIDLobby));
+                    }
+
+                    tcs.SetResult((r.m_eResult, new CSteamID(r.m_ulSteamIDLobby), e));
+                });
+
+                return tcs.Task;
+            }
+#if UNITASK_INSTALLED
+            /// <summary>
+            /// Create a new matchmaking lobby.
+            /// </summary>
+            /// <param name="type">The type and visibility of this lobby. This can be changed later via SetLobbyType.</param>
+            /// <param name="mode">How is this lobby used, Session, Party, General.</param>
+            /// <param name="maxMembers">The maximum number of players that can join this lobby. This cannot be above 250.</param>
+            /// <returns>
+            /// A UniTask that resolves when the lobby creation is completed.
+            /// The UniTask result contains a tuple:
+            /// <list type="bullet">
+            ///     <item><description><see cref="EResult"/> result of the creation request.</description></item>
+            ///     <item><description><see cref="LobbyData"/> representing the created lobby.</description></item>
+            ///     <item><description><c>bool</c> indicating whether an IO error occurred.</description></item>
+            /// </list>
+            /// </returns>
+            public static UniTask<(EResult result, LobbyData lobbyData, bool failed)> CreateLobbyUniTask(
+                ELobbyType type,
+                SteamLobbyModeType mode,
+                int maxMembers)
+            {
+                if (type == ELobbyType.k_ELobbyTypePrivateUnique)
+                    throw new ArgumentOutOfRangeException(nameof(type),
+                        "The `k_ELobbyTypePrivateUnique` should not be used and is a legacy feature of Steam API that is not defined for use in the Client API. It is shown in the ELobbyType and editor as a matter of compatibility with the native API. Do Not Use It.");
+
+                var tcs = new UniTaskCompletionSource<(EResult, LobbyData, bool)>();
+
+                _lobbyCreatedT ??= CallResult<LobbyCreated_t>.Create();
+
+                var handle = SteamMatchmaking.CreateLobby(type, maxMembers);
+                _lobbyCreatedT.Set(handle, (r, e) =>
+                {
+                    if (!e && r.m_eResult == EResult.k_EResultOK)
+                    {
+                        SetLobbyData(new CSteamID(r.m_ulSteamIDLobby), LobbyData.DataType, ((int)type).ToString());
+                        ((LobbyData)r.m_ulSteamIDLobby).Mode = mode;
+                        MemberOfLobbies.Add(new CSteamID(r.m_ulSteamIDLobby));
+                    }
+
+                    tcs.TrySetResult((r.m_eResult, new CSteamID(r.m_ulSteamIDLobby), e));
+                });
+
+                return tcs.Task;
+            }
+#endif
             /// <summary>
             /// Removes a metadata key from the lobby.
             /// </summary>
@@ -475,7 +289,7 @@ namespace Heathen.SteamworksIntegration.API
                         ipAddress = ip,
                         connectionPort = connPort,
                         queryPort = queryPort,
-                        lastPlayedOnServer = new DateTime(1970, 1, 1).AddSeconds(lastPlayed),
+                        LastPlayedOnServer = new DateTime(1970, 1, 1).AddSeconds(lastPlayed),
                         isHistory = flags == Constants.k_unFavoriteFlagHistory
                     };
                 }
@@ -499,7 +313,7 @@ namespace Heathen.SteamworksIntegration.API
                         ipAddress = ip,
                         connectionPort = connPort,
                         queryPort = queryPort,
-                        lastPlayedOnServer = new DateTime(1970, 1, 1).AddSeconds(lastPlayed),
+                        LastPlayedOnServer = new DateTime(1970, 1, 1).AddSeconds(lastPlayed),
                         isHistory = flags == Constants.k_unFavoriteFlagHistory
                     };
                 }
@@ -598,7 +412,7 @@ namespace Heathen.SteamworksIntegration.API
             /// Joins an existing lobby.
             /// </summary>
             /// <remarks>
-            /// The lobby Steam ID can be obtained either from a search with RequestLobbyList, joining on a friend, or from an invite.
+            /// The lobby Steam ID can be obtained either from a search with RequestLobbyList, joining on a friend, or from an invitation.
             /// </remarks>
             /// <param name="lobby">The Steam ID of the lobby to join.</param>
             /// <param name="callback"></param>
@@ -607,16 +421,15 @@ namespace Heathen.SteamworksIntegration.API
                 if (callback == null)
                     return;
 
-                if (m_LobbyEnter_t2 == null)
-                    m_LobbyEnter_t2 = CallResult<LobbyEnter_t>.Create();
+                _lobbyEnterT2 ??= CallResult<LobbyEnter_t>.Create();
 
                 var handle = SteamMatchmaking.JoinLobby(lobby);
-                m_LobbyEnter_t2.Set(handle, (r, e) =>
+                _lobbyEnterT2.Set(handle, (r, e) =>
                 {
                     var response = (EChatRoomEnterResponse)r.m_EChatRoomEnterResponse;
 
                     if (!e && response == EChatRoomEnterResponse.k_EChatRoomEnterResponseSuccess)
-                        memberOfLobbies.Add(new CSteamID(r.m_ulSteamIDLobby));
+                        MemberOfLobbies.Add(new CSteamID(r.m_ulSteamIDLobby));
                     else
                     {
                         if (response == EChatRoomEnterResponse.k_EChatRoomEnterResponseLimited)
@@ -627,25 +440,105 @@ namespace Heathen.SteamworksIntegration.API
                 });
             }
             /// <summary>
+            /// Joins an existing lobby.
+            /// </summary>
+            /// <remarks>
+            /// The lobby Steam ID can be obtained either from a search with RequestLobbyList, joining on a friend, or from an invitation.
+            /// </remarks>
+            /// <param name="lobby">The Steam ID of the lobby to join.</param>
+            /// <returns>
+            /// A Task that resolves when the join request completes.
+            /// The Task result contains a tuple:
+            /// <list type="bullet">
+            ///     <item><description><see cref="LobbyEnter"/> response data for the join request.</description></item>
+            ///     <item><description><c>bool</c> indicating whether an IO error occurred.</description></item>
+            /// </list>
+            /// </returns>
+            public static Task<(LobbyEnter response, bool ioError)> JoinLobbyTask(LobbyData lobby)
+            {
+                var tcs = new TaskCompletionSource<(LobbyEnter, bool)>();
+
+                _lobbyEnterT2 ??= CallResult<LobbyEnter_t>.Create();
+
+                var handle = SteamMatchmaking.JoinLobby(lobby);
+                _lobbyEnterT2.Set(handle, (r, e) =>
+                {
+                    var response = (EChatRoomEnterResponse)r.m_EChatRoomEnterResponse;
+
+                    if (!e && response == EChatRoomEnterResponse.k_EChatRoomEnterResponseSuccess)
+                        MemberOfLobbies.Add(new CSteamID(r.m_ulSteamIDLobby));
+                    else
+                    {
+                        if (response == EChatRoomEnterResponse.k_EChatRoomEnterResponseLimited)
+                            SteamMatchmaking.LeaveLobby(new CSteamID(r.m_ulSteamIDLobby));
+                    }
+
+                    tcs.TrySetResult((r, e));
+                });
+
+                return tcs.Task;
+            }
+#if UNITASK_INSTALLED
+            /// <summary>
+            /// Joins an existing lobby.
+            /// </summary>
+            /// <remarks>
+            /// The lobby Steam ID can be obtained either from a search with RequestLobbyList, joining on a friend, or from an invitation.
+            /// </remarks>
+            /// <param name="lobby">The Steam ID of the lobby to join.</param>
+            /// <returns>
+            /// A UniTask that resolves when the join request completes.
+            /// The UniTask result contains a tuple:
+            /// <list type="bullet">
+            ///     <item><description><see cref="LobbyEnter"/> response data for the join request.</description></item>
+            ///     <item><description><c>bool</c> indicating whether an IO error occurred.</description></item>
+            /// </list>
+            /// </returns>
+            public static UniTask<(LobbyEnter response, bool ioError)> JoinLobbyUniTask(LobbyData lobby)
+            {
+                var tcs = new UniTaskCompletionSource<(LobbyEnter, bool)>();
+
+                _lobbyEnterT2 ??= CallResult<LobbyEnter_t>.Create();
+
+                var handle = SteamMatchmaking.JoinLobby(lobby);
+                _lobbyEnterT2.Set(handle, (r, e) =>
+                {
+                    var response = (EChatRoomEnterResponse)r.m_EChatRoomEnterResponse;
+
+                    if (!e && response == EChatRoomEnterResponse.k_EChatRoomEnterResponseSuccess)
+                        MemberOfLobbies.Add(new CSteamID(r.m_ulSteamIDLobby));
+                    else
+                    {
+                        if (response == EChatRoomEnterResponse.k_EChatRoomEnterResponseLimited)
+                            SteamMatchmaking.LeaveLobby(new CSteamID(r.m_ulSteamIDLobby));
+                    }
+
+                    tcs.TrySetResult((r, e));
+                });
+
+                return tcs.Task;
+            }
+#endif
+            /// <summary>
             /// Leave a lobby that the user is currently in; this will take effect immediately on the client side, other users in the lobby will be notified by a LobbyChatUpdate_t callback.
             /// </summary>
             /// <param name="lobby"></param>
             public static void LeaveLobby(LobbyData lobby)
             {
-                if (API.App.isDebugging)
+                if (App.IsDebugging)
                 {
                     Debug.Log("Detected lobby exit (" + lobby + ")");
                 }
 
-                m_OnLobbyLeave.Invoke(lobby);
+                SteamTools.Events.InvokeOnLobbyLeave(lobby);
                 SteamMatchmaking.LeaveLobby(lobby);
-                memberOfLobbies.RemoveAll(p => p == lobby);
+                MemberOfLobbies.RemoveAll(p => p == lobby);
             }
             /// <summary>
             /// Removes the game server from the local favorites list.
             /// </summary>
             /// <param name="appId">The App ID of the game.</param>
-            /// <param name="ip">The IP address of the server in host order, i.e 127.0.0.1 == 0x7f000001.</param>
+            /// <param name="ip">The IP address of the server in host order, i.e. 127.0.0.1 == 0x7f000001.</param>
             /// <param name="connectionPort">The port used to connect to the server, in host order.</param>
             /// <param name="queryPort">The port used to query the server, in host order.</param>
             /// <returns></returns>
@@ -654,7 +547,7 @@ namespace Heathen.SteamworksIntegration.API
             /// Removes the game server from the local favorites list.
             /// </summary>
             /// <param name="appId">The App ID of the game.</param>
-            /// <param name="ip">The IP address of the server in host order, i.e 127.0.0.1 == 0x7f000001.</param>
+            /// <param name="ip">The IP address of the server in host order, i.e. 127.0.0.1 == 0x7f000001.</param>
             /// <param name="connectionPort">The port used to connect to the server, in host order.</param>
             /// <param name="queryPort">The port used to query the server, in host order.</param>
             /// <returns></returns>
@@ -678,7 +571,7 @@ namespace Heathen.SteamworksIntegration.API
             /// <returns></returns>
             public static bool RemoveHistoryGame(AppId_t appId, string ip, ushort connectionPort, ushort queryPort) => SteamMatchmaking.RemoveFavoriteGame(appId, Utilities.IPStringToUint(ip), connectionPort, queryPort, Constants.k_unFavoriteFlagHistory);
             /// <summary>
-            /// Refreshes all of the metadata for a lobby that you're not in right now.
+            /// Refreshes all the metadata for a lobby that you're not in right now.
             /// </summary>
             /// <remarks>
             /// You will never do this for lobbies you're a member of, that data will always be up to date. You can use this to refresh lobbies that you have obtained from RequestLobbyList or that are available via friends.
@@ -691,7 +584,7 @@ namespace Heathen.SteamworksIntegration.API
             /// </summary>
             /// <remarks>
             /// <para>
-            /// There can only be one active lobby search at a time. The old request will be canceled if a new one is started. Depending on the users connection to the Steam back-end, this call can take from 300ms to 5 seconds to complete, and has a timeout of 20 seconds.
+            /// There can only be one active lobby search at a time. The old request will be cancelled if a new one is started. Depending on the users connection to the Steam back-end, this call can take from 300ms to 5 seconds to complete, and has a timeout of 20 seconds.
             /// </para>
             /// <para>
             /// NOTE: To filter the results you MUST call the AddRequestLobbyList* functions before calling this. The filters are cleared on each call to this function.
@@ -709,11 +602,10 @@ namespace Heathen.SteamworksIntegration.API
                 if (callback == null)
                     return;
 
-                if (m_LobbyMatchList_t == null)
-                    m_LobbyMatchList_t = CallResult<LobbyMatchList_t>.Create();
+                _lobbyMatchListT ??= CallResult<LobbyMatchList_t>.Create();
 
                 var handle = SteamMatchmaking.RequestLobbyList();
-                m_LobbyMatchList_t.Set(handle, (results, error) =>
+                _lobbyMatchListT.Set(handle, (results, error) =>
                 {
                     if (!error && results.m_nLobbiesMatching > 0)
                     {
@@ -722,23 +614,132 @@ namespace Heathen.SteamworksIntegration.API
                         {
                             buffer[i] = SteamMatchmaking.GetLobbyByIndex(i);
                         }
-                        callback.Invoke(buffer, error);
+                        callback.Invoke(buffer, false);
                     }
                     else
                     {
-                        callback.Invoke(new LobbyData[0], error);
+                        callback.Invoke(Array.Empty<LobbyData>(), error);
                     }
                 });
             }
+
             /// <summary>
-            /// Broadcasts a chat (text or binary data) message to the all of the users in the lobby.
+            /// Get a filtered list of relevant lobbies.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// There can only be one active lobby search at a time. The old request will be cancelled if a new one is started. Depending on the users connection to the Steam back-end, this call can take from 300ms to 5 seconds to complete, and has a timeout of 20 seconds.
+            /// </para>
+            /// <para>
+            /// NOTE: To filter the results you MUST call the AddRequestLobbyList* functions before calling this. The filters are cleared on each call to this function.
+            /// </para>
+            /// <para>
+            /// NOTE: If AddRequestLobbyListDistanceFilter is not called, k_ELobbyDistanceFilterDefault will be used, which will only find matches in the same or nearby regions.
+            /// </para>
+            /// <para>
+            /// NOTE: This will only return lobbies that are not full, and only lobbies that are k_ELobbyTypePublic or k_ELobbyTypeInvisible, and are set to joinable with SetLobbyJoinable.
+            /// </para>
+            /// </remarks>
+            /// <returns>
+            /// A Task that resolves when the lobby list request completes.
+            /// The Task result contains a tuple:
+            /// <list type="bullet">
+            ///     <item><description>An array of <see cref="LobbyData"/> representing the matched lobbies.</description></item>
+            ///     <item><description><c>bool</c> indicating whether an IO error occurred.</description></item>
+            /// </list>
+            /// </returns>
+            public static Task<(LobbyData[] lobbies, bool ioError)> RequestLobbyListTask()
+            {
+                var tcs = new TaskCompletionSource<(LobbyData[], bool)>();
+
+                _lobbyMatchListT ??= CallResult<LobbyMatchList_t>.Create();
+
+                var handle = SteamMatchmaking.RequestLobbyList();
+                _lobbyMatchListT.Set(handle, (results, error) =>
+                {
+                    if (!error && results.m_nLobbiesMatching > 0)
+                    {
+                        var buffer = new LobbyData[results.m_nLobbiesMatching];
+                        for (int i = 0; i < results.m_nLobbiesMatching; i++)
+                        {
+                            buffer[i] = SteamMatchmaking.GetLobbyByIndex(i);
+                        }
+
+                        tcs.TrySetResult((buffer, false));
+                    }
+                    else
+                    {
+                        tcs.TrySetResult((Array.Empty<LobbyData>(), error));
+                    }
+                });
+
+                return tcs.Task;
+            }
+            
+#if UNITASK_INSTALLED
+            /// <summary>
+            /// Get a filtered list of relevant lobbies.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// There can only be one active lobby search at a time. The old request will be cancelled if a new one is started. Depending on the users connection to the Steam back-end, this call can take from 300ms to 5 seconds to complete, and has a timeout of 20 seconds.
+            /// </para>
+            /// <para>
+            /// NOTE: To filter the results you MUST call the AddRequestLobbyList* functions before calling this. The filters are cleared on each call to this function.
+            /// </para>
+            /// <para>
+            /// NOTE: If AddRequestLobbyListDistanceFilter is not called, k_ELobbyDistanceFilterDefault will be used, which will only find matches in the same or nearby regions.
+            /// </para>
+            /// <para>
+            /// NOTE: This will only return lobbies that are not full, and only lobbies that are k_ELobbyTypePublic or k_ELobbyTypeInvisible, and are set to joinable with SetLobbyJoinable.
+            /// </para>
+            /// </remarks>
+            /// <returns>
+            /// A UniTask that resolves when the lobby list request completes.
+            /// The UniTask result contains a tuple:
+            /// <list type="bullet">
+            ///     <item><description>An array of <see cref="LobbyData"/> representing the matched lobbies.</description></item>
+            ///     <item><description><c>bool</c> indicating whether an IO error occurred.</description></item>
+            /// </list>
+            /// </returns>
+            public static UniTask<(LobbyData[] lobbies, bool ioError)> RequestLobbyListUniTask()
+            {
+                var tcs = new UniTaskCompletionSource<(LobbyData[], bool)>();
+
+                _lobbyMatchListT ??= CallResult<LobbyMatchList_t>.Create();
+
+                var handle = SteamMatchmaking.RequestLobbyList();
+                _lobbyMatchListT.Set(handle, (results, error) =>
+                {
+                    if (!error && results.m_nLobbiesMatching > 0)
+                    {
+                        var buffer = new LobbyData[results.m_nLobbiesMatching];
+                        for (int i = 0; i < results.m_nLobbiesMatching; i++)
+                        {
+                            buffer[i] = SteamMatchmaking.GetLobbyByIndex(i);
+                        }
+
+                        tcs.TrySetResult((buffer, false));
+                    }
+                    else
+                    {
+                        tcs.TrySetResult((Array.Empty<LobbyData>(), error));
+                    }
+                });
+
+                return tcs.Task;
+            }
+#endif
+
+            /// <summary>
+            /// Broadcasts a chat (text or binary data) message to the all the users in the lobby.
             /// </summary>
             /// <param name="lobby">The Steam ID of the lobby to send the chat message to.</param>
             /// <param name="messageBody">This can be text or binary data, up to 4 Kilobytes in size.</param>
             /// <returns></returns>
             public static bool SendLobbyChatMsg(LobbyData lobby, byte[] messageBody) => SteamMatchmaking.SendLobbyChatMsg(lobby, messageBody, messageBody.Length);
             /// <summary>
-            /// Sets a key/value pair in the lobby metadata. This can be used to set the the lobby name, current map, game mode, etc.
+            /// Sets a key/value pair in the lobby metadata. This can be used to set the lobby name, current map, game mode, etc.
             /// </summary>
             /// <remarks>
             /// This can only be set by the owner of the lobby. Lobby members should use SetLobbyMemberData instead.
@@ -787,7 +788,7 @@ namespace Heathen.SteamworksIntegration.API
             /// <param name="gameServerId">Sets the Steam ID of the game server. Use k_steamIDNil if you're not setting this.</param>
             public static void SetLobbyGameServer(LobbyData lobby, string ip, ushort port, CSteamID gameServerId) => SteamMatchmaking.SetLobbyGameServer(lobby, Utilities.IPStringToUint(ip), port, gameServerId);
             /// <summary>
-            /// Sets whether or not a lobby is joinable by other players. This always defaults to enabled for a new lobby.
+            /// Sets whether a lobby is joinable by other players. This always defaults to enabled for a new lobby.
             /// </summary>
             /// <remarks>
             /// If joining is disabled, then no players can join, even if they are a friend or have been invited.
@@ -807,9 +808,11 @@ namespace Heathen.SteamworksIntegration.API
             /// <param name="key"></param>
             /// <returns></returns>
             public static string GetLobbyMemberData(LobbyData lobby, CSteamID member, string key) => SteamMatchmaking.GetLobbyMemberData(lobby, member, key);
+
             /// <summary>
             /// Get the LobbyMember object for a given user
             /// </summary>
+            /// <param name="lobby"></param>
             /// <param name="id">The ID of the member to fetch</param>
             /// <param name="member">The member found</param>
             /// <returns>True if the user is a member of the lobby, false if they are not</returns>
@@ -827,9 +830,11 @@ namespace Heathen.SteamworksIntegration.API
                     return true;
                 }
             }
+
             /// <summary>
             /// Checks if a user is a member of this lobby
             /// </summary>
+            /// <param name="lobby"></param>
             /// <param name="id">The user to check for</param>
             /// <returns>True if they are, false if not</returns>
             public static bool IsAMember(LobbyData lobby, CSteamID id)
@@ -841,7 +846,7 @@ namespace Heathen.SteamworksIntegration.API
             /// Sets per-user metadata for the local user.
             /// </summary>
             /// <remarks>
-            /// Each user in the lobby will be receive notification of the lobby data change via a LobbyDataUpdate_t callback, and any new users joining will receive any existing data.
+            /// Each user in the lobby will be received notification of the lobby data change via a LobbyDataUpdate_t callback, and any new users joining will receive any existing data.
             /// </remarks>
             /// <param name="lobby"></param>
             /// <param name="key"></param>
@@ -858,7 +863,7 @@ namespace Heathen.SteamworksIntegration.API
             /// Changes who the lobby owner is.
             /// </summary>
             /// <remarks>
-            /// This can only be set by the owner of the lobby. This will trigger a LobbyDataUpdate_t for all of the users in the lobby, each user should update their local state to reflect the new owner. This is typically accomplished by displaying a crown icon next to the owners name.
+            /// This can only be set by the owner of the lobby. This will trigger a LobbyDataUpdate_t for all the users in the lobby, each user should update their local state to reflect the new owner. This is typically accomplished by displaying a crown icon next to the owners name.
             /// </remarks>
             /// <param name="lobby"></param>
             /// <param name="newOwner"></param>
@@ -907,7 +912,7 @@ namespace Heathen.SteamworksIntegration.API
             {
                 var count = SteamMatchmakingServers.GetServerCount(request);
                 var results = new gameserveritem_t[count];
-                for (int i = 0; i < count; i++)
+                for (var i = 0; i < count; i++)
                 {
                     results[i] = SteamMatchmakingServers.GetServerDetails(request, i);
                 }
@@ -963,7 +968,7 @@ namespace Heathen.SteamworksIntegration.API
             /// <param name="request"></param>
             public static void RefreshQuery(HServerListRequest request) => SteamMatchmakingServers.RefreshQuery(request);
             /// <summary>
-            /// Refreshes a single server inside of a query.
+            /// Refreshes a single server inside a query.
             /// </summary>
             /// <param name="request"></param>
             /// <param name="index"></param>
@@ -1011,7 +1016,7 @@ namespace Heathen.SteamworksIntegration.API
             /// <param name="appId"></param>
             /// <param name="pRequestServersResponse"></param>
             /// <returns></returns>
-            public static HServerListRequest RequestLANServerList(AppId_t appId, ISteamMatchmakingServerListResponse pRequestServersResponse) => SteamMatchmakingServers.RequestLANServerList(appId, pRequestServersResponse);
+            public static HServerListRequest RequestLanServerList(AppId_t appId, ISteamMatchmakingServerListResponse pRequestServersResponse) => SteamMatchmakingServers.RequestLANServerList(appId, pRequestServersResponse);
             /// <summary>
             /// Request a new list of game servers from the 'spectator' server list.
             /// </summary>
@@ -1041,13 +1046,12 @@ namespace Heathen.SteamworksIntegration.API
             /// </summary>
             public static void LeaveAllLobbies()
             {
-                var tempList = memberOfLobbies.ToArray();
+                var tempList = MemberOfLobbies.ToArray();
 
                 foreach (var lobby in tempList)
                     lobby.Leave();
 
-                memberOfLobbies.Clear();
-                tempList = null;
+                MemberOfLobbies.Clear();
             }
         }
     }

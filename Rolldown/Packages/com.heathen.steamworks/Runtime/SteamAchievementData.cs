@@ -1,31 +1,54 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 using System;
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.Serialization;
 
 namespace Heathen.SteamworksIntegration
 {
+    /// <summary>
+    /// Represents data for a Steam achievement.
+    /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("Steamworks/Achievement")]
-    [HelpURL("https://kb.heathen.group/steam/features/achievements")]
+    [HelpURL("https://heathen.group/kb/steam-features-achievements/")]
     public class SteamAchievementData : MonoBehaviour
     {
+        /// <summary>
+        /// The API name of the achievement as defined in the Steamworks portal.
+        /// </summary>
         public string apiName;
+        /// <summary>
+        /// Gets or sets the achievement data using the API name.
+        /// </summary>
         public AchievementData Data
         {
             get => apiName;
             set => apiName = value.ApiName;
         }
 
-        [SerializeField]
-        private List<string> m_Delegates;
+        [FormerlySerializedAs("m_Delegates")] [SerializeField]
+        private List<string> mDelegates;
 
+        /// <summary>
+        /// Unlocks the achievement.
+        /// </summary>
         public void Unlock() => Data.Unlock();
+        /// <summary>
+        /// Clears the achievement status.
+        /// </summary>
         public void Clear() => Data.Clear();
+        /// <summary>
+        /// Stores the achievement status to Steam.
+        /// </summary>
         public void Store() => Data.Store();
+        /// <summary>
+        /// Sets the achievement as unlocked or cleared.
+        /// </summary>
+        /// <param name="value">If true, unlocks the achievement; if false, clears it.</param>
         public void SetAchieved(bool value)
         {
             if (value)
@@ -36,15 +59,20 @@ namespace Heathen.SteamworksIntegration
     }
 
 #if UNITY_EDITOR
-    [UnityEditor.CustomEditor(typeof(SteamAchievementData), true)]
+    /// <summary>
+    /// Custom editor for <see cref="SteamAchievementData"/>.
+    /// </summary>
+    [CustomEditor(typeof(SteamAchievementData), true)]
     public class SteamAchievementDataEditor : ModularEditor
     {
         private string[] _options;
         private int _selectedIndex;
-        private SerializedProperty apiNameProp;
-        private SteamToolsSettings settings;
+        private SerializedProperty _apiNameProp;
+        private SteamToolsSettings _settings;
 
-        // --- Allowed types for this editor ---
+        /// <summary>
+        /// Allowed types for this editor.
+        /// </summary>
         protected override Type[] AllowedTypes => new Type[]
         {
             typeof(SteamAchievementName),
@@ -55,22 +83,22 @@ namespace Heathen.SteamworksIntegration
 
         private void OnEnable()
         {
-            apiNameProp = serializedObject.FindProperty("apiName");
+            _apiNameProp = serializedObject.FindProperty("apiName");
             RefreshOptions();
         }
 
         private void RefreshOptions()
         {
-            settings = SteamToolsSettings.GetOrCreate();
-            var list = settings != null && settings.achievements != null
-                ? settings.achievements
-                : new System.Collections.Generic.List<string>();
+            _settings = SteamToolsSettings.GetOrCreate();
+            var list = _settings != null && _settings.achievements != null
+                ? _settings.achievements
+                : new List<string>();
 
             if (list.Count > 0)
             {
                 _options = list.ToArray();
-                var current = apiNameProp.stringValue;
-                _selectedIndex = Mathf.Max(0, System.Array.IndexOf(_options, current));
+                var current = _apiNameProp.stringValue;
+                _selectedIndex = Mathf.Max(0, Array.IndexOf(_options, current));
                 if (_selectedIndex < 0)
                     _selectedIndex = 0;
             }
@@ -80,10 +108,13 @@ namespace Heathen.SteamworksIntegration
             }
         }
 
+        /// <summary>
+        /// Draws the inspector GUI.
+        /// </summary>
         public override void OnInspectorGUI()
         {
-            if(settings != null)
-                settings = SteamToolsSettings.GetOrCreate();
+            if(_settings)
+                _settings = SteamToolsSettings.GetOrCreate();
 
             serializedObject.Update();
 
@@ -91,7 +122,7 @@ namespace Heathen.SteamworksIntegration
             if (EditorGUILayout.LinkButton("Settings"))
                 SettingsService.OpenProjectSettings("Project/Player/Steamworks");
             if (EditorGUILayout.LinkButton("Portal"))
-                Application.OpenURL("https://partner.steamgames.com/apps/landing/" + settings.Get(settings.ActiveApp.Value).applicationId.ToString());
+                Application.OpenURL("https://partner.steamgames.com/apps/landing/" + _settings.Get(_settings.ActiveApp.Value).applicationId.ToString());
             if (EditorGUILayout.LinkButton("Guide"))
                 Application.OpenURL("https://kb.heathen.group/steam/features/achievements");
             if (EditorGUILayout.LinkButton("Support"))
@@ -115,7 +146,7 @@ namespace Heathen.SteamworksIntegration
 
             _selectedIndex = EditorGUILayout.Popup(_selectedIndex, _options);
             if (_selectedIndex >= 0 && _selectedIndex < _options.Length)
-                apiNameProp.stringValue = _options[_selectedIndex];
+                _apiNameProp.stringValue = _options[_selectedIndex];
 
             EditorGUILayout.Space();
 

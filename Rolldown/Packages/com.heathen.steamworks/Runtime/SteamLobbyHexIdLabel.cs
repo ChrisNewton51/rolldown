@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using UnityEngine;
 
 namespace Heathen.SteamworksIntegration
@@ -10,31 +10,31 @@ namespace Heathen.SteamworksIntegration
     {
         public TMPro.TextMeshProUGUI label;
 
-        private SteamLobbyData m_Inspector;
+        private SteamLobbyData _inspector;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamLobbyData>();
-            m_Inspector.onChanged.AddListener(HandleOnChanged);
-            if (m_Inspector.Data.IsValid)
-                label.text = m_Inspector.Data.ToString();
+            _inspector = GetComponent<SteamLobbyData>();
+            _inspector.onChanged.AddListener(HandleOnChanged);
+            if (_inspector.Data.IsValid)
+                label.text = _inspector.Data.ToString();
         }
 
         private void OnDestroy()
         {
-            m_Inspector.onChanged.RemoveListener(HandleOnChanged);
+            _inspector.onChanged.RemoveListener(HandleOnChanged);
         }
 
         private void HandleOnChanged(LobbyData arg0)
         {
-            if (m_Inspector.Data.IsValid)
+            if (_inspector.Data.IsValid)
             {
-                if (label != null)
-                    label.text = m_Inspector.Data.ToString();
+                if (label)
+                    label.text = _inspector.Data.ToString();
             }
             else
             {
-                if (label != null)
+                if (label)
                     label.text = string.Empty;
             }
         }

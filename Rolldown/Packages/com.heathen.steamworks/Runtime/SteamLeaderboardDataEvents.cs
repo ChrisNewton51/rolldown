@@ -1,7 +1,8 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using System;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 
 namespace Heathen.SteamworksIntegration
 {
@@ -20,37 +21,37 @@ namespace Heathen.SteamworksIntegration
         public UnityEvent<LeaderboardScoreUploaded> onScoreUploaded;
         [EventField]
         public UnityEvent<LeaderboardScoreUploaded> onRankChanged;
-        [EventField]
-        public UnityEvent<LeaderboardUGCSet> onUGCAttached;
+        [FormerlySerializedAs("onUGCAttached")] [EventField]
+        public UnityEvent<LeaderboardUgcSet> onUgcAttached;
 
-        private SteamLeaderboardData m_Inspector;
+        private SteamLeaderboardData _mInspector;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamLeaderboardData>();
-            API.Leaderboards.Client.onScoreUploaded.AddListener(HandleScoreUpload);
-            API.Leaderboards.Client.onUgcAttached.AddListener(HandleUgcAttached);
+            _mInspector = GetComponent<SteamLeaderboardData>();
+            API.Leaderboards.Client.OnScoreUploaded.AddListener(HandleScoreUpload);
+            API.Leaderboards.Client.OnUgcAttached.AddListener(HandleUgcAttached);
         }
 
         private void OnDestroy()
         {
-            API.Leaderboards.Client.onScoreUploaded.RemoveListener(HandleScoreUpload);
-            API.Leaderboards.Client.onUgcAttached.RemoveListener(HandleUgcAttached);
+            API.Leaderboards.Client.OnScoreUploaded.RemoveListener(HandleScoreUpload);
+            API.Leaderboards.Client.OnUgcAttached.RemoveListener(HandleUgcAttached);
         }
 
-        private void HandleUgcAttached(LeaderboardUGCSet arg0, bool arg1)
+        private void HandleUgcAttached(LeaderboardUgcSet arg0, bool arg1)
         {
             if (!arg1
-                && arg0.Leaderboard == m_Inspector.Data)
+                && arg0.Leaderboard == _mInspector.Data)
             {
-                onUGCAttached.Invoke(arg0);
+                onUgcAttached.Invoke(arg0);
             }
         }
 
         private void HandleScoreUpload(LeaderboardScoreUploaded arg0, bool arg1)
         {
             if (!arg1
-                && arg0.Leaderboard == m_Inspector.Data)
+                && arg0.Leaderboard == _mInspector.Data)
             {
                 onScoreUploaded.Invoke(arg0);
 

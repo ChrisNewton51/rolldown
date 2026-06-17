@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using UnityEngine;
 
@@ -10,25 +10,25 @@ namespace Heathen.SteamworksIntegration
     public class SteamLobbyJoin : MonoBehaviour
     {
         /// <summary>
-        /// If true and creating a Party it will leave any existing lobby first, if true when creating a session it will notify any existing party of the new session lobby.
+        /// If true and creating a Party, it will leave any existing lobby first, if true when creating a session it will notify any existing party of the new session lobby.
         /// </summary>
-        [SettingsField(synchronized = true)]
+        [SettingsField(0, true)]
         [Tooltip("If true and creating a Party it will leave any existing lobby first, if true when creating a session it will notify any existing party of the new session lobby.")]
-        public bool partyWise = false;
+        public bool partyWise;
 
-        private SteamLobbyData m_Inspector;
-        private SteamLobbyDataEvents m_Events;
+        private SteamLobbyData _mInspector;
+        private SteamLobbyDataEvents _mEvents;
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamLobbyData>();
-            m_Events = GetComponent<SteamLobbyDataEvents>();
+            _mInspector = GetComponent<SteamLobbyData>();
+            _mEvents = GetComponent<SteamLobbyDataEvents>();
         }
 
         public void RequestJoin(SteamLobbyJoin toRequest)
         {
-            if (toRequest != null && m_Inspector.Data.IsValid)
-                toRequest.Join(m_Inspector.Data);
+            if (toRequest != null && _mInspector.Data.IsValid)
+                toRequest.Join(_mInspector.Data);
         }
 
         public void JoinFromIdString(string id)
@@ -48,7 +48,7 @@ namespace Heathen.SteamworksIntegration
                 return;
 
             // If we are already tracking this lobby
-            if (lobby == m_Inspector.Data)
+            if (lobby == _mInspector.Data)
                 return;
 
             LobbyData partyLobby = CSteamID.Nil;
@@ -65,9 +65,9 @@ namespace Heathen.SteamworksIntegration
             {
                 if (!enterIoError && enterLobby.Response == EChatRoomEnterResponse.k_EChatRoomEnterResponseSuccess)
                 {
-                    m_Inspector.Data = enterLobby.Lobby;
-                    if (m_Events != null)
-                        m_Events.onEnterSuccess?.Invoke(enterLobby.Lobby);
+                    _mInspector.Data = enterLobby.Lobby;
+                    if (_mEvents != null)
+                        _mEvents.onEnterSuccess?.Invoke(enterLobby.Lobby);
 
                     if (partyLobby.IsValid && enterLobby.Lobby.IsSession)
                     {
@@ -76,8 +76,8 @@ namespace Heathen.SteamworksIntegration
                 }
                 else
                 {
-                    if(m_Events != null)
-                        m_Events.onEnterFailure?.Invoke(enterLobby.Response);
+                    if(_mEvents != null)
+                        _mEvents.onEnterFailure?.Invoke(enterLobby.Response);
                 }
             });
         }

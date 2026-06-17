@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using System;
 using CloudAPI = Heathen.SteamworksIntegration.API.RemoteStorage.Client;
 
@@ -9,11 +9,11 @@ namespace Heathen.SteamworksIntegration
     {
         public string name;
         public int size;
-        public DateTime timestamp;
+        public DateTime Timestamp;
 
         public bool Equals(RemoteStorageFile other)
         {
-            return name.Equals(other.name) && size.Equals(other.size) && timestamp.Equals(other.timestamp);
+            return name.Equals(other.name) && size.Equals(other.size) && Timestamp.Equals(other.Timestamp);
         }
 
         public override bool Equals(object obj)
@@ -27,7 +27,7 @@ namespace Heathen.SteamworksIntegration
 
         public override int GetHashCode()
         {
-            return name.GetHashCode() ^ size.GetHashCode() ^ timestamp.GetHashCode();
+            return name.GetHashCode() ^ size.GetHashCode() ^ Timestamp.GetHashCode();
         }
 
         public byte[] Data => CloudAPI.FileRead(name);

@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using System.Collections.Generic;
@@ -35,47 +35,47 @@ namespace Heathen.SteamworksIntegration
         //[Tooltip("The container where member templates will be spawned as members join or removed from when members leave.")]
         //public Transform content;
 
-        private SteamLobbyData m_Inspector;
-        private List<SteamLobbyMemberData> m_SpawnedMembers = new();
+        private SteamLobbyData _mInspector;
+        private List<SteamLobbyMemberData> _mSpawnedMembers = new();
 
         private void Awake()
         {
-            m_Inspector = GetComponent<SteamLobbyData>();
-            m_Inspector.onChanged.AddListener(HandleLobbyChanged);
-            API.Matchmaking.Client.OnLobbyChatUpdate.AddListener(GlobalChatUpdate);
+            _mInspector = GetComponent<SteamLobbyData>();
+            _mInspector.onChanged.AddListener(HandleLobbyChanged);
+            
+            SteamTools.Events.OnLobbyChatUpdate += GlobalChatUpdate;
         }
 
         private void OnDestroy()
         {
-            m_Inspector?.onChanged.RemoveListener(HandleLobbyChanged);
-            API.Matchmaking.Client.OnLobbyChatUpdate.RemoveListener(GlobalChatUpdate);
+            _mInspector?.onChanged.RemoveListener(HandleLobbyChanged);
+            SteamTools.Events.OnLobbyChatUpdate -= GlobalChatUpdate;
         }
 
         private void HandleLobbyChanged(LobbyData arg0)
         {
-            foreach(var member in m_SpawnedMembers)
+            foreach(var member in _mSpawnedMembers)
                 Destroy(member.gameObject);
 
-            m_SpawnedMembers.Clear();
+            _mSpawnedMembers.Clear();
 
-            if (m_Inspector.Data.IsValid)
+            if (_mInspector.Data.IsValid)
             {
-                foreach (var member in m_Inspector.Data.Members)
+                foreach (var member in _mInspector.Data.Members)
                 {
                     AddMember(member);
                 }
             }
         }
 
-        private void GlobalChatUpdate(LobbyChatUpdate_t arg0)
+        private void GlobalChatUpdate(LobbyData lobby, UserData user, EChatMemberStateChange state)
         {
-            if (arg0.m_ulSteamIDLobby == m_Inspector.Data)
+            if (lobby == _mInspector.Data)
             {
-                var state = (EChatMemberStateChange)arg0.m_rgfChatMemberStateChange;
                 if (state == EChatMemberStateChange.k_EChatMemberStateChangeEntered)
-                    AddMember(LobbyMemberData.Get(m_Inspector.Data, arg0.m_ulSteamIDUserChanged));
+                    AddMember(LobbyMemberData.Get(_mInspector.Data, user));
                 else
-                    RemoveMember(new UserLobbyLeaveData { user = arg0.m_ulSteamIDUserChanged, state = state });
+                    RemoveMember(new UserLobbyLeaveData { user = user, state = state });
             }
         }
 
@@ -89,16 +89,16 @@ namespace Heathen.SteamworksIntegration
                 var go = Instantiate(attributes.template, attributes.content);
                 var comp = go.GetComponent<SteamLobbyMemberData>();
                 comp.Data = data;
-                m_SpawnedMembers.Add(comp);
+                _mSpawnedMembers.Add(comp);
             }
         }
 
         private void RemoveMember(UserLobbyLeaveData data)
         {
-            var target = m_SpawnedMembers.Find((p) => { return p.Data.user == data.user; });
+            var target = _mSpawnedMembers.Find((p) => { return p.Data.user == data.user; });
             if(target != null)
             {
-                m_SpawnedMembers.Remove(target);
+                _mSpawnedMembers.Remove(target);
                 Destroy(target.gameObject);
             }
         }

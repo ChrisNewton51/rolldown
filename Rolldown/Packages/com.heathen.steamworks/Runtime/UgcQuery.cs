@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using Steamworks;
 using System;
 using System.Collections.Generic;
@@ -9,45 +9,45 @@ namespace Heathen.SteamworksIntegration
 {
     public class UgcQuery : IDisposable
     {
-        public UGCQueryHandle_t handle;
-        public uint matchedRecordCount = 0;
-        public uint pageCount = 1;
-        private bool isAllQuery = false;
-        private bool isUserQuery = false;
-        private EUserUGCList listType;
-        private EUGCQuery queryType;
-        private EUGCMatchingUGCType matchingType;
-        private EUserUGCListSortOrder sortOrder;
-        private AppId_t creatorApp;
-        private AppId_t consumerApp;
-        private AccountID_t account;
-        private uint _Page = 1;
-        public uint Page { get { return _Page; } set { SetPage(value); } }
-        private UnityAction<UgcQuery> callback;
+        public UGCQueryHandle_t Handle;
+        public uint MatchedRecordCount = 0;
+        public uint PageCount = 1;
+        private bool _isAllQuery = false;
+        private bool _isUserQuery = false;
+        private EUserUGCList _listType;
+        private EUGCQuery _queryType;
+        private EUGCMatchingUGCType _matchingType;
+        private EUserUGCListSortOrder _sortOrder;
+        private AppId_t _creatorApp;
+        private AppId_t _consumerApp;
+        private AccountID_t _account;
+        private uint _page = 1;
+        public uint Page { get { return _page; } set { SetPage(value); } }
+        private UnityAction<UgcQuery> _callback;
 
-        public CallResult<SteamUGCQueryCompleted_t> m_SteamUGCQueryCompleted;
+        public CallResult<SteamUGCQueryCompleted_t> MSteamUgcQueryCompleted;
 
         public List<WorkshopItemDetails> ResultsList = new List<WorkshopItemDetails>();
 
         private UgcQuery()
         {
-            m_SteamUGCQueryCompleted = CallResult<SteamUGCQueryCompleted_t>.Create(HandleQueryCompleted);
+            MSteamUgcQueryCompleted = CallResult<SteamUGCQueryCompleted_t>.Create(HandleQueryCompleted);
         }
 
         public static UgcQuery Get(EUGCQuery queryType, EUGCMatchingUGCType matchingType, AppId_t creatorApp, AppId_t consumerApp)
         {
             UgcQuery nQuery = new UgcQuery
             {
-                matchedRecordCount = 0,
-                pageCount = 1,
-                isAllQuery = true,
-                isUserQuery = false,
-                queryType = queryType,
-                matchingType = matchingType,
-                creatorApp = creatorApp,
-                consumerApp = consumerApp,
+                MatchedRecordCount = 0,
+                PageCount = 1,
+                _isAllQuery = true,
+                _isUserQuery = false,
+                _queryType = queryType,
+                _matchingType = matchingType,
+                _creatorApp = creatorApp,
+                _consumerApp = consumerApp,
                 Page = 1,
-                handle = API.UserGeneratedContent.Client.CreateQueryAllRequest(queryType, matchingType, creatorApp, consumerApp, 1)
+                Handle = API.UserGeneratedContent.Client.CreateQueryAllRequest(queryType, matchingType, creatorApp, consumerApp, 1)
             };
 
             return nQuery;
@@ -61,12 +61,12 @@ namespace Heathen.SteamworksIntegration
 
             UgcQuery nQuery = new UgcQuery
             {
-                matchedRecordCount = 0,
-                pageCount = 1,
-                isAllQuery = true,
-                isUserQuery = false,
+                MatchedRecordCount = 0,
+                PageCount = 1,
+                _isAllQuery = true,
+                _isUserQuery = false,
                 Page = 1,
-                handle = API.UserGeneratedContent.Client.CreateQueryDetailsRequest(fileIds)
+                Handle = API.UserGeneratedContent.Client.CreateQueryDetailsRequest(fileIds)
             };
 
             return nQuery;
@@ -77,12 +77,12 @@ namespace Heathen.SteamworksIntegration
             var list = new List<PublishedFileId_t>(fileIds);
             UgcQuery nQuery = new UgcQuery
             {
-                matchedRecordCount = 0,
-                pageCount = 1,
-                isAllQuery = true,
-                isUserQuery = false,
+                MatchedRecordCount = 0,
+                PageCount = 1,
+                _isAllQuery = true,
+                _isUserQuery = false,
                 Page = 1,
-                handle = API.UserGeneratedContent.Client.CreateQueryDetailsRequest(list.ToArray())
+                Handle = API.UserGeneratedContent.Client.CreateQueryDetailsRequest(list.ToArray())
             };
 
             return nQuery;
@@ -92,18 +92,18 @@ namespace Heathen.SteamworksIntegration
         {
             UgcQuery nQuery = new UgcQuery
             {
-                matchedRecordCount = 0,
-                pageCount = 1,
-                isAllQuery = false,
-                isUserQuery = true,
-                listType = listType,
-                sortOrder = sortOrder,
-                matchingType = matchingType,
-                creatorApp = creatorApp,
-                consumerApp = consumerApp,
-                account = account,
+                MatchedRecordCount = 0,
+                PageCount = 1,
+                _isAllQuery = false,
+                _isUserQuery = true,
+                _listType = listType,
+                _sortOrder = sortOrder,
+                _matchingType = matchingType,
+                _creatorApp = creatorApp,
+                _consumerApp = consumerApp,
+                _account = account,
                 Page = 1,
-                handle = API.UserGeneratedContent.Client.CreateQueryUserRequest(account, listType, matchingType, sortOrder, creatorApp, consumerApp, 1)
+                Handle = API.UserGeneratedContent.Client.CreateQueryUserRequest(account, listType, matchingType, sortOrder, creatorApp, consumerApp, 1)
             };
 
             return nQuery;
@@ -113,18 +113,18 @@ namespace Heathen.SteamworksIntegration
         {
             UgcQuery nQuery = new UgcQuery
             {
-                matchedRecordCount = 0,
-                pageCount = 1,
-                isAllQuery = false,
-                isUserQuery = true,
-                listType = listType,
-                sortOrder = sortOrder,
-                matchingType = matchingType,
-                creatorApp = creatorApp,
-                consumerApp = consumerApp,
-                account = user.AccountId,
+                MatchedRecordCount = 0,
+                PageCount = 1,
+                _isAllQuery = false,
+                _isUserQuery = true,
+                _listType = listType,
+                _sortOrder = sortOrder,
+                _matchingType = matchingType,
+                _creatorApp = creatorApp,
+                _consumerApp = consumerApp,
+                _account = user.AccountId,
                 Page = 1,
-                handle = API.UserGeneratedContent.Client.CreateQueryUserRequest(user.AccountId, listType, matchingType, sortOrder, creatorApp, consumerApp, 1)
+                Handle = API.UserGeneratedContent.Client.CreateQueryUserRequest(user.AccountId, listType, matchingType, sortOrder, creatorApp, consumerApp, 1)
             };
 
             return nQuery;
@@ -132,7 +132,7 @@ namespace Heathen.SteamworksIntegration
 
         public static UgcQuery GetMyPublished()
         {
-            var query = UgcQuery.Get(UserData.Me, EUserUGCList.k_EUserUGCList_Published, EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items_ReadyToUse, EUserUGCListSortOrder.k_EUserUGCListSortOrder_CreationOrderDesc, AppData.Me, AppData.Me);
+            var query = Get(UserData.Me, EUserUGCList.k_EUserUGCList_Published, EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items_ReadyToUse, EUserUGCListSortOrder.k_EUserUGCListSortOrder_CreationOrderDesc, AppData.Me, AppData.Me);
             query.SetReturnLongDescription(true);
             query.SetReturnMetadata(true);
             return query;
@@ -140,7 +140,7 @@ namespace Heathen.SteamworksIntegration
 
         public static UgcQuery GetMyPublished(AppData creatorApp, AppData consumerApp)
         {
-            var query = UgcQuery.Get(UserData.Me, EUserUGCList.k_EUserUGCList_Published, EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items_ReadyToUse, EUserUGCListSortOrder.k_EUserUGCListSortOrder_CreationOrderDesc, creatorApp, consumerApp);
+            var query = Get(UserData.Me, EUserUGCList.k_EUserUGCList_Published, EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items_ReadyToUse, EUserUGCListSortOrder.k_EUserUGCListSortOrder_CreationOrderDesc, creatorApp, consumerApp);
             query.SetReturnLongDescription(true);
             query.SetReturnMetadata(true);
             return query;
@@ -163,7 +163,7 @@ namespace Heathen.SteamworksIntegration
 
         public static UgcQuery GetPlayed()
         {
-            var query = UgcQuery.Get(UserData.Me, EUserUGCList.k_EUserUGCList_UsedOrPlayed, EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items_ReadyToUse, EUserUGCListSortOrder.k_EUserUGCListSortOrder_LastUpdatedDesc, AppData.Me, AppData.Me);
+            var query = Get(UserData.Me, EUserUGCList.k_EUserUGCList_UsedOrPlayed, EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items_ReadyToUse, EUserUGCListSortOrder.k_EUserUGCListSortOrder_LastUpdatedDesc, AppData.Me, AppData.Me);
             query.SetReturnLongDescription(true);
             query.SetReturnMetadata(true);
             return query;
@@ -171,7 +171,7 @@ namespace Heathen.SteamworksIntegration
 
         public static UgcQuery GetPlayed(AppData creatorApp, AppData consumerApp)
         {
-            var query = UgcQuery.Get(UserData.Me, EUserUGCList.k_EUserUGCList_UsedOrPlayed, EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items_ReadyToUse, EUserUGCListSortOrder.k_EUserUGCListSortOrder_LastUpdatedDesc, creatorApp, consumerApp);
+            var query = Get(UserData.Me, EUserUGCList.k_EUserUGCList_UsedOrPlayed, EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items_ReadyToUse, EUserUGCListSortOrder.k_EUserUGCListSortOrder_LastUpdatedDesc, creatorApp, consumerApp);
             query.SetReturnLongDescription(true);
             query.SetReturnMetadata(true);
             return query;
@@ -182,87 +182,87 @@ namespace Heathen.SteamworksIntegration
         /// </summary>
         /// <param name="tagName"></param>
         /// <returns></returns>
-        public bool AddExcludedTag(string tagName) => API.UserGeneratedContent.Client.AddExcludedTag(handle, tagName);
+        public bool AddExcludedTag(string tagName) => API.UserGeneratedContent.Client.AddExcludedTag(Handle, tagName);
         /// <summary>
         /// Adds a required key-value tag to a pending UGC Query. This will only return workshop items that have a key = pKey and a value = pValue.
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        public bool AddRequiredKeyValueTag(string key, string value) => API.UserGeneratedContent.Client.AddRequiredKeyValueTag(handle, key, value);
+        public bool AddRequiredKeyValueTag(string key, string value) => API.UserGeneratedContent.Client.AddRequiredKeyValueTag(Handle, key, value);
         /// <summary>
         /// Adds a required tag to a pending UGC Query. This will only return UGC with the specified tag.
         /// </summary>
         /// <param name="tagName"></param>
         /// <returns></returns>
-        public bool AddRequiredTag(string tagName) => API.UserGeneratedContent.Client.AddRequiredTag(handle, tagName);
+        public bool AddRequiredTag(string tagName) => API.UserGeneratedContent.Client.AddRequiredTag(Handle, tagName);
         /// <summary>
         /// Set allow cached response
         /// </summary>
         /// <param name="maxAgeSeconds"></param>
         /// <returns></returns>
-        public bool SetAllowCachedResponse(uint maxAgeSeconds) => API.UserGeneratedContent.Client.SetAllowCachedResponse(handle, maxAgeSeconds);
+        public bool SetAllowCachedResponse(uint maxAgeSeconds) => API.UserGeneratedContent.Client.SetAllowCachedResponse(Handle, maxAgeSeconds);
         /// <summary>
         /// Set cloud file name filter
         /// </summary>
         /// <param name="fileName"></param>
         /// <returns></returns>
-        public bool SetCloudFileNameFilter(string fileName) => API.UserGeneratedContent.Client.SetCloudFileNameFilter(handle, fileName);
+        public bool SetCloudFileNameFilter(string fileName) => API.UserGeneratedContent.Client.SetCloudFileNameFilter(Handle, fileName);
         /// <summary>
         /// Set item langauge
         /// </summary>
         /// <param name="language"></param>
         /// <returns></returns>
-        public bool SetLanguage(string language) => API.UserGeneratedContent.Client.SetLanguage(handle, language);
+        public bool SetLanguage(string language) => API.UserGeneratedContent.Client.SetLanguage(Handle, language);
 
         /// <summary>
         /// Set match any tag
         /// </summary>
         /// <param name="anyTag"></param>
         /// <returns></returns>
-        public bool SetMatchAnyTag(bool anyTag) => API.UserGeneratedContent.Client.SetMatchAnyTag(handle, anyTag);
+        public bool SetMatchAnyTag(bool anyTag) => API.UserGeneratedContent.Client.SetMatchAnyTag(Handle, anyTag);
 
         /// <summary>
         /// Set ranked by trend days
         /// </summary>
         /// <param name="days"></param>
         /// <returns></returns>
-        public bool SetRankedByTrendDays(uint days) => API.UserGeneratedContent.Client.SetRankedByTrendDays(handle, days);
+        public bool SetRankedByTrendDays(uint days) => API.UserGeneratedContent.Client.SetRankedByTrendDays(Handle, days);
 
         /// <summary>
         /// Set return additional previews
         /// </summary>
         /// <param name="additionalPreviews"></param>
         /// <returns></returns>
-        public bool SetReturnAdditionalPreviews(bool additionalPreviews) => API.UserGeneratedContent.Client.SetReturnAdditionalPreviews(handle, additionalPreviews);
+        public bool SetReturnAdditionalPreviews(bool additionalPreviews) => API.UserGeneratedContent.Client.SetReturnAdditionalPreviews(Handle, additionalPreviews);
 
         /// <summary>
         /// Set return childre
         /// </summary>
         /// <param name="returnChildren"></param>
         /// <returns></returns>
-        public bool SetReturnChildren(bool returnChildren) => API.UserGeneratedContent.Client.SetReturnChildren(handle, returnChildren);
+        public bool SetReturnChildren(bool returnChildren) => API.UserGeneratedContent.Client.SetReturnChildren(Handle, returnChildren);
 
         /// <summary>
         /// Set return key value tags
         /// </summary>
         /// <param name="tags"></param>
         /// <returns></returns>
-        public bool SetReturnKeyValueTags(bool tags) => API.UserGeneratedContent.Client.SetReturnKeyValueTags(handle, tags);
+        public bool SetReturnKeyValueTags(bool tags) => API.UserGeneratedContent.Client.SetReturnKeyValueTags(Handle, tags);
 
         /// <summary>
         /// Set return long description
         /// </summary>
         /// <param name="longDescription"></param>
         /// <returns></returns>
-        public bool SetReturnLongDescription(bool longDescription) =>  API.UserGeneratedContent.Client.SetReturnLongDescription(handle, longDescription);
+        public bool SetReturnLongDescription(bool longDescription) =>  API.UserGeneratedContent.Client.SetReturnLongDescription(Handle, longDescription);
 
         /// <summary>
         /// Set return metadata
         /// </summary>
         /// <param name="metadata"></param>
         /// <returns></returns>
-        public bool SetReturnMetadata(bool metadata) =>  API.UserGeneratedContent.Client.SetReturnMetadata(handle, metadata);
+        public bool SetReturnMetadata(bool metadata) =>  API.UserGeneratedContent.Client.SetReturnMetadata(Handle, metadata);
 
         /// <summary>
         /// Set return IDs only
@@ -270,7 +270,7 @@ namespace Heathen.SteamworksIntegration
         /// <param name="handle"></param>
         /// <param name="onlyIds"></param>
         /// <returns></returns>
-        public bool SetReturnOnlyIDs(bool onlyIds) => API.UserGeneratedContent.Client.SetReturnOnlyIDs(handle, onlyIds);
+        public bool SetReturnOnlyIDs(bool onlyIds) => API.UserGeneratedContent.Client.SetReturnOnlyIDs(Handle, onlyIds);
 
         /// <summary>
         /// Set return playtime stats
@@ -278,7 +278,7 @@ namespace Heathen.SteamworksIntegration
         /// <param name="handle"></param>
         /// <param name="days"></param>
         /// <returns></returns>
-        public bool SetReturnPlaytimeStats(uint days) => API.UserGeneratedContent.Client.SetReturnPlaytimeStats(handle, days);
+        public bool SetReturnPlaytimeStats(uint days) => API.UserGeneratedContent.Client.SetReturnPlaytimeStats(Handle, days);
 
         /// <summary>
         /// Set return total only
@@ -286,7 +286,7 @@ namespace Heathen.SteamworksIntegration
         /// <param name="handle"></param>
         /// <param name="totalOnly"></param>
         /// <returns></returns>
-        public bool SetReturnTotalOnly(bool totalOnly) => API.UserGeneratedContent.Client.SetReturnTotalOnly(handle, totalOnly);
+        public bool SetReturnTotalOnly(bool totalOnly) => API.UserGeneratedContent.Client.SetReturnTotalOnly(Handle, totalOnly);
 
         /// <summary>
         /// Set search text
@@ -294,27 +294,27 @@ namespace Heathen.SteamworksIntegration
         /// <param name="handle"></param>
         /// <param name="text"></param>
         /// <returns></returns>
-        public bool SetSearchText(string text) => API.UserGeneratedContent.Client.SetSearchText(handle, text);
+        public bool SetSearchText(string text) => API.UserGeneratedContent.Client.SetSearchText(Handle, text);
 
-        public bool SetNextPage() =>  SetPage((uint)Mathf.Clamp((int)_Page + 1, 1, pageCount));
+        public bool SetNextPage() =>  SetPage((uint)Mathf.Clamp((int)_page + 1, 1, PageCount));
 
-        public bool SetPreviousPage() => SetPage((uint)Mathf.Clamp((int)_Page - 1, 1, pageCount));
+        public bool SetPreviousPage() => SetPage((uint)Mathf.Clamp((int)_page - 1, 1, PageCount));
 
         public bool SetPage(uint page)
         {
-            _Page = page > 0 ? page : 1;
-            if (isAllQuery)
+            _page = page > 0 ? page : 1;
+            if (_isAllQuery)
             {
                 ReleaseHandle();
-                handle = API.UserGeneratedContent.Client.CreateQueryAllRequest(queryType, matchingType, creatorApp, consumerApp, Page);
-                matchedRecordCount = 0;
+                Handle = API.UserGeneratedContent.Client.CreateQueryAllRequest(_queryType, _matchingType, _creatorApp, _consumerApp, Page);
+                MatchedRecordCount = 0;
                 return true;
             }
-            else if (isUserQuery)
+            else if (_isUserQuery)
             {
                 ReleaseHandle();
-                handle = API.UserGeneratedContent.Client.CreateQueryUserRequest(account, listType, matchingType, sortOrder, creatorApp, consumerApp, Page);
-                matchedRecordCount = 0;
+                Handle = API.UserGeneratedContent.Client.CreateQueryUserRequest(_account, _listType, _matchingType, _sortOrder, _creatorApp, _consumerApp, Page);
+                MatchedRecordCount = 0;
                 return true;
             }
             else
@@ -326,15 +326,15 @@ namespace Heathen.SteamworksIntegration
 
         public bool Execute(UnityAction<UgcQuery> callback)
         {
-            if(handle == UGCQueryHandle_t.Invalid)
+            if(Handle == UGCQueryHandle_t.Invalid)
             {
                 Debug.LogError("Invalid handle, you must call CreateAll");
                 return false;
             }
 
             ResultsList.Clear();
-            this.callback = callback;
-            API.UserGeneratedContent.Client.SendQueryUGCRequest(handle, HandleQueryCompleted);
+            _callback = callback;
+            API.UserGeneratedContent.Client.SendQueryUgcRequest(Handle, HandleQueryCompleted);
 
             return true;
         }
@@ -345,11 +345,11 @@ namespace Heathen.SteamworksIntegration
             {
                 if (param.m_eResult == EResult.k_EResultOK)
                 {
-                    matchedRecordCount = param.m_unTotalMatchingResults;
+                    MatchedRecordCount = param.m_unTotalMatchingResults;
 
-                    pageCount = (uint)Mathf.Clamp((int)matchedRecordCount / 50, 1, int.MaxValue);
-                    if (pageCount * 50 < matchedRecordCount)
-                        pageCount++;
+                    PageCount = (uint)Mathf.Clamp((int)MatchedRecordCount / 50, 1, int.MaxValue);
+                    if (PageCount * 50 < MatchedRecordCount)
+                        PageCount++;
 
                     for (int i = 0; i < param.m_unNumResultsReturned; i++)
                     {
@@ -371,8 +371,8 @@ namespace Heathen.SteamworksIntegration
                         ResultsList.Add(nRecord);
                     }
                     ReleaseHandle();
-                    if (callback != null)
-                        callback.Invoke(this);
+                    if (_callback != null)
+                        _callback.Invoke(this);
                 }
                 else
                 {
@@ -387,10 +387,10 @@ namespace Heathen.SteamworksIntegration
 
         public void ReleaseHandle()
         {
-            if (handle != UGCQueryHandle_t.Invalid)
+            if (Handle != UGCQueryHandle_t.Invalid)
             {
-                API.UserGeneratedContent.Client.ReleaseQueryRequest(handle);
-                handle = UGCQueryHandle_t.Invalid;
+                API.UserGeneratedContent.Client.ReleaseQueryRequest(Handle);
+                Handle = UGCQueryHandle_t.Invalid;
             }
         }
 
@@ -405,8 +405,7 @@ namespace Heathen.SteamworksIntegration
 
 #if STEAM_LEGACY || STEAM_161
         public static UgcQuery GetSubscribed() => Get(API.UserGeneratedContent.Client.GetSubscribedItems());
-#endif
-#if STEAM_162
+#elif STEAM_162 || STEAM_163
         public static UgcQuery GetSubscribed(bool IncludeLocallyDisabled = false) => Get(API.UserGeneratedContent.Client.GetSubscribedItems(IncludeLocallyDisabled));
 #endif
     }

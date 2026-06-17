@@ -1,7 +1,8 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using UnityEngine.Serialization;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -9,8 +10,11 @@ using UnityEditor;
 
 namespace Heathen.SteamworksIntegration
 {
+    /// <summary>
+    /// Represents data for a Steam Input action, providing access to its set, layer, and action details.
+    /// </summary>
     [AddComponentMenu("Steamworks/Input Action")]
-    [HelpURL("https://kb.heathen.group/steam/features/input")]
+    [HelpURL("https://heathen.group/kb/input/")]
     public class SteamInputActionData : MonoBehaviour, ISteamInputActionData
     {
         [SerializeField]
@@ -19,36 +23,38 @@ namespace Heathen.SteamworksIntegration
         private string layerName;
         [SerializeField]
         private string actionName;
-
+        
+        /// <summary>
+        /// Gets or sets the input action set data.
+        /// </summary>
         public InputActionSetData Set
         {
-            get => m_Set;
-            set
-            {
-                m_Set = value;
-            }
+            get => _mSet;
+            set => _mSet = value;
         }
+
+        /// <summary>
+        /// Gets or sets the input action set layer data.
+        /// </summary>
         public InputActionSetLayerData Layer
         {
-            get => m_Layer;
-            set
-            {
-                m_Layer = value;
-            }
+            get => _mLayer;
+            set => _mLayer = value;
         }
+
+        /// <summary>
+        /// Gets or sets the input action data.
+        /// </summary>
         public InputActionData Action
         {
-            get => m_Action;
-            set
-            {
-                m_Action = value;
-            }
+            get => _mAction;
+            set => _mAction = value;
         }
-        private InputActionSetData m_Set;
-        private InputActionSetLayerData m_Layer;
-        private InputActionData m_Action;
-        [SerializeField]
-        private List<string> m_Delegates;
+        private InputActionSetData _mSet;
+        private InputActionSetLayerData _mLayer;
+        private InputActionData _mAction;
+        [FormerlySerializedAs("m_Delegates")] [SerializeField]
+        private List<string> mDelegates;
 
         private void Start()
         {
@@ -62,50 +68,56 @@ namespace Heathen.SteamworksIntegration
         {
             SteamTools.Interface.OnReady -= Interface_OnReady;
 
-            m_Set = SteamTools.Interface.GetSet(layerName);
-            m_Layer = new() { layerName = layerName };
-            m_Action = SteamTools.Interface.GetAction(actionName);
+            _mSet = SteamTools.Interface.GetSet(layerName);
+            _mLayer = new() { LayerName = layerName };
+            _mAction = SteamTools.Interface.GetAction(actionName);
         }
     }
 
 #if UNITY_EDITOR
+    /// <summary>
+    /// Custom editor for <see cref="SteamInputActionData"/>, providing a modular interface for managing input actions.
+    /// </summary>
     [CustomEditor(typeof(SteamInputActionData))]
     public class SteamInputActionDataEditor : ModularEditor
     {
-        private SerializedProperty setNameProp;
-        private SerializedProperty layerNameProp;
-        private SerializedProperty actionNameProp;
+        private SerializedProperty _setNameProp;
+        private SerializedProperty _layerNameProp;
+        private SerializedProperty _actionNameProp;
 
-        private SteamToolsSettings settings;
+        private SteamToolsSettings _settings;
 
         // --- Allowed types for this editor ---
-        protected override Type[] AllowedTypes => new Type[]
+        protected override Type[] AllowedTypes => new[]
         {
             typeof(SteamInputActionName),
             typeof(SteamInputActionGlyph),
             typeof(SteamInputActionEvent),
         };
 
-        private string[] setOptions = new string[0];
-        private string[] layerOptions = new string[0];
-        private string[] actionOptions = new string[0];
+        private string[] _setOptions = Array.Empty<string>();
+        private string[] _layerOptions = Array.Empty<string>();
+        private string[] _actionOptions = Array.Empty<string>();
 
         private void OnEnable()
         {
-            setNameProp = serializedObject.FindProperty("setName");
-            layerNameProp = serializedObject.FindProperty("layerName");
-            actionNameProp = serializedObject.FindProperty("actionName");
+            _setNameProp = serializedObject.FindProperty("setName");
+            _layerNameProp = serializedObject.FindProperty("layerName");
+            _actionNameProp = serializedObject.FindProperty("actionName");
 
-            settings = SteamToolsSettings.GetOrCreate();
+            _settings = SteamToolsSettings.GetOrCreate();
 
-            if (settings != null)
+            if (_settings != null)
             {
-                setOptions = settings.inputSets?.ToArray() ?? new string[0];
-                layerOptions = settings.inputLayers?.ToArray() ?? new string[0];
-                actionOptions = settings.inputActions?.ToArray() ?? new string[0];
+                _setOptions = _settings.inputSets?.ToArray() ?? Array.Empty<string>();
+                _layerOptions = _settings.inputLayers?.ToArray() ?? Array.Empty<string>();
+                _actionOptions = _settings.inputActions?.ToArray() ?? Array.Empty<string>();
             }
         }
 
+        /// <summary>
+        /// Renders the custom inspector GUI for Steam input action data.
+        /// </summary>
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
@@ -114,14 +126,15 @@ namespace Heathen.SteamworksIntegration
             if (EditorGUILayout.LinkButton("Settings"))
                 SettingsService.OpenProjectSettings("Project/Player/Steamworks");
             if (EditorGUILayout.LinkButton("Portal"))
-                Application.OpenURL("https://partner.steamgames.com/apps/landing/" + settings.Get(settings.ActiveApp.Value).applicationId.ToString());
+                // ReSharper disable once PossibleInvalidOperationException
+                Application.OpenURL("https://partner.steamgames.com/apps/landing/" + _settings.Get(_settings.ActiveApp.Value).applicationId.ToString());
             if (EditorGUILayout.LinkButton("Guide"))
                 Application.OpenURL("https://kb.heathen.group/steam/features/input");
             if (EditorGUILayout.LinkButton("Support"))
                 Application.OpenURL("https://discord.gg/heathen-group-463483739612381204");
             EditorGUILayout.EndHorizontal();
 
-            if (actionOptions == null || actionOptions.Length == 0)
+            if (_actionOptions == null || _actionOptions.Length == 0)
             {
                 EditorGUILayout.HelpBox("No Actions Founds! Configure Steamworks in Project Settings > Player > Steamworks.", MessageType.Warning);
 
@@ -130,9 +143,9 @@ namespace Heathen.SteamworksIntegration
             }
 
             // ---- Dropdowns for Set / Layer / Action ----
-            DrawPopup("Set", setNameProp, setOptions);
-            DrawPopup("Layer", layerNameProp, layerOptions);
-            DrawPopup("Action", actionNameProp, actionOptions);
+            DrawPopup("Set", _setNameProp, _setOptions);
+            DrawPopup("Layer", _layerNameProp, _layerOptions);
+            DrawPopup("Action", _actionNameProp, _actionOptions);
 
             EditorGUILayout.Space();
 
@@ -159,7 +172,7 @@ namespace Heathen.SteamworksIntegration
 
         private void DrawPopup(string label, SerializedProperty prop, string[] options)
         {
-            int index = Mathf.Max(0, System.Array.IndexOf(options, prop.stringValue));
+            int index = Mathf.Max(0, Array.IndexOf(options, prop.stringValue));
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField(label, GUILayout.Width(60f));
             index = EditorGUILayout.Popup(index, options);

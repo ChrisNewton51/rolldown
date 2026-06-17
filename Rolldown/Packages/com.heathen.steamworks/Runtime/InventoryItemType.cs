@@ -1,4 +1,4 @@
-﻿#if !DISABLESTEAMWORKS  && (STEAMWORKSNET || STEAM_LEGACY || STEAM_161 || STEAM_162)
+﻿#if !DISABLESTEAMWORKS  && STEAM_INSTALLED
 
 namespace Heathen.SteamworksIntegration
 {
@@ -7,12 +7,12 @@ namespace Heathen.SteamworksIntegration
     /// </summary>
     public enum InventoryItemType
     {
-        item,
-        bundle,
-        generator,
-        playtimegenerator,
-        tag_generator,
-        tag_tool
+        Item,
+        Bundle,
+        Generator,
+        Playtimegenerator,
+        TagGenerator,
+        TagTool
     }
 }
 #endif
