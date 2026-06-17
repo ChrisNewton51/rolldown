@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: fb185cd139dea9d4e8335380fa457f06
+guid: f69cd6956d639bf4a8fc489bf6c12268
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -157,7 +157,7 @@ TextureImporter:
 AssetOrigin:
   serializedVersion: 1
   productId: 280818
-  packageName: RETROWAVE SKIES - Dynamic Skybox Asset Pack
-  packageVersion: 3.0.0
+  packageName: RETROWAVE SKIES - Dynamic Synthwave Skybox Asset Pack
+  packageVersion: 3.0.2
   assetPath: Assets/Suggo Creations/RETROWAVE SKIES/Cubemaps/Lines_2k.png
-  uploadId: 693760
+  uploadId: 887090

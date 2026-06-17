@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: ea5db4927d3dbcb4f853110015354c7a
+guid: 0d4d7fe73d041664c9b0c3f584e9b0fc
 DefaultImporter:
   externalObjects: {}
   userData: 
@@ -8,8 +8,8 @@ DefaultImporter:
 AssetOrigin:
   serializedVersion: 1
   productId: 280818
-  packageName: RETROWAVE SKIES - Dynamic Skybox Asset Pack
-  packageVersion: 3.0.0
+  packageName: RETROWAVE SKIES - Dynamic Synthwave Skybox Asset Pack
+  packageVersion: 3.0.2
   assetPath: Assets/Suggo Creations/RETROWAVE SKIES/_Demo Scenes/Demo Scenes/Demo
     Default.unity
-  uploadId: 693760
+  uploadId: 887090

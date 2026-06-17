@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 600aba05b6888344686d83b0e3f2bed2
+guid: 6a5adc48e63742d4f9b180a347ba868f
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -157,7 +157,7 @@ TextureImporter:
 AssetOrigin:
   serializedVersion: 1
   productId: 280818
-  packageName: RETROWAVE SKIES - Dynamic Skybox Asset Pack
-  packageVersion: 3.0.0
+  packageName: RETROWAVE SKIES - Dynamic Synthwave Skybox Asset Pack
+  packageVersion: 3.0.2
   assetPath: Assets/Suggo Creations/RETROWAVE SKIES/Cubemaps/Cloudy_2k.png
-  uploadId: 693760
+  uploadId: 887090

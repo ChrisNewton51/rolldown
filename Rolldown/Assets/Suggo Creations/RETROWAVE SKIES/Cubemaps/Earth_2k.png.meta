@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: f2a7997dc4c57a640968a95c08c7d15e
+guid: 10caad74a1a20bb4681ffedd5b3c25ae
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -157,7 +157,7 @@ TextureImporter:
 AssetOrigin:
   serializedVersion: 1
   productId: 280818
-  packageName: RETROWAVE SKIES - Dynamic Skybox Asset Pack
-  packageVersion: 3.0.0
+  packageName: RETROWAVE SKIES - Dynamic Synthwave Skybox Asset Pack
+  packageVersion: 3.0.2
   assetPath: Assets/Suggo Creations/RETROWAVE SKIES/Cubemaps/Earth_2k.png
-  uploadId: 693760
+  uploadId: 887090

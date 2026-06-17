@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 0ce69d03720b20747a54df4014256ee8
+guid: e7cb4f59f5d762f4bacd0443ed738e50
 ScriptedImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -11,7 +11,7 @@ ScriptedImporter:
 AssetOrigin:
   serializedVersion: 1
   productId: 280818
-  packageName: RETROWAVE SKIES - Dynamic Skybox Asset Pack
-  packageVersion: 3.0.0
+  packageName: RETROWAVE SKIES - Dynamic Synthwave Skybox Asset Pack
+  packageVersion: 3.0.2
   assetPath: Assets/Suggo Creations/RETROWAVE SKIES/Shaders/Grid (Lit).shadergraph
-  uploadId: 693760
+  uploadId: 887090
